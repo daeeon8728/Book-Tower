@@ -1676,17 +1676,13 @@
       const spawnY = highestY - boxHeight - 150;
       const texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
 
-      // 무너지지 않게 마찰력과 무게를 크게
-      let extra = 5 + Math.random() * 45;
-      let newFriction = 1.0 + extra;
-      let newDensity = 0.5 + extra;
-
+      // 책보다 약간만 무겁게 (기존: density 5~45 → 책들 짓눌러 겹침 유발)
       const newObj = Matter.Bodies.rectangle(spawnX, spawnY, boxWidth, boxHeight, {
         restitution: 0.0,
-        friction: newFriction,
-        frictionStatic: newFriction * 10,
-        density: newDensity,
-        slop: 0.05,
+        friction: 0.95,          // 책(0.9)과 비슷한 수준
+        frictionStatic: 4.0,     // 미끄러지지 않도록 적당한 정적 마찰
+        density: 0.7,            // 책(0.5)보다 약간 무거운 정도
+        slop: 0.01,              // 겹침 허용 범위 축소 (기존 0.05 → 0.01)
         angle: 0,
         customType: type,
         customColor: boxColor,
@@ -1768,7 +1764,7 @@
         friction: baseFriction,
         frictionStatic: statFriction,
         density: isEasy ? 0.5 : 0.2,
-        slop: 0.05,
+        slop: 0.01,              // 겹침 허용 범위 축소 (0.05 → 0.01)
         angle: 0,
         customType: state.currentShape,
         customColor: cfg.color,
