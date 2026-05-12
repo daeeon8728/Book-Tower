@@ -39,18 +39,32 @@ export default async function handler(request, response) {
       // 기존 랭킹 조회 로직
       const leaderboard = await kv.zrange('leaderboard', 0, 99, { rev: true, withScores: true });
       
-      const formatted = leaderboard.map((item, index) => ({
-        id: index.toString(),
-        name: item.member,
-        score: item.score
-      }));
+      let formatted = [];
+      if (Array.isArray(leaderboard) && leaderboard.length > 0) {
+        if (typeof leaderboard[0] === 'object' && leaderboard[0] !== null) {
+          formatted = leaderboard.map((item, index) => ({
+            id: index.toString(),
+            username: item.member,
+            score: item.score
+          }));
+        } else {
+          // Flat array 처리 (예: ['username1', score1, 'username2', score2])
+          for (let i = 0; i < leaderboard.length; i += 2) {
+            formatted.push({
+              id: Math.floor(i/2).toString(),
+              username: leaderboard[i],
+              score: Number(leaderboard[i+1])
+            });
+          }
+        }
+      }
       
-      return response.status(200).json(formatted);
+      return response.status(200).json(JSON.parse(JSON.stringify(formatted)));
 
     } else if (request.method === 'POST') {
-      const { name, score, digest } = request.body;
+      const { username, score, digest } = request.body;
       
-      if (!name || typeof score !== 'number') {
+      if (!username || typeof score !== 'number') {
         return response.status(400).json({ error: '잘못된 요청입니다.' });
       }
 
@@ -60,11 +74,11 @@ export default async function handler(request, response) {
       }
 
       // 기존 점수 확인
-      const currentScore = await kv.zscore('leaderboard', name);
+      const currentScore = await kv.zscore('leaderboard', username);
       
       // 기존 점수가 없거나 새로운 점수가 더 높을 경우에만 업데이트
       if (currentScore === null || score > currentScore) {
-        await kv.zadd('leaderboard', { score: score, member: name });
+        await kv.zadd('leaderboard', { score: score, member: username });
       }
       
       return response.status(200).json({ success: true });
