@@ -1,0 +1,2767 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Book Tower: Toss Style Pomodoro</title>
+
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+  <style>
+    :root {
+      --toss-blue: #3182F6;
+      --toss-blue-hover: #1b64da;
+      --toss-bg-light: #F2F4F6;
+      --toss-card: #FFFFFF;
+      --toss-text-dark: #333D4B;
+      --toss-text-gray: #8B95A1;
+      --toss-border: #E5E8EB;
+
+      --bg-stage-0: #F2F4F6;
+      --bg-stage-1: #D6EBFF;
+      --bg-stage-2: #2C3E50;
+      --bg-stage-3: #1A1A1B;
+
+      --current-bg: var(--toss-bg-light);
+      --nav-height: 64px;
+
+      --nav-bg: rgba(255, 255, 255, 0.85);
+      --hud-bg: rgba(255, 255, 255, 0.9);
+      --hud-btn-bg: rgba(255, 255, 255, 0.8);
+      --timer-shadow: 0 4px 24px rgba(255, 255, 255, 0.8);
+    }
+
+    :root[data-theme="dark"] {
+      --toss-bg-light: #121212;
+      --toss-card: #1E1E1E;
+      --toss-text-dark: #E5E8EB;
+      --toss-text-gray: #A0AAB5;
+      --toss-border: #333D4B;
+      --bg-stage-0: #121212;
+      
+      --nav-bg: rgba(30, 30, 30, 0.85);
+      --hud-bg: rgba(30, 30, 30, 0.9);
+      --hud-btn-bg: rgba(45, 45, 45, 0.8);
+      --timer-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --toss-bg-light: #121212;
+        --toss-card: #1E1E1E;
+        --toss-text-dark: #E5E8EB;
+        --toss-text-gray: #A0AAB5;
+        --toss-border: #333D4B;
+        --bg-stage-0: #121212;
+        
+        --nav-bg: rgba(30, 30, 30, 0.85);
+        --hud-bg: rgba(30, 30, 30, 0.9);
+        --hud-btn-bg: rgba(45, 45, 45, 0.8);
+        --timer-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Pretendard', sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      overflow: hidden;
+      background-color: var(--current-bg);
+      transition: background-color 2s ease;
+      color: var(--toss-text-dark);
+    }
+
+    #stage-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .bg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: opacity 2.5s ease-in-out;
+      background-size: cover;
+      z-index: -2;
+    }
+
+    #particles {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 2s ease;
+      background-image:
+        radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+        radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+        radial-gradient(2px 2px at 50px 160px, #ddd, transparent),
+        radial-gradient(2px 2px at 90px 40px, #fff, transparent);
+      background-repeat: repeat;
+      background-size: 200px 200px;
+    }
+
+    #particles.show {
+      opacity: 1;
+      animation: twinkle 4s infinite linear;
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 0.8;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+
+      100% {
+        opacity: 0.8;
+      }
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
+      60% { transform: translateY(-4px); }
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Views */
+    .view-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - var(--nav-height));
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    .view-wrapper.hidden {
+      display: none !important;
+    }
+
+    #timer-view {
+      overflow: hidden;
+    }
+
+    /* Modals & Cards */
+    .toss-card {
+      background: var(--toss-card);
+      border-radius: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+      padding: 24px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.hidden {
+      display: none !important;
+    }
+
+    .modal-icon {
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--toss-text-dark);
+    }
+
+    .modal-desc {
+      font-size: 15px;
+      color: var(--toss-text-gray);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* Form Fields */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--toss-text-dark);
+    }
+
+    .form-input {
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--toss-border);
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      background: #F9FAFB;
+      color: var(--toss-blue);
+    }
+
+    .btn {
+      width: 100%;
+      border: none;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--toss-blue);
+      color: white;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .btn-secondary {
+      background: var(--toss-border);
+      color: var(--toss-text-dark);
+    }
+
+    /* Timer View (Canvas Layer) */
+    .start-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 80;
+    }
+
+    .start-screen.hidden {
+      display: none !important;
+    }
+
+    .start-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .start-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--toss-text-dark);
+      margin-bottom: 12px;
+    }
+
+    /* HUD TOP (Timer) */
+    .top-hud {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .top-hud.hidden {
+      display: none !important;
+    }
+
+    .giant-timer {
+      font-size: 72px;
+      font-weight: 800;
+      color: var(--toss-text-dark);
+      letter-spacing: -2px;
+      font-variant-numeric: tabular-nums;
+      text-shadow: var(--timer-shadow);
+      pointer-events: auto;
+      line-height: 1;
+    }
+
+    .giant-timer.light {
+      color: #ffffff;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    }
+
+    .status-hud {
+      pointer-events: auto;
+      background: var(--hud-bg);
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      color: var(--toss-text-dark);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #26D555;
+    }
+
+    .status-dot.unstable {
+      background: #F04438;
+      box-shadow: 0 0 8px #F04438;
+    }
+
+    .tower-stats {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--toss-blue);
+      background: var(--hud-bg);
+      padding: 6px 16px;
+      border-radius: 100px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      pointer-events: auto;
+    }
+
+    /* Timer Controls */
+    .timer-controls {
+      display: flex;
+      gap: 12px;
+      pointer-events: auto;
+      margin-top: 8px;
+    }
+
+    .control-btn {
+      background: var(--hud-btn-bg);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--toss-text-dark);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      height: var(--nav-height);
+      background: var(--nav-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      z-index: 90;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--toss-text-gray);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+
+    .nav-item.active {
+      color: var(--toss-text-dark);
+    }
+
+    .nav-icon {
+      font-size: 22px;
+      margin-bottom: 2px;
+      opacity: 0.5;
+    }
+
+    .nav-item.active .nav-icon {
+      opacity: 1;
+    }
+
+    /* Home (Dashboard) */
+    #home-view {
+      background: var(--toss-bg-light);
+      padding: 24px;
+      padding-top: 40px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .dash-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--toss-text-dark);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .stat-card {
+      background: var(--toss-card);
+      border-radius: 20px;
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--toss-text-gray);
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--toss-text-dark);
+    }
+
+    .stat-value.blue {
+      color: var(--toss-blue);
+    }
+
+    .stat-large {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Calendar Grid */
+    .calendar-card {
+      background: var(--toss-card);
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .cal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--toss-text-dark);
+      margin-bottom: 16px;
+    }
+
+    .cal-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      height: 100px;
+      gap: 8px;
+    }
+
+    .cal-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .cal-bar-bg {
+      width: 100%;
+      height: 80px;
+      background: var(--toss-border);
+      border-radius: 6px;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .cal-bar-fill {
+      width: 100%;
+      background: var(--toss-blue);
+      border-radius: 6px;
+      transition: height 0.5s;
+      min-height: 4px;
+    }
+
+    .cal-day {
+      font-size: 12px;
+      color: var(--toss-text-gray);
+      font-weight: 600;
+    }
+
+    /* Subject List */
+    .subject-list {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+    }
+
+    .subject-item {
+      background: var(--toss-card);
+      border-radius: 16px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      margin-bottom: 8px;
+    }
+
+    .subject-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .subject-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--toss-text-dark);
+    }
+
+    .subject-time {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--toss-text-gray);
+      margin-top: 4px;
+    }
+
+    .btn-play {
+      background: var(--toss-blue);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(49, 130, 246, 0.3);
+    }
+
+    .btn-play:active {
+      transform: scale(0.95);
+    }
+
+    .subject-add-btn {
+      background: transparent;
+      color: var(--toss-blue);
+      font-weight: 700;
+      border: 1px dashed var(--toss-blue);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* Settings View */
+    #settings-view {
+      background: var(--toss-bg-light);
+      padding: 24px;
+      padding-top: 40px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .settings-list {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* DIY View */
+    #diy-view {
+      background: var(--toss-bg-light);
+      padding: 24px;
+      padding-top: 40px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .diy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .diy-item {
+      background: var(--toss-card);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      border: 2px solid transparent;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .diy-item.active {
+      border-color: var(--toss-blue);
+      background: #F0F6FF;
+    }
+
+    .diy-icon {
+      font-size: 40px;
+      margin-bottom: 8px;
+    }
+
+    .diy-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--toss-text-dark);
+    }
+
+    /* Ranking View */
+    #ranking-view {
+      background: var(--toss-bg-light);
+      padding: 24px;
+      padding-top: 40px;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .rank-list {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .rank-item {
+      background: var(--toss-card);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+
+    .rank-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .rank-num {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--toss-blue);
+      width: 24px;
+    }
+
+    .rank-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--toss-text-dark);
+    }
+
+    .rank-score {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--toss-text-gray);
+    }
+
+    .my-rank-item {
+      background: var(--toss-blue);
+      border: 1px solid var(--toss-blue);
+    }
+
+    .my-rank-item .rank-name,
+    .my-rank-item .rank-score,
+    .my-rank-item .rank-num {
+      color: white !important;
+    }
+
+    .my-rank-sticky {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 48px);
+      max-width: 400px;
+      z-index: 10;
+      transition: opacity 0.3s, transform 0.3s;
+      box-shadow: 0 8px 24px rgba(49, 130, 246, 0.4);
+    }
+
+    .my-rank-sticky.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-50%) translateY(20px);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="stage-container">
+    <div class="bg-layer" id="bg-0" style="background: linear-gradient(180deg, #E2E8F0 0%, #F8FAFC 100%); opacity: 1;">
+    </div>
+    <div class="bg-layer" id="bg-1" style="background: linear-gradient(180deg, #7DD3FC 0%, #E0F2FE 100%); opacity: 0;">
+    </div>
+    <div class="bg-layer" id="bg-2" style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 100%); opacity: 0;">
+    </div>
+    <div class="bg-layer" id="bg-3" style="background: linear-gradient(180deg, #020617 0%, #111827 100%); opacity: 0;">
+    </div>
+    <div id="particles"></div>
+  </div>
+
+  <!-- View 1: Home Dashboard -->
+  <div id="home-view" class="view-wrapper">
+    <div class="dash-title">나의 공부 분석</div>
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">오늘 방어한 시간</div>
+        <div class="stat-value blue" id="dash-today">0분</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">이번 달 방어 시간</div>
+        <div class="stat-value" id="dash-month">0분</div>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card" style="flex:1;">
+        <div class="stat-label">총 누적 기록</div>
+        <div class="stat-value" id="dash-total">0분</div>
+      </div>
+      <div class="stat-card" style="flex:1;">
+        <div class="stat-label">최고 탑 높이</div>
+        <div class="stat-value blue" id="dash-max-height">0.0m</div>
+      </div>
+    </div>
+
+    <div class="calendar-card" style="margin-top: 16px;">
+      <div class="cal-title">이번 달 기록 달력</div>
+      <div id="monthly-calendar"
+        style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; text-align:center;">
+        <!-- JS generated -->
+      </div>
+    </div>
+
+    <div
+      style="width:100%; max-width:400px; margin-top: 32px; font-size: 18px; font-weight: 800; color: var(--toss-text-dark); text-align: left; position: relative;">
+      오늘의 집중 과목
+      <div id="subject-tooltip" style="position: absolute; right: 0; top: -10px; background: var(--toss-blue); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; animation: bounce 2s infinite; pointer-events: none;">
+        과목을 선택해서 시작!
+        <div style="position: absolute; bottom: -4px; right: 20px; width: 8px; height: 8px; background: var(--toss-blue); transform: rotate(45deg);"></div>
+      </div>
+    </div>
+    <div class="subject-list" id="subject-list-container">
+      <!-- JS Generated Subjects -->
+    </div>
+  </div>
+
+  <!-- View 2: Timer (Book Tower) -->
+  <div id="timer-view" class="view-wrapper hidden">
+
+    <div class="start-screen" id="start-screen">
+      <div class="start-icon">⏳</div>
+      <div class="start-title">탑을 쌓아볼까요?</div>
+      <button class="btn btn-primary" style="max-width: 200px;" onclick="openPomodoroConfig()">시작 설정하기</button>
+    </div>
+
+    <!-- Physics Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Top HUD -->
+    <div class="top-hud hidden" id="top-hud">
+      <div class="status-hud" id="status-hud">
+        <div class="status-dot" id="gyro-dot"></div>
+        <span id="gyro-text">수평 유지 감지중</span>
+      </div>
+      <div class="giant-timer" id="time-display">30:00</div>
+      <div class="tower-stats" id="height-display">0.0m (0개)</div>
+
+      <div class="timer-controls">
+        <button class="control-btn" id="btn-pause" onclick="togglePause()">일시정지</button>
+        <button class="control-btn" onclick="resetSession()">초기화</button>
+        <button class="control-btn" style="color: #F04438;" onclick="quitSession()">오늘은 여기까지</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View 3: Avatar & Collection (Items) -->
+  <div id="diy-view" class="view-wrapper hidden" style="padding: 0; display: flex; flex-direction: column;">
+    <!-- Top 1/2: Avatar Display -->
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e0f2fe; position: relative; overflow: hidden; min-height: 250px;">
+      <div style="font-size: 20px; font-weight: 800; position: absolute; top: 20px; color: var(--toss-blue);">나의 아바타</div>
+      <!-- Base Avatar -->
+      <div style="width: 200px; height: 200px; position: relative;">
+        <!-- Placeholder for generated base -->
+        <div id="avatar-base" style="width: 100%; height: 100%; background-image: url('avatar_base_1778555239711.png'); background-size: cover; background-position: center; mix-blend-mode: multiply; position: absolute; z-index: 1;"></div>
+        <!-- Item Layers -->
+        <div id="avatar-layer-bottom" style="width: 100%; height: 100%; position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 60px; transform: translateY(30px);"></div>
+        <div id="avatar-layer-shoes" style="width: 100%; height: 100%; position: absolute; z-index: 3; display: flex; align-items: flex-end; justify-content: center; font-size: 50px; transform: translateY(10px);"></div>
+        <div id="avatar-layer-top" style="width: 100%; height: 100%; position: absolute; z-index: 4; display: flex; align-items: center; justify-content: center; font-size: 80px; transform: translateY(10px);"></div>
+        <div id="avatar-layer-head" style="width: 100%; height: 100%; position: absolute; z-index: 5; display: flex; align-items: flex-start; justify-content: center; font-size: 70px; transform: translateY(-10px);"></div>
+      </div>
+    </div>
+    
+    <!-- Bottom 1/2: Item Tabs -->
+    <div style="flex: 1; background: var(--toss-bg-light); border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 16px rgba(0,0,0,0.05); margin-top: -20px;">
+      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--toss-border); padding-bottom: 10px; margin-bottom: 16px;">
+        <div class="avatar-tab active" onclick="switchAvatarTab('head')" id="tab-head" style="font-weight: 700; cursor: pointer; color: var(--toss-blue); text-align: center; flex: 1;">머리<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-head">0/4</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('top')" id="tab-top" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">상의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-top">0/4</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('bottom')" id="tab-bottom" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">하의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-bottom">0/4</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('shoes')" id="tab-shoes" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">신발<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-shoes">0/4</span></div>
+      </div>
+      <div class="diy-grid" id="collection-grid" style="overflow-y: auto; padding-bottom: 80px;">
+        <!-- JS Generated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- View 4: Ranking -->
+  <div id="ranking-view" class="view-wrapper hidden">
+    <div class="dash-title">실시간 랭킹 (Local)</div>
+    <div class="rank-list" id="rank-list" style="padding-bottom: 80px;">
+      <!-- JS Generated -->
+      <div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">불러오는 중...</div>
+    </div>
+
+    <div id="sticky-my-rank" class="rank-item my-rank-item my-rank-sticky hidden"></div>
+  </div>
+
+  <!-- View 5: Settings -->
+  <div id="settings-view" class="view-wrapper hidden">
+    <div class="dash-title">설정</div>
+    <div class="settings-list">
+      <div class="toss-card">
+        <div class="form-group">
+          <div class="form-label">닉네임</div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="setting-nickname" class="form-input" style="flex:1; min-width: 0;">
+            <button class="btn btn-primary"
+              style="width: max-content; flex-shrink: 0; white-space: nowrap; padding: 0 16px; border-radius: 12px; font-weight:700;"
+              onclick="saveNicknameFromSetting()">변경</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="toss-card" style="padding: 20px;">
+        <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-theme" onclick="toggleTheme()">테마: 시스템 기본</button>
+        <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-vibrate" onclick="toggleVibration()">진동:
+          켜짐</button>
+        <button class="btn btn-secondary" style="color: #F04438;" onclick="resetData()">데이터 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 실패 팝업 -->
+  <div class="modal-overlay hidden" id="fail-modal">
+    <div class="toss-card">
+      <div class="modal-icon">💥</div>
+      <div class="modal-title">실패!</div>
+      <div class="modal-desc">탑이 무너졌습니다.<br>너무 급하게 기울였나요?</div>
+      <button class="btn btn-primary" onclick="restartFromFail()">다시 도전하기</button>
+      <button class="btn btn-secondary" onclick="quitSession()">오늘은 여기까지</button>
+    </div>
+  </div>
+
+  <!-- 뽀모도로 설정 모달 -->
+  <div class="modal-overlay hidden" id="pomodoro-modal">
+    <div class="toss-card">
+      <div class="modal-title">타이머 모드 설정</div>
+
+      <div class="form-group">
+        <div class="form-label">모드 선택</div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" id="btn-mode-normal" onclick="selectTimerMode('normal')"
+            style="background:var(--toss-blue); color:white;">일반 모드</button>
+          <button class="btn btn-secondary" id="btn-mode-pomo" onclick="selectTimerMode('pomo')">뽀모도로 모드</button>
+        </div>
+        <div style="font-size:12px; color:var(--toss-text-gray); margin-top:4px;" id="mode-desc-text">일반 모드는 시간을 끝없이
+          측정합니다. (방해물 없음)</div>
+      </div>
+
+      <div class="form-group hidden" id="pomo-repeats-container">
+        <div class="form-label">반복 횟수 (30분 집중 / 5분 휴식)</div>
+        <div style="display:flex; gap:4px; margin-top:4px;" id="pomo-repeats-btns">
+          <!-- Buttons generated via JS or statically -->
+          <button class="btn btn-secondary" style="padding:10px; flex:1;" onclick="setPomoRepeat(1)">1번</button>
+          <button class="btn btn-secondary" style="padding:10px; flex:1;" onclick="setPomoRepeat(2)">2번</button>
+          <button class="btn btn-secondary" style="padding:10px; flex:1;" onclick="setPomoRepeat(3)">3번</button>
+          <button class="btn btn-secondary" style="padding:10px; flex:1;" onclick="setPomoRepeat(4)">4번</button>
+          <button class="btn btn-secondary" style="padding:10px; flex:1;" onclick="setPomoRepeat(5)">5번</button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="btn btn-secondary" onclick="closePomodoroConfig()">취소</button>
+        <button class="btn btn-primary" onclick="startPomodoro()">시작</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let selectedTimerMode = 'normal';
+    let pomoRepeatCount = 1;
+
+    function selectTimerMode(mode) {
+      selectedTimerMode = mode;
+      document.getElementById('btn-mode-normal').style.background = mode === 'normal' ? 'var(--toss-blue)' : 'var(--toss-border)';
+      document.getElementById('btn-mode-normal').style.color = mode === 'normal' ? 'white' : 'var(--toss-text-dark)';
+      document.getElementById('btn-mode-pomo').style.background = mode === 'pomo' ? 'var(--toss-blue)' : 'var(--toss-border)';
+      document.getElementById('btn-mode-pomo').style.color = mode === 'pomo' ? 'white' : 'var(--toss-text-dark)';
+
+      if (mode === 'pomo') {
+        document.getElementById('pomo-repeats-container').classList.remove('hidden');
+        document.getElementById('mode-desc-text').innerText = '30분 집중 후 5분 휴식을 반복합니다. (딴짓 시 방해물 출현)';
+        setPomoRepeat(1);
+      } else {
+        document.getElementById('pomo-repeats-container').classList.add('hidden');
+        document.getElementById('mode-desc-text').innerText = '일반 모드는 시간을 끝없이 측정합니다. (방해물 없음)';
+      }
+    }
+
+    function setPomoRepeat(cnt) {
+      pomoRepeatCount = cnt;
+      const btns = document.getElementById('pomo-repeats-btns').children;
+      for (let i = 0; i < btns.length; i++) {
+        if (i + 1 === cnt) {
+          btns[i].style.background = 'var(--toss-blue)';
+          btns[i].style.color = 'white';
+        } else {
+          btns[i].style.background = 'var(--toss-border)';
+          btns[i].style.color = 'var(--toss-text-dark)';
+        }
+      }
+    }
+  </script>
+
+
+  <!-- 휴식 팝업 -->
+  <div class="modal-overlay hidden" id="rest-modal">
+    <div class="toss-card" style="width: 90%; max-width: 360px;">
+      <div class="modal-icon">☕️</div>
+      <div class="modal-title">쉬는 시간입니다!</div>
+      <div class="modal-desc">휴식 타이머가 이미 시작되었습니다.<br>가벼운 스트레칭은 어떨까요?</div>
+
+      <div
+        style="width: 100%; aspect-ratio: 16/9; margin: 16px 0; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/MTU4iCDntjs?enablejsapi=1"
+          id="rest-youtube-iframe" frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen></iframe>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button class="btn btn-primary" onclick="closeRestPopup()">팝업 닫고 쉬기 (배경 타이머 유지)</button>
+        <button class="btn btn-secondary" onclick="quitSession()">오늘은 여기까지</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal-overlay hidden" id="login-modal">
+    <div class="toss-card">
+      <div class="modal-icon">👋</div>
+      <div class="modal-title">환영합니다!</div>
+      <div class="modal-desc">랭킹에 표시될 닉네임을 설정해주세요.</div>
+      <div class="form-group">
+        <input type="text" id="input-nickname" class="form-input" placeholder="닉네임 입력 (예: 김토스)" maxlength="10">
+      </div>
+      <button class="btn btn-primary" onclick="submitNickname()">시작하기</button>
+    </div>
+  </div>
+
+  <!-- Sensor Modal -->
+  <div class="modal-overlay hidden" id="sensor-modal">
+    <div class="toss-card">
+      <div class="modal-icon">📱</div>
+      <div class="modal-title">센서 권한 설정</div>
+      <div class="modal-desc">물리적인 중력 변화를 위해 자이로 센서 접근 권한이 필요합니다.</div>
+      <button class="btn btn-primary" onclick="requestSensor()">허용하고 계속하기</button>
+    </div>
+  </div>
+
+  <!-- Warning Modal -->
+  <div class="modal-overlay hidden" id="warning-modal">
+    <div class="toss-card">
+      <div class="modal-icon">🚨</div>
+      <div class="modal-title">딴 짓 감지됨!</div>
+      <div class="modal-desc" style="font-size: 16px;">경고! 집중을 유지해주세요.<br>방해물이 소환되어 탑을 무너뜨렸을 수 있습니다!</div>
+      <button class="btn btn-primary" onclick="closeWarningPopup()">알겠습니다 (타이머 재개)</button>
+    </div>
+  </div>
+
+  <!-- Add Subject Modal -->
+  <div class="modal-overlay hidden" id="add-subject-modal">
+    <div class="toss-card">
+      <div class="modal-title">새로운 과목 추가</div>
+      <div class="form-group" style="margin-top: 16px;">
+        <input type="text" id="input-new-subject" class="form-input" placeholder="새 과목 이름" maxlength="15">
+        <div id="subject-name-error" style="color:red; font-size:12px; margin-top:4px; display:none;">과목 이름이 중복입니다.
+        </div>
+      </div>
+      <div class="form-group" style="margin-top: 8px;">
+        <div class="form-label">색상 선택</div>
+        <div id="color-palette" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+          <!-- JS generated -->
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="btn btn-secondary" onclick="closeAddSubjectModal()">취소</button>
+        <button class="btn btn-primary" onclick="addNewSubject()">추가하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar Day Detail Modal -->
+  <div class="modal-overlay hidden" id="calendar-detail-modal">
+    <div class="toss-card">
+      <div class="modal-title" id="cal-detail-title">YYYY.MM.DD</div>
+      <div class="modal-desc" style="margin-bottom: 16px;">총 공부 시간: <strong id="cal-detail-total"
+          style="color:var(--toss-blue);">0분</strong></div>
+
+      <div class="subject-list" id="cal-detail-list" style="margin: 0; padding: 0; width: 100%;">
+        <!-- JS Generated -->
+      </div>
+
+      <button class="btn btn-primary" style="margin-top: 16px;"
+        onclick="document.getElementById('calendar-detail-modal').classList.add('hidden')">닫기</button>
+    </div>
+  </div>
+
+  <!-- Tutorial Modal -->
+  <div class="modal-overlay hidden" id="tutorial-modal" style="z-index: 999;">
+    <div class="toss-card">
+      <div class="modal-title">Book Tower 사용법 📚</div>
+      <div class="modal-desc" style="text-align: left; margin-top: 12px; font-size: 14px;">
+        1. <b>과목을 선택</b>하여 집중 타이머를 시작하세요.<br><br>
+        2. 집중하는 동안에는 <b>탑이 계속 쌓입니다</b>.<br><br>
+        3. 스마트폰을 흔들리게 하거나 딴짓을 하면 <b>경고</b>가 울리며 탑이 무너질 수 있습니다.<br><br>
+        4. 5분마다 <b>특별한 아이템</b>이 무작위로 떨어져 도감에 수집됩니다!
+      </div>
+      <button class="btn btn-primary" style="margin-top: 20px;" onclick="closeTutorial()">확인했습니다!</button>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="switchTab('home')">
+      <div class="nav-icon">🏠</div>홈
+    </div>
+    <div class="nav-item" onclick="switchTab('diy')">
+      <div class="nav-icon">💎</div>아이템
+    </div>
+    <div class="nav-item" onclick="switchTab('ranking')">
+      <div class="nav-icon">🏆</div>랭킹
+    </div>
+    <div class="nav-item" onclick="switchTab('settings')">
+      <div class="nav-icon">⚙️</div>설정
+    </div>
+  </div>
+
+  <script>
+    /* =======================================
+       1. State & Constants
+    ======================================= */
+
+    function getOffsetDate() {
+      let d = new Date();
+      d.setTime(d.getTime() - 5 * 60 * 60 * 1000);
+      return d;
+    }
+    function getTodayStr() {
+      return getOffsetDate().toLocaleDateString('ko-KR');
+    }
+
+    let state = {
+      mode: 'idle', // 'study', 'rest', 'idle'
+      timeLeft: 0,
+      timerInterval: null,
+      books: [],
+      isPaused: false,
+      studyGoalMins: 30,
+      restGoalMins: 5,
+      currentShape: 'book',
+      difficulty: 'easy',
+      warnings: 0,
+      isWarningCooldown: false,
+      currentSubject: '수학'
+    };
+
+    const PX_PER_METER = 100;
+    const RANKING_API = '/api/ranking';
+
+    // DOM Cache
+    const views = {
+      home: document.getElementById('home-view'),
+      timer: document.getElementById('timer-view'),
+      diy: document.getElementById('diy-view'),
+      ranking: document.getElementById('ranking-view'),
+      settings: document.getElementById('settings-view')
+    };
+    const docBody = document.body;
+
+    /* =======================================
+       2. LocalStorage & Statistics
+    ======================================= */
+    function getRecords() {
+      let data = JSON.parse(localStorage.getItem('bookTowerv2'));
+      if (!data) {
+        data = { total: 0, daily: {}, userName: '나', maxHeight: 0, vibrate: true, dropInterval: 60 };
+      }
+      if (data.maxHeight === undefined) data.maxHeight = 0;
+      if (data.vibrate === undefined) data.vibrate = true;
+      if (data.dropInterval === undefined) data.dropInterval = 60;
+
+      // Data Schema Migration & Initialization for Today
+      const todayStr = getTodayStr();
+
+      Object.keys(data.daily).forEach(k => {
+        if (typeof data.daily[k] === 'number') {
+          data.daily[k] = { total: data.daily[k], subjects: {}, subjectList: ['수학', '영어'] };
+        }
+      });
+
+      if (!data.daily[todayStr]) {
+        let recentList = ['수학', '영어'];
+        let dates = Object.keys(data.daily).sort((a, b) => new Date(a.replace(/\./g, '-')) - new Date(b.replace(/\./g, '-')));
+        if (dates.length > 0) {
+          let lastDay = data.daily[dates[dates.length - 1]];
+          if (lastDay && lastDay.subjectList) recentList = [...lastDay.subjectList];
+        }
+        data.daily[todayStr] = { total: 0, subjects: {}, subjectList: recentList };
+      }
+
+      // Ensure 'subjects' map is initialized
+      data.daily[todayStr].subjectList.forEach(sj => {
+        if (data.daily[todayStr].subjects[sj] === undefined) data.daily[todayStr].subjects[sj] = 0;
+      });
+
+      return data;
+    }
+
+    function saveStudyRecord() {
+      const dateStr = getTodayStr();
+      let data = getRecords();
+      data.total += 1;
+      data.daily[dateStr].total += 1;
+      if (data.daily[dateStr].subjects[state.currentSubject] === undefined) {
+        data.daily[dateStr].subjects[state.currentSubject] = 0;
+        if (!data.daily[dateStr].subjectList.includes(state.currentSubject)) {
+          data.daily[dateStr].subjectList.push(state.currentSubject);
+        }
+      }
+      data.daily[dateStr].subjects[state.currentSubject] += 1;
+      localStorage.setItem('bookTowerv2', JSON.stringify(data));
+
+      if (views.home && !views.home.classList.contains('hidden')) renderSubjectList();
+    }
+
+    function updateDashboard() {
+      const data = getRecords();
+      const now = getOffsetDate();
+
+      const todayStr = now.toLocaleDateString('ko-KR');
+      const todaySecs = data.daily[todayStr]?.total || 0;
+      document.getElementById('dash-today').innerText = `${Math.floor(todaySecs / 60)}분`;
+      document.getElementById('dash-total').innerText = `${Math.floor(data.total / 60)}분`;
+      try { document.getElementById('dash-max-height').innerText = `${(data.maxHeight || 0).toFixed(1)}m`; } catch (e) { }
+
+      let monthSecs = 0;
+      Object.keys(data.daily).forEach(k => {
+        let d = new Date(k.replace(/\./g, '-').replace(/ /g, ''));
+        if (isNaN(d.getTime())) d = new Date(k);
+        if (!isNaN(d.getTime()) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) {
+          monthSecs += (data.daily[k].total || 0);
+        }
+      });
+      document.getElementById('dash-month').innerText = `${Math.floor(monthSecs / 60)}분`;
+
+      // Render Real Monthly Calendar
+      const calEl = document.getElementById('monthly-calendar');
+      if (calEl) {
+        calEl.innerHTML = '';
+        ['일', '월', '화', '수', '목', '금', '토'].forEach(day => {
+          calEl.innerHTML += `<div style="font-size:12px; font-weight:bold; color:var(--toss-text-gray); padding-bottom:4px;">${day}</div>`;
+        });
+
+        let firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+        let lastDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) calEl.innerHTML += `<div></div>`;
+
+        for (let day = 1; day <= lastDate; day++) {
+          let loopD = new Date(now.getFullYear(), now.getMonth(), day);
+          let key = loopD.toLocaleDateString('ko-KR');
+          let val = data.daily[key]?.total || 0;
+          let mins = Math.floor(val / 60);
+
+          let bgColor = 'transparent';
+          let textColor = 'var(--toss-text-dark)';
+          if (mins >= 60) {
+            textColor = 'white';
+            if (mins >= 300) bgColor = '#B71C1C';
+            else if (mins >= 240) bgColor = '#D32F2F';
+            else if (mins >= 180) bgColor = '#F44336';
+            else if (mins >= 120) bgColor = '#E57373';
+            else bgColor = '#FFCDD2';
+          }
+
+          let isToday = (day === now.getDate());
+          let border = isToday ? '2px solid var(--toss-blue)' : 'none';
+
+          calEl.innerHTML += `<div onclick="showDayDetail('${key}')" style="cursor:pointer; padding:6px 0; border-radius:8px; background:${bgColor}; color:${textColor}; font-size:13px; font-weight:600; border:${border};">${day}</div>`;
+        }
+      }
+
+      renderSubjectList();
+    }
+
+    function renderSubjectList() {
+      let data = getRecords();
+      const todayStr = getTodayStr();
+      let todayData = data.daily[todayStr];
+      let container = document.getElementById('subject-list-container');
+      if (!container) return;
+
+      let html = '';
+      todayData.subjectList.forEach(sj => {
+        let secs = todayData.subjects[sj] || 0;
+        let m = Math.floor(secs / 60);
+        html += `
+        <div class="subject-item" style="border-left: 6px solid ${data.subjectColors && data.subjectColors[sj] ? data.subjectColors[sj] : 'var(--toss-blue)'};">
+            <div class="subject-info">
+                <div class="subject-name">${sj}</div>
+                <div class="subject-time">${m}분 방어함</div>
+            </div>
+            <button class="btn-play" onclick="startSubjectTimer('${sj}')">▶</button>
+        </div>`;
+      });
+
+      if (todayData.subjectList.length < 8) {
+        html += `<div class="subject-add-btn" onclick="openAddSubjectModal();">+ 과목 추가하기</div>`;
+      }
+      container.innerHTML = html;
+    }
+
+
+    const SUBJECT_COLORS = ['#FFCDD2', '#F8BBD0', '#E1BEE7', '#D1C4E9', '#C5CAE9', '#BBDEFB', '#B2EBF2', '#B2DFDB', '#C8E6C9', '#DCEDC8'];
+    let selectedSubjectColor = null;
+
+    function openAddSubjectModal() {
+      document.getElementById('input-new-subject').value = '';
+      document.getElementById('subject-name-error').style.display = 'none';
+      selectedSubjectColor = null;
+      renderColorPalette();
+      document.getElementById('add-subject-modal').classList.remove('hidden');
+    }
+
+    function renderColorPalette() {
+      let data = getRecords();
+      let usedColors = Object.values(data.subjectColors || {});
+
+      let html = '';
+      SUBJECT_COLORS.forEach(c => {
+        let isUsed = usedColors.includes(c);
+        let border = (selectedSubjectColor === c) ? '2px solid var(--toss-text-dark)' : '2px solid transparent';
+        let content = isUsed ? '<span style="color:white; font-weight:bold; text-shadow:0 0 2px rgba(0,0,0,0.5);">✓</span>' : '';
+        html += `<div onclick="selectSubjectColor('${c}', ${isUsed})" style="width:36px; height:36px; border-radius:50%; background-color:${c}; border:${border}; cursor:${isUsed ? 'not-allowed' : 'pointer'}; display:flex; align-items:center; justify-content:center;">${content}</div>`;
+      });
+      document.getElementById('color-palette').innerHTML = html;
+    }
+
+    function selectSubjectColor(c, isUsed) {
+      if (isUsed) return;
+      selectedSubjectColor = c;
+      renderColorPalette(); // re-render
+    }
+
+    function closeAddSubjectModal() {
+      document.getElementById('add-subject-modal').classList.add('hidden');
+    }
+
+    function addNewSubject() {
+      let val = document.getElementById('input-new-subject').value.trim();
+      if (!val) return;
+
+      let data = getRecords();
+      if (!data.subjectColors) data.subjectColors = {};
+
+      if (Object.keys(data.subjectColors).includes(val)) {
+        document.getElementById('subject-name-error').style.display = 'block';
+        return;
+      }
+      document.getElementById('subject-name-error').style.display = 'none';
+
+      if (!selectedSubjectColor) {
+        alert("색상을 선택해주세요.");
+        return;
+      }
+
+      const todayStr = getTodayStr();
+      if (!data.daily[todayStr].subjectList.includes(val)) {
+        data.daily[todayStr].subjectList.push(val);
+        data.daily[todayStr].subjects[val] = 0;
+        data.subjectColors[val] = selectedSubjectColor;
+        localStorage.setItem('bookTowerv2', JSON.stringify(data));
+        renderSubjectList();
+      }
+      closeAddSubjectModal();
+    }
+
+
+    function startSubjectTimer(subj) {
+      state.currentSubject = subj;
+      // Hide tooltip once clicked
+      const tooltip = document.getElementById('subject-tooltip');
+      if (tooltip) tooltip.style.display = 'none';
+      goToTimerAndConfig();
+    }
+
+    function showDayDetail(dateStr) {
+      let data = getRecords();
+      let dayData = data.daily[dateStr];
+      if (!dayData || dayData.total === 0) {
+        alert("해당 날짜에 공부 기록이 없습니다.");
+        return;
+      }
+      document.getElementById('cal-detail-title').innerText = dateStr;
+      document.getElementById('cal-detail-total').innerText = Math.floor(dayData.total / 60) + "분";
+
+      let html = '';
+      if (dayData.subjects) {
+        Object.keys(dayData.subjects).forEach(sj => {
+          let m = Math.floor(dayData.subjects[sj] / 60);
+          if (m > 0) {
+            html += `
+                <div class="subject-item" style="box-shadow:none; border:1px solid var(--toss-border);">
+                    <div class="subject-name">${sj}</div>
+                    <div class="subject-time" style="color:var(--toss-blue); margin:0;">${m}분</div>
+                </div>`;
+          }
+        });
+      }
+      if (html === '') html = '<div style="text-align:center;font-size:14px;color:var(--toss-text-gray);">세부 기록이 없습니다.</div>';
+
+      document.getElementById('cal-detail-list').innerHTML = html;
+      document.getElementById('calendar-detail-modal').classList.remove('hidden');
+    }
+
+    /* =======================================
+       3. Matter.js Setup & Persistence
+    ======================================= */
+    const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
+    const engine = Engine.create({ positionIterations: 12, velocityIterations: 10 });
+    engine.world.gravity.x = 0;
+    engine.world.gravity.y = 1;
+
+    state.manualZoomScale = 1;
+    let initialTouchDist = 0;
+
+    let render, ground, runnerObj;
+
+    function initMatter() {
+      if (render) return; // Prevent double init
+
+      const container = document.getElementById('canvas-container');
+      const w = window.innerWidth;
+      const h = window.innerHeight; // FULL HEIGHT
+
+      render = Render.create({
+        element: container,
+        engine: engine,
+        options: { width: w, height: h, wireframes: false, background: 'transparent' }
+      });
+
+      ground = Bodies.rectangle(w / 2, h + 50, w * 3, 100, { isStatic: true, friction: 1, frictionStatic: 1, render: { fillStyle: 'transparent' } });
+      Composite.add(engine.world, [ground]);
+
+      Render.run(render);
+      runnerObj = Runner.create();
+      Runner.run(runnerObj, engine);
+
+      document.getElementById('stage-container').addEventListener('touchstart', e => {
+        if (e.touches.length === 2 && state.mode === 'study') {
+          initialTouchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        }
+      }, { passive: true });
+
+      document.getElementById('stage-container').addEventListener('touchmove', e => {
+        if (e.touches.length === 2 && state.mode === 'study') {
+          let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+          let delta = initialTouchDist - currentDist;
+          if (Math.abs(delta) > 5) {
+            state.manualZoomScale = Math.max(0.3, Math.min(3, state.manualZoomScale + delta * 0.005));
+            initialTouchDist = currentDist;
+            try { autoCenterCamera(); } catch (e) { }
+          }
+        }
+      }, { passive: true });
+
+      Events.on(engine, 'collisionStart', (e) => {
+        if (!state.isPaused && getRecords().vibrate !== false && navigator.vibrate) try { navigator.vibrate(5); } catch (err) { }
+      });
+      Events.on(engine, 'afterUpdate', calculateHeight);
+
+      // Restore previous physics state if any
+      restorePhysicsState();
+    }
+
+    // 윈도우 리사이즈
+    window.addEventListener('resize', () => {
+      if (!render) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      render.canvas.width = w; render.canvas.height = h;
+      Matter.Body.setPosition(ground, { x: w / 2, y: h + 50 });
+    });
+
+
+    const UNIV_SUBJECTS = ['화학I', '화학II', '물리I', '물리II', '미적분', '이산수학', '선형대수', '영어1', '영어2', '영어고급', '미디어와 사회', '프로그래밍', '자료구조', '알고리즘', '운영체제', '네트워크', '데이터베이스', '인공지능', '유기화학', '물리화학', '생화학', '세포생물학', '해부학', '생리학', '일반물리학', '현대물리', '전자기학', '양자역학', '거시경제학', '미시경제학'];
+
+    function getShapeSettings(shapeType, seedColor) {
+      let width, height, textureSVG;
+      let color = seedColor || `hsl(${Math.floor(Math.random() * 360)}, 60%, 40%)`;
+
+      if (shapeType === 'book' || shapeType === 'diy-custom') {
+        width = 110 + Math.random() * 30; height = 30;
+        let title = UNIV_SUBJECTS[Math.floor(Math.random() * UNIV_SUBJECTS.length)];
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="2" fill="#e2e8f0"/><rect x="0" y="2" width="${width - 4}" height="${height - 4}" fill="#ffffff"/><rect x="4" y="0" width="${width - 4}" height="${height}" rx="2" fill="${color}"/><rect x="10" y="5" width="${width - 20}" height="${height - 10}" rx="2" fill="rgba(0,0,0,0.15)"/><text x="${width / 2}" y="${height / 2 + 4}" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${title}</text></svg>`;
+        return { width, height, textureSVG, color };
+      } else if (shapeType === 'jokbo') {
+        width = 90; height = 120;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="#fef3c7" stroke="#d97706" stroke-width="2"/><text x="${width / 2}" y="40" font-size="24" font-weight="bold" fill="#b45309" text-anchor="middle">족보</text><text x="${width / 2}" y="80" font-size="40" text-anchor="middle">💯</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'advice') {
+        width = 100; height = 60;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="10" fill="#e0f2fe" stroke="#0284c7" stroke-width="2"/><text x="${width / 2}" y="35" font-size="14" font-weight="bold" fill="#0369a1" text-anchor="middle">선배님의 조언</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'gold-book') {
+        width = 140; height = 40;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="4" fill="#FFC000"/><rect x="0" y="4" width="${width - 6}" height="${height - 8}" fill="#ffffff"/><rect x="6" y="0" width="${width - 6}" height="${height}" rx="4" fill="#FFDF00"/><text x="${width / 2}" y="${height / 2 + 6}" font-size="20" font-weight="bold" fill="#fff" text-anchor="middle" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">황금책👑</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'notebook') {
+        width = 150; height = 20;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="4" fill="#94a3b8"/><rect x="2" y="2" width="${width - 4}" height="${height - 4}" rx="2" fill="#cbd5e1"/><rect x="${width / 2 - 10}" y="${height - 4}" width="20" height="4" fill="#475569"/></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'pad') {
+        width = 120; height = 15;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="6" fill="#1e293b"/><rect x="4" y="2" width="${width - 8}" height="${height - 4}" fill="#0f172a"/><text x="${width / 2}" y="12" font-size="10" fill="#ffffff" text-anchor="middle">SAMSUNG</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'summary') {
+        width = 80; height = 100;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/><path d="M10 20 L70 20 M10 40 L70 40 M10 60 L70 60 M10 80 L50 80" stroke="#cbd5e1" stroke-width="4"/><text x="${width / 2}" y="15" font-size="10" font-weight="bold" fill="#ef4444" text-anchor="middle">요약본</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'coffee') {
+        width = 120; height = 30;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="4" fill="#6f4e37" stroke="#3e2723" stroke-width="2"/><rect x="4" y="4" width="${width - 8}" height="${height - 8}" rx="2" fill="#d7ccc8"/><text x="${width / 2}" y="20" font-size="14" font-weight="bold" fill="#3e2723" text-anchor="middle">☕ COFFEE BOX</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'energy') {
+        width = 110; height = 30;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="4" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="2"/><text x="${width / 2}" y="20" font-size="16" font-weight="bold" fill="#facc15" text-anchor="middle">⚡ ENERGY</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      } else if (shapeType === 'vitamin') {
+        width = 100; height = 30;
+        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="4" fill="#fcd34d" stroke="#b45309" stroke-width="2"/><text x="${width / 2}" y="20" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">💊 VITAMIN</text></svg>`;
+        return { width, height, textureSVG, color: null };
+      }
+
+      return getShapeSettings('book'); // fallback
+    }
+
+    function spawnGachaItem() {
+      const w = window.innerWidth;
+      let r = Math.random() * 100;
+      let grade = 'common';
+      
+      // 1% 전설, 4% 영웅, 20% 희귀, 75% 일반
+      if (r < 1) grade = 'legend';
+      else if (r < 5) grade = 'epic';
+      else if (r < 25) grade = 'rare';
+      else grade = 'common';
+
+      // 해당 등급의 아이템 수집
+      let candidates = [];
+      ['head', 'top', 'bottom', 'shoes'].forEach(cat => {
+        let items = AVATAR_ITEMS[cat].filter(i => i.grade === grade);
+        candidates = candidates.concat(items);
+      });
+      
+      let item;
+      if (grade === 'legend') {
+          // 전설 내에서 총장 모자(h5)가 뜰 확률은 1%
+          if (Math.random() * 100 < 1) {
+              item = candidates.find(i => i.id === 'h5');
+          } else {
+              // 나머지는 총장 모자를 제외한 전설템 중에서 균등 픽
+              let others = candidates.filter(i => i.id !== 'h5');
+              item = others[Math.floor(Math.random() * others.length)];
+          }
+      } else {
+          item = candidates[Math.floor(Math.random() * candidates.length)];
+      }
+      
+      let type = item.id;
+
+      // 아이템 박스 외형 설정
+      let boxColor = grade === 'legend' ? '#FFDF00' : grade === 'epic' ? '#a855f7' : grade === 'rare' ? '#f97316' : '#9ca3af';
+      let boxWidth = 90;
+      let boxHeight = 90;
+      let textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${boxWidth}" height="${boxHeight}"><rect width="${boxWidth}" height="${boxHeight}" rx="8" fill="${boxColor}" stroke="#ffffff" stroke-width="4"/><text x="${boxWidth/2}" y="${boxHeight/2 + 10}" font-size="40" text-anchor="middle">${item.icon}</text></svg>`;
+
+      let groundY = window.innerHeight + 50;
+      let highestY = groundY;
+      state.books.forEach(b => {
+        if (b.position.y < highestY && Math.abs(b.velocity.y) < 3) highestY = b.position.y;
+      });
+
+      const spawnX = w / 2;
+      const spawnY = highestY - boxHeight - 150;
+      const texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
+
+      // 무너지지 않게 마찰력과 무게를 크게
+      let extra = 5 + Math.random() * 45;
+      let newFriction = 1.0 + extra;
+      let newDensity = 0.5 + extra;
+
+      const newObj = Matter.Bodies.rectangle(spawnX, spawnY, boxWidth, boxHeight, {
+        restitution: 0.0,
+        friction: newFriction,
+        frictionStatic: newFriction * 10,
+        density: newDensity,
+        slop: 0.05,
+        angle: 0,
+        customType: type,
+        customColor: boxColor,
+        customW: boxWidth, customH: boxHeight,
+        render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
+      });
+
+      state.books.push(newObj);
+      Matter.Composite.add(engine.world, newObj);
+      savePhysicsState();
+
+      // Unlock item in collection
+      let data = getRecords();
+      if (!data.unlockedItems) data.unlockedItems = [];
+      if (!data.unlockedItems.includes(type)) {
+        data.unlockedItems.push(type);
+        localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      }
+
+      // 알림 표시
+      let gradeName = grade === 'legend' ? '전설' : grade === 'epic' ? '영웅' : grade === 'rare' ? '희귀' : '일반';
+      spawnNotification("아이템 획득!", `[${gradeName}] ${item.name}을(를) 획득했습니다!`);
+      
+      // 즉시 도감 업데이트 (열려있을 경우)
+      if (!document.getElementById('diy-view').classList.contains('hidden')) {
+          renderCollection();
+          ['head', 'top', 'bottom', 'shoes'].forEach(cat => {
+            let count = AVATAR_ITEMS[cat].filter(i => data.unlockedItems.includes(i.id)).length;
+            document.getElementById(`count-${cat}`).innerText = `${count}/4`;
+          });
+      }
+    }
+
+
+    function autoCenterCamera() {
+      if (!render) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      let groundY = h + 50;
+      let minY = groundY;
+      state.books.forEach(b => { if (b.position.y < minY) minY = b.position.y; });
+
+      let towerHeight = groundY - minY;
+      let autoScale = Math.max(1, (towerHeight + 150) / h);
+      let zoomFactor = autoScale * state.manualZoomScale;
+
+      Matter.Render.lookAt(render, {
+        min: { x: w / 2 - (w / 2) * zoomFactor, y: groundY - h * zoomFactor },
+        max: { x: w / 2 + (w / 2) * zoomFactor, y: groundY }
+      });
+    }
+
+    function spawnObject() {
+      const w = window.innerWidth;
+      const cfg = getShapeSettings('book');
+
+      let groundY = window.innerHeight + 50;
+      let highestY = groundY;
+      state.books.forEach(b => {
+        // 무너지거나 강하게 튕겨오르는 책(velocity.y 크기가 3 이상)은 제외시켜 비정상적인 높은 위치 소환 방지
+        if (b.position.y < highestY && Math.abs(b.velocity.y) < 3) {
+          highestY = b.position.y;
+        }
+      });
+
+      const spawnX = w / 2;
+      const spawnY = highestY - cfg.height - 150;
+
+      const texUrl = cfg.textureURL ? cfg.textureURL : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(cfg.textureSVG);
+
+      const isEasy = (state.difficulty !== 'hard');
+      const baseFriction = isEasy ? 0.9 : 0.8;
+      const statFriction = isEasy ? 3.0 : 1.0;
+
+      const newObj = Bodies.rectangle(spawnX, spawnY, cfg.width, cfg.height, {
+        restitution: isEasy ? 0.0 : 0.01,
+        friction: baseFriction,
+        frictionStatic: statFriction,
+        density: isEasy ? 0.5 : 0.2,
+        slop: 0.05,
+        angle: 0,
+        customType: state.currentShape,
+        customColor: cfg.color,
+        customW: cfg.width, customH: cfg.height,
+        render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
+      });
+
+      state.books.push(newObj);
+      Composite.add(engine.world, newObj);
+      savePhysicsState();
+    }
+
+    function calculateHeight() {
+      autoCenterCamera();
+
+      if (state.books.length === 0) {
+        document.getElementById('height-display').innerText = `0.0m (0개)`;
+        updateTheme(0);
+        return;
+      }
+
+      const screenBottom = window.innerHeight;
+      let maxPx = 0;
+      let activeCount = 0;
+
+      for (let i = state.books.length - 1; i >= 0; i--) {
+        let b = state.books[i];
+        if (b.position.y > screenBottom + 200 || b.position.x < -1500 || b.position.x > window.innerWidth + 1500) {
+          Composite.remove(engine.world, b);
+          state.books.splice(i, 1);
+          continue;
+        }
+        activeCount++;
+        let stackPx = screenBottom - b.position.y;
+        if (stackPx > maxPx) maxPx = stackPx;
+      }
+
+
+
+      let meterHeight = Math.max(0, maxPx / PX_PER_METER);
+
+      let currentData = getRecords();
+      if (!currentData.maxHeight) currentData.maxHeight = 0;
+      if (meterHeight > currentData.maxHeight) {
+        currentData.maxHeight = meterHeight;
+        localStorage.setItem('bookTowerv2', JSON.stringify(currentData));
+        try { document.getElementById('dash-max-height').innerText = `${meterHeight.toFixed(1)}m`; } catch (e) { }
+      }
+
+      document.getElementById('height-display').innerText = `${meterHeight.toFixed(1)}m (${activeCount}개)`;
+      updateTheme(meterHeight);
+    }
+
+    function updateTheme(h) {
+      const bgs = [document.getElementById('bg-0'), document.getElementById('bg-1'), document.getElementById('bg-2'), document.getElementById('bg-3')];
+
+      if (!views.timer.classList.contains('hidden')) {
+        let mode = 'var(--bg-stage-0)';
+        let activeIdx = 0;
+
+        if (h >= 5 && h < 15) { mode = 'var(--bg-stage-1)'; activeIdx = 1; }
+        else if (h >= 15 && h < 30) { mode = 'var(--bg-stage-2)'; activeIdx = 2; }
+        else if (h >= 30) { mode = 'var(--bg-stage-3)'; activeIdx = 3; }
+
+        bgs.forEach((bg, i) => bg.style.opacity = (i === activeIdx) ? '1' : '0');
+        docBody.style.setProperty('--current-bg', mode);
+
+        // Timer Text Color adapt
+        const t = document.getElementById('time-display');
+        if (h >= 15) t.classList.add('light'); else t.classList.remove('light');
+        if (h >= 30) document.getElementById('particles').classList.add('show');
+        else document.getElementById('particles').classList.remove('show');
+      } else {
+        docBody.style.setProperty('--current-bg', 'var(--bg-stage-0)');
+        bgs.forEach((bg, i) => bg.style.opacity = (i === 0) ? '1' : '0');
+        document.getElementById('particles').classList.remove('show');
+      }
+    }
+
+    // Save/Restore State
+    function savePhysicsState() {
+      if (!state.books.length) {
+        localStorage.removeItem('bookPhysicsState');
+        return;
+      }
+      const serialized = state.books.map(b => ({
+        x: b.position.x, y: b.position.y,
+        angle: b.angle,
+        w: b.customW, h: b.customH,
+        color: b.customColor,
+        type: b.customType || 'book'
+      }));
+      localStorage.setItem('bookPhysicsState', JSON.stringify(serialized));
+    }
+
+    function restorePhysicsState() {
+      const data = localStorage.getItem('bookPhysicsState');
+      if (!data) return;
+      try {
+        const list = JSON.parse(data);
+        list.forEach(item => {
+          let textureSVG = '';
+          let texUrl = '';
+          if (item.type === 'book') {
+            textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${item.w}" height="${item.h}"><rect width="${item.w}" height="${item.h}" rx="2" fill="#e2e8f0"/><rect x="0" y="2" width="${item.w - 4}" height="${item.h - 4}" fill="#ffffff"/><rect x="4" y="0" width="${item.w - 4}" height="${item.h}" rx="2" fill="${item.color}"/><rect x="10" y="5" width="${item.w - 20}" height="${item.h - 10}" rx="2" fill="rgba(0,0,0,0.15)"/></svg>`;
+          } else {
+            let c = getShapeSettings(item.type);
+            if (c && c.textureURL) texUrl = c.textureURL;
+            else if (c) textureSVG = c.textureSVG;
+          }
+
+          if (!texUrl) texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
+
+          const b = Bodies.rectangle(item.x, item.y, item.w, item.h, {
+            angle: item.angle, restitution: 0.01, friction: 0.9, density: 0.2, slop: 0.05,
+            customType: item.type,
+            customColor: item.color,
+            customW: item.w, customH: item.h,
+            render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
+          });
+          state.books.push(b);
+          Composite.add(engine.world, b);
+        });
+        autoCenterCamera(); // Force camera update after load
+      } catch (e) { }
+    }
+
+    /* =======================================
+       4. Gyro Sensor
+    ======================================= */
+    function handleOrientation(event) {
+      if (state.isPaused || state.mode !== 'study') return;
+
+      let gamma = event.gamma; let beta = event.beta;
+      if (gamma === null || beta === null) return;
+
+      // 15도 이상 이탈 감지 시 지진 발생
+      let isCheat = (Math.abs(beta) >= 15 || Math.abs(gamma) >= 15);
+
+      let gX = (gamma / 150);
+      if (Math.abs(gX) < 0.1) gX = 0;
+      if (gX > 0.3) gX = 0.3; if (gX < -0.3) gX = -0.3;
+      let gY = 1.0;
+
+      const dot = document.getElementById('gyro-dot');
+      const txt = document.getElementById('gyro-text');
+
+      if (isCheat) {
+        dot.classList.add('unstable');
+        if (txt) txt.innerText = '경고! 탑 붕괴!';
+
+        // 탑을 무너뜨리기 위해 모든 객체에 강한 랜덤 힘 적용 (FR-10)
+        state.books.forEach(b => {
+           Matter.Body.applyForce(b, b.position, {
+              x: (Math.random() - 0.5) * 0.5,
+              y: -Math.random() * 0.5
+           });
+        });
+        
+        gX += (Math.random() - 0.5) * 6;
+        gY = 1.0 + (Math.random() * 2);
+
+        if (getRecords().vibrate !== false && navigator.vibrate) {
+          try { navigator.vibrate([100, 50, 100, 50, 200]); } catch (e) { }
+        }
+      } else {
+        dot.classList.remove('unstable');
+        if (txt) txt.innerText = '안정 (집중 중)';
+      }
+
+      engine.world.gravity.x = gX; engine.world.gravity.y = gY;
+    }
+
+    /* =======================================
+       5. Timer & UI Controls
+    ======================================= */
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60).toString().padStart(2, '0');
+      const s = (secs % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function openPomodoroConfig() {
+      document.getElementById('pomodoro-modal').classList.remove('hidden');
+    }
+    function closePomodoroConfig() {
+      document.getElementById('pomodoro-modal').classList.add('hidden');
+    }
+
+    function startPomodoro() {
+      closePomodoroConfig();
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('top-hud').classList.remove('hidden');
+
+      state.timerMode = selectedTimerMode; // 'normal' or 'pomo'
+      state.pomoRemainingRepeats = pomoRepeatCount;
+
+      if (state.timerMode === 'pomo') {
+        state.studyGoalMins = 30;
+        state.restGoalMins = 5;
+        state.difficulty = 'hard';
+        state.timeLeft = 30 * 60;
+      } else {
+        state.studyGoalMins = 9999; // infinite
+        state.restGoalMins = 0;
+        state.difficulty = 'easy';
+        state.timeLeft = 0; // count up
+      }
+
+      state.mode = 'study';
+      state.warnings = 0;
+      state.isWarningCooldown = false;
+      state.isPaused = false;
+
+      document.getElementById('btn-pause').innerText = '일시정지';
+      if (runnerObj) runnerObj.enabled = true; // resume physics
+
+      initMatter(); // ensure running
+
+      state.lastTickTime = Date.now();
+      clearInterval(state.timerInterval);
+      state.timerInterval = setInterval(tick, 1000);
+      document.getElementById('time-display').innerText = formatTime(state.timeLeft);
+
+      if (state.books.length === 0) spawnObject();
+      if (window.AndroidPinning) {
+          window.AndroidPinning.startPinning();
+      }
+    }
+
+    function togglePause() {
+      state.isPaused = !state.isPaused;
+      const btn = document.getElementById('btn-pause');
+
+      if (state.isPaused) {
+        btn.innerText = '다시 시작';
+        // 물리 엔진 완전 정지 (공중의 책도 스탑)
+        runnerObj.enabled = false;
+        if (window.AndroidPinning) {
+            window.AndroidPinning.stopPinning();
+        }
+      } else {
+        btn.innerText = '일시정지';
+        // 물리재개
+        runnerObj.enabled = true;
+        state.lastTickTime = Date.now();
+        if (window.AndroidPinning) {
+            window.AndroidPinning.startPinning();
+        }
+      }
+    }
+
+    function quitSession() {
+      clearInterval(state.timerInterval);
+      state.mode = 'idle';
+      state.isPaused = false;
+      if (runnerObj) runnerObj.enabled = true; // re-enable for next time
+      savePhysicsState();
+      if (window.AndroidPinning) {
+          window.AndroidPinning.stopPinning();
+      }
+
+      document.getElementById('rest-modal').classList.add('hidden');
+      document.getElementById('top-hud').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+
+      // Post ranking
+      syncRanking();
+
+      alert("세션 종료: 오늘의 기록이 안전하게 저장되었습니다!");
+
+      switchTab('home');
+    }
+
+    function tick() {
+      if (state.isPaused) return;
+
+      let now = Date.now();
+      let delta = Math.floor((now - state.lastTickTime) / 1000);
+      if (delta < 1) return; // Wait for full second
+      
+      state.lastTickTime += delta * 1000;
+
+      if (state.timerMode === 'normal') {
+        state.timeLeft += delta; // count up
+      } else {
+        state.timeLeft -= delta; // count down
+      }
+
+      document.getElementById('time-display').innerText = formatTime(state.timeLeft);
+
+      if (state.mode === 'study') {
+        saveStudyRecord();
+        let elapsed = state.timerMode === 'normal' ? state.timeLeft : (state.studyGoalMins * 60 - state.timeLeft);
+
+        // items every 5 mins (300 sec)
+        if (elapsed > 0 && elapsed % 300 === 0) {
+          spawnGachaItem();
+        } else if (elapsed > 0 && elapsed % 60 === 0) {
+          spawnObject(); // normal book every 1 min
+        }
+      }
+
+      if (state.timerMode === 'pomo' && state.timeLeft <= 0) {
+        clearInterval(state.timerInterval);
+        if (state.mode === 'study') {
+          if (navigator.vibrate) try { navigator.vibrate([200, 100, 200]); } catch (e) { }
+          document.getElementById('rest-modal').classList.remove('hidden');
+
+          state.mode = 'rest';
+          if (window.AndroidPinning) {
+              window.AndroidPinning.stopPinning();
+          }
+          state.timeLeft = state.restGoalMins * 60;
+          state.lastTickTime = Date.now();
+          state.timerInterval = setInterval(tick, 1000);
+          spawnNotification("집중 완료!", "휴식 시간이 자동으로 시작되었습니다.");
+          
+          // YouTube 자동 재생 (FR-09)
+          const iframe = document.getElementById('rest-youtube-iframe');
+          if (iframe && iframe.contentWindow) {
+             iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+          }
+        } else {
+          if (navigator.vibrate) try { navigator.vibrate([200, 100, 200]); } catch (e) { }
+          document.getElementById('rest-modal').classList.add('hidden');
+          const iframe = document.getElementById('rest-youtube-iframe');
+          if (iframe) {
+            let src = iframe.src;
+            iframe.src = src;
+          }
+
+          state.pomoRemainingRepeats--;
+          if (state.pomoRemainingRepeats > 0) {
+            state.mode = 'study';
+            state.timeLeft = state.studyGoalMins * 60;
+            state.lastTickTime = Date.now();
+            state.timerInterval = setInterval(tick, 1000);
+            if (window.AndroidPinning) {
+                window.AndroidPinning.startPinning();
+                window.AndroidPinning.startForegroundService();
+            }
+            spawnNotification("휴식 완료!", "다음 뽀모도로를 시작합니다!");
+          } else {
+            document.getElementById('start-screen').classList.remove('hidden');
+            document.getElementById('top-hud').classList.add('hidden');
+            spawnNotification("모든 반복 완료!", "수고하셨습니다.");
+          }
+        }
+      }
+
+      if (!document.hasFocus()) {
+        document.title = `[${formatTime(state.timeLeft)}] Book Tower`;
+      } else {
+        document.title = 'Book Tower: Toss Style Pomodoro';
+      }
+    }
+
+    function spawnNotification(title, body) {
+      if ("Notification" in window) {
+        if (Notification.permission === "granted") {
+          new Notification(title, { body: body });
+        } else if (Notification.permission !== "denied") {
+          Notification.requestPermission().then(function (permission) {
+            if (permission === "granted") {
+              new Notification(title, { body: body });
+            }
+          });
+        }
+      }
+    }
+
+    function closeRestPopup() {
+      document.getElementById('rest-modal').classList.add('hidden');
+      const iframe = document.getElementById('rest-youtube-iframe');
+      if (iframe) {
+        let src = iframe.src;
+        iframe.src = src;
+      }
+    }
+
+    /* =======================================
+       6. Navigation & Features
+    ======================================= */
+    function switchTab(tabId) {
+      // 탭 이동 제한 (타이머 중일때)
+      if ((state.mode === 'study' || state.mode === 'rest') && !state.isPaused && tabId !== 'timer') {
+        alert("타이머 진행 중입니다. 일시정지 후 이동할 수 있습니다.");
+        return;
+      }
+
+      Object.values(views).forEach(v => v.classList.add('hidden'));
+      const allNavs = document.querySelectorAll('.nav-item');
+      allNavs.forEach(i => i.classList.remove('active'));
+
+      switch (tabId) {
+        case 'home':
+          views.home.classList.remove('hidden'); allNavs[0].classList.add('active');
+          updateDashboard(); updateTheme(0);
+          break;
+        case 'timer':
+          views.timer.classList.remove('hidden'); 
+          calculateHeight(); // theme auto update
+          break;
+        case 'diy':
+          views.diy.classList.remove('hidden'); allNavs[1].classList.add('active');
+          renderCollection();
+          updateTheme(0);
+          break;
+        case 'ranking':
+          views.ranking.classList.remove('hidden'); allNavs[2].classList.add('active');
+          updateTheme(0); fetchRanking();
+          break;
+        case 'settings':
+          views.settings.classList.remove('hidden'); allNavs[3].classList.add('active');
+          document.getElementById('setting-nickname').value = getRecords().userName;
+          document.getElementById('setting-interval').value = getRecords().dropInterval || 60;
+          updateTheme(0);
+          break;
+      }
+    }
+
+    let mgState = 'idle'; // idle, waiting, ready
+    let mgStartTime = 0;
+    let mgTimeout = null;
+
+    function startMiniGame() {
+      clearTimeout(mgTimeout);
+      const box = document.getElementById('mg-box');
+      document.getElementById('mg-result').innerText = '';
+      box.style.background = '#F04438'; // Red
+      box.style.color = 'white';
+      box.innerText = '기다리세요...';
+      mgState = 'waiting';
+
+      let delay = 1000 + Math.random() * 3000;
+      mgTimeout = setTimeout(() => {
+        if (mgState === 'waiting') {
+          mgState = 'ready';
+          box.style.background = '#26D555'; // Green
+          box.innerText = '지금 클릭!';
+          mgStartTime = performance.now();
+        }
+      }, delay);
+    }
+
+    function clickMgBox() {
+      if (mgState === 'waiting') {
+        clearTimeout(mgTimeout);
+        document.getElementById('mg-box').innerText = '너무 빨리 눌렀습니다! (실패)';
+        document.getElementById('mg-box').style.background = '#E5E8EB';
+        document.getElementById('mg-box').style.color = 'var(--toss-text-dark)';
+        mgState = 'idle';
+      } else if (mgState === 'ready') {
+        let reaction = Math.round(performance.now() - mgStartTime);
+        document.getElementById('mg-box').innerText = '성공!';
+        document.getElementById('mg-box').style.background = '#E5E8EB';
+        document.getElementById('mg-box').style.color = 'var(--toss-text-dark)';
+        document.getElementById('mg-result').innerText = `나의 반응 속도: ${reaction}ms`;
+        mgState = 'idle';
+        if (navigator.vibrate) try { navigator.vibrate(50); } catch (e) { }
+      }
+    }
+
+
+    const AVATAR_ITEMS = {
+      head: [
+        { id: 'h1', name: '야구 모자', icon: '🧢', desc: '흔한 모자', grade: 'common' },
+        { id: 'h2', name: '밀짚 모자', icon: '👒', desc: '여름 나기', grade: 'rare' },
+        { id: 'h3', name: '마법사 모자', icon: '🧙', desc: '마력이 깃든 모자', grade: 'epic' },
+        { id: 'h4', name: '황금 왕관', icon: '👑', desc: '전설의 왕관', grade: 'legend' },
+        { id: 'h5', name: '총장 모자', icon: '<div style="background:black; color:white; font-weight:900; font-size:14px; padding:4px 8px; border-radius:4px; display:inline-block; line-height:1; border:2px solid #555;">총장</div>', desc: '학교의 지배자', grade: 'legend' }
+      ],
+      top: [
+        { id: 't1', name: '흰 티셔츠', icon: '👕', desc: '가장 무난한 옷', grade: 'common' },
+        { id: 't2', name: '체크 셔츠', icon: '👔', desc: '공대생 필수품', grade: 'rare' },
+        { id: 't3', name: '가죽 자켓', icon: '🧥', desc: '멋쟁이 자켓', grade: 'epic' },
+        { id: 't4', name: '황금 갑옷', icon: '🛡️', desc: '무적의 갑옷', grade: 'legend' }
+      ],
+      bottom: [
+        { id: 'b1', name: '청바지', icon: '👖', desc: '국민 바지', grade: 'common' },
+        { id: 'b2', name: '반바지', icon: '🩳', desc: '시원한 바지', grade: 'rare' },
+        { id: 'b3', name: '정장 바지', icon: '🕴️', desc: '깔끔한 바지', grade: 'epic' },
+        { id: 'b4', name: '황금 바지', icon: '✨', desc: '눈이 부신 바지', grade: 'legend' }
+      ],
+      shoes: [
+        { id: 's1', name: '운동화', icon: '👟', desc: '편안한 신발', grade: 'common' },
+        { id: 's2', name: '구두', icon: '👞', desc: '단정한 구두', grade: 'rare' },
+        { id: 's3', name: '부츠', icon: '👢', desc: '멋진 부츠', grade: 'epic' },
+        { id: 's4', name: '황금 신발', icon: '✨👟', desc: '빛의 속도', grade: 'legend' }
+      ]
+    };
+
+    let currentAvatarTab = 'head';
+    let equippedItems = { head: null, top: null, bottom: null, shoes: null };
+
+    function switchAvatarTab(tab) {
+      currentAvatarTab = tab;
+      const tabs = ['head', 'top', 'bottom', 'shoes'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        if (t === tab) {
+          el.style.color = 'var(--toss-blue)';
+          el.style.fontWeight = '700';
+        } else {
+          el.style.color = 'var(--toss-text-gray)';
+          el.style.fontWeight = '600';
+        }
+      });
+      renderCollection();
+    }
+
+    function equipItem(category, itemId) {
+      let data = getRecords();
+      if (!data.equipped) data.equipped = { head: null, top: null, bottom: null, shoes: null };
+      
+      // Toggle logic
+      if (data.equipped[category] === itemId) {
+        data.equipped[category] = null;
+      } else {
+        data.equipped[category] = itemId;
+      }
+      
+      localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      updateAvatarPreview();
+      renderCollection();
+    }
+
+    function updateAvatarPreview() {
+      let data = getRecords();
+      let eq = data.equipped || { head: null, top: null, bottom: null, shoes: null };
+      equippedItems = eq;
+      
+      const cats = ['head', 'top', 'bottom', 'shoes'];
+      cats.forEach(cat => {
+        let el = document.getElementById(`avatar-layer-${cat}`);
+        if(eq[cat]) {
+          let item = AVATAR_ITEMS[cat].find(i => i.id === eq[cat]);
+          if(item) {
+            // Apply image generated for legendary or fallback to icon
+            if (item.grade === 'legend') {
+               if(cat === 'head') {
+                 if (item.id === 'h5') el.innerHTML = `<div style="transform:scale(1.5) translateY(-5px);">${item.icon}</div>`;
+                 else el.innerHTML = `<img src="item_crown_1778555264601.png" style="width:80px; mix-blend-mode:multiply;"/>`;
+               }
+               else if(cat === 'top') el.innerHTML = `<img src="item_shirt_1778555281469.png" style="width:100px; mix-blend-mode:multiply;"/>`;
+               else if(cat === 'shoes') el.innerHTML = `<img src="item_shoes_1778555321840.png" style="width:80px; mix-blend-mode:multiply;"/>`;
+               else el.innerHTML = item.icon;
+            } else {
+               el.innerHTML = item.icon;
+            }
+          }
+        } else {
+          el.innerHTML = '';
+        }
+      });
+    }
+
+    function renderCollection() {
+      let data = getRecords();
+      let unlocked = data.unlockedItems || [];
+      let eq = data.equipped || { head: null, top: null, bottom: null, shoes: null };
+
+      // Update Counts
+      ['head', 'top', 'bottom', 'shoes'].forEach(cat => {
+        let count = AVATAR_ITEMS[cat].filter(i => unlocked.includes(i.id)).length;
+        let total = AVATAR_ITEMS[cat].length;
+        document.getElementById(`count-${cat}`).innerText = `${count}/${total}`;
+      });
+
+      let html = '';
+      AVATAR_ITEMS[currentAvatarTab].forEach(item => {
+        let isUnlocked = unlocked.includes(item.id);
+        let isEquipped = (eq[currentAvatarTab] === item.id);
+        let borderStyle = isEquipped ? 'border: 2px solid var(--toss-blue); background:#F0F6FF;' : 'border: 2px solid transparent; background:var(--toss-card);';
+        
+        let gradeColors = { common: '#9ca3af', rare: '#f97316', epic: '#a855f7', legend: '#eab308' };
+        let gColor = gradeColors[item.grade];
+
+        if (isUnlocked) {
+          html += `
+            <div class="diy-item" style="${borderStyle} padding:16px; position:relative;" onclick="equipItem('${currentAvatarTab}', '${item.id}')">
+                ${isEquipped ? '<div style="position:absolute; top:-8px; right:-8px; background:var(--toss-blue); color:white; font-size:10px; font-weight:bold; padding:4px 8px; border-radius:12px;">장착중</div>' : ''}
+                <div class="diy-icon" style="font-size:32px; margin-bottom:4px; text-shadow: 0 0 10px ${gColor}66;">${item.icon}</div>
+                <div class="diy-name" style="font-size:14px; color:${gColor};">${item.name}</div>
+                <div style="font-size:11px; color:var(--toss-text-gray); margin-top:4px;">${item.desc}</div>
+            </div>`;
+        } else {
+          html += `
+            <div class="diy-item" style="background:#F2F4F6; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; border: 2px solid transparent;">
+                <div style="width:40px; height:40px; background:#D1D5DB; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-size:24px; font-weight:900;">?</div>
+                <div class="diy-name" style="font-size:14px; color:var(--toss-text-gray); margin-top:8px;">미해금 (${item.grade})</div>
+            </div>`;
+        }
+      });
+
+      document.getElementById('collection-grid').innerHTML = html;
+    }
+
+    function setShape(shape, elm) {
+      state.currentShape = shape;
+      // Removed old diy logic
+    }
+
+    // Ranking API Call (Local DB constraint requested)
+    async function syncRanking() {
+      let r = getRecords();
+      try {
+        await fetch(RANKING_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name: r.userName, 
+            score: r.total,
+            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
+          })
+        });
+      } catch (e) { console.log('랭킹 서버 오프라인'); }
+    }
+
+    async function fetchRanking() {
+      const container = document.getElementById('rank-list');
+      try {
+        await syncRanking(); // Sync first
+        let res = await fetch(RANKING_API);
+        let data = await res.json();
+
+        let html = '';
+        let myRankInfo = null;
+        let myName = getRecords().userName;
+
+        data.forEach((user, i) => {
+          let isMe = (user.name === myName);
+          if (isMe) myRankInfo = { rank: i + 1, score: user.score, name: myName };
+
+          html += `
+        <div class="rank-item ${isMe ? 'my-rank-item' : ''}" id="${isMe ? 'list-my-rank' : ''}">
+          <div class="rank-left">
+            <div class="rank-num">${i + 1}</div>
+            <div class="rank-name">${isMe ? '나 (' + user.name + ')' : user.name}</div>
+          </div>
+          <div class="rank-score">${Math.floor(user.score / 60)}분</div>
+        </div>
+      `;
+        });
+        container.innerHTML = html;
+
+        if (myRankInfo) {
+          document.getElementById('sticky-my-rank').innerHTML = `
+        <div class="rank-left">
+          <div class="rank-num" style="color:white;">${myRankInfo.rank}</div>
+          <div class="rank-name" style="color:white;">나 (${myName})</div>
+        </div>
+        <div class="rank-score" style="color:white;">${Math.floor(myRankInfo.score / 60)}분</div>
+      `;
+          setupRankObserver();
+        }
+      } catch (e) {
+        container.innerHTML = `
+      <div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">
+        <p>📡 서버에 접속할 수 없습니다.</p>
+        <p style="font-size:13px; margin-top:8px;">노트북 서버(server.js)를 실행해주세요.</p>
+        <p style="font-size:13px; margin-top:4px;">현재 내 누적 기록: ${Math.floor(getRecords().total / 60)}분</p>
+      </div>
+    `;
+      }
+    }
+
+    let rankObserver = null;
+    function setupRankObserver() {
+      if (rankObserver) rankObserver.disconnect();
+      const target = document.getElementById('list-my-rank');
+      const sticky = document.getElementById('sticky-my-rank');
+      if (!target || !sticky) return;
+
+      rankObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) sticky.classList.add('hidden');
+          else sticky.classList.remove('hidden');
+        });
+      }, { root: document.getElementById('ranking-view'), threshold: 0.1 });
+      rankObserver.observe(target);
+    }
+
+    async function submitNickname() {
+      const name = document.getElementById('input-nickname').value.trim();
+      if (!name) return;
+
+      try {
+        let res = await fetch(`${RANKING_API}?check=${encodeURIComponent(name)}`);
+        let result = await res.json();
+        if (result.exists) {
+          alert('이미 존재하는 닉네임입니다. 다른 닉네임을 사용해주세요.');
+          return;
+        }
+      } catch (e) {
+        console.log('서버 연결 실패, 중복체크 건너뜀');
+      }
+
+      let data = getRecords();
+      data.userName = name;
+      localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      document.getElementById('setting-nickname').value = name;
+      document.getElementById('login-modal').classList.add('hidden');
+
+      checkSensorFlow();
+    }
+
+    function checkSensorFlow() {
+      if (localStorage.getItem('sensorGranted') === 'true') {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+      }
+    }
+
+    function closeTutorial() {
+      localStorage.setItem('tutorialSeen', 'true');
+      document.getElementById('tutorial-modal').classList.add('hidden');
+    }
+
+    function initTheme() {
+      let savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('btn-theme').innerText = savedTheme === 'dark' ? '테마: 다크 모드' : '테마: 라이트 모드';
+      } else {
+        document.getElementById('btn-theme').innerText = '테마: 시스템 기본';
+      }
+    }
+
+    function toggleTheme() {
+      let current = document.documentElement.getAttribute('data-theme');
+      let newTheme = 'system';
+      if (!current) {
+        newTheme = 'dark';
+      } else if (current === 'dark') {
+        newTheme = 'light';
+      } else {
+        newTheme = 'system';
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.removeItem('theme');
+      }
+
+      if (newTheme !== 'system') {
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+      }
+      initTheme();
+    }
+
+    // Initial Loads
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      // Capacitor 뒤로가기 이탈 방지 및 홈 버튼(백그라운드) 이탈 방지
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+        window.Capacitor.Plugins.App.addListener('backButton', () => {
+          if ((state.mode === 'study' || state.mode === 'rest') && !state.isPaused) {
+            alert("타이머 진행 중에는 앱을 종료할 수 없습니다. 일시정지 후 시도해주세요.");
+          } else if ((state.mode === 'study' || state.mode === 'rest') && state.isPaused) {
+            if (confirm("현재 타이머를 중단하고 앱을 종료하시겠습니까?")) {
+              quitSession();
+              setTimeout(() => { window.Capacitor.Plugins.App.exitApp(); }, 300);
+            }
+          } else {
+            window.Capacitor.Plugins.App.exitApp();
+          }
+        });
+
+        window.Capacitor.Plugins.App.addListener('appStateChange', ({ isActive }) => {
+          if (!isActive && state.mode === 'study' && !state.isPaused) {
+            // 앱이 백그라운드로 내려가도 실패하지 않도록 처리 (사용자 요청)
+          }
+        });
+      } else {
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+          if ((state.mode === 'study' || state.mode === 'rest') && !state.isPaused) {
+            alert("타이머 진행 중에는 뒤로 갈 수 없습니다. 일시정지 후 시도해주세요.");
+            history.pushState(null, null, location.href);
+          } else if ((state.mode === 'study' || state.mode === 'rest') && state.isPaused) {
+            if (confirm("현재 타이머를 중단하시겠습니까?")) {
+              quitSession();
+            } else {
+              history.pushState(null, null, location.href);
+            }
+          } else {
+            history.back();
+          }
+        };
+      }
+
+      let data = getRecords();
+      document.getElementById('btn-vibrate').innerText = data.vibrate ? '진동: 켜짐' : '진동: 꺼짐';
+
+      if (!localStorage.getItem('tutorialSeen')) {
+        document.getElementById('tutorial-modal').classList.remove('hidden');
+      }
+
+      if (localStorage.getItem('sensorGranted') !== 'true') {
+        document.getElementById('sensor-modal').classList.remove('hidden');
+      } else if (data.userName === '나') {
+        document.getElementById('login-modal').classList.remove('hidden');
+      } else {
+        checkSensorFlow();
+      }
+
+      // Set initial DIY config
+      state.currentShape = 'book';
+
+      // Load custom shape image if exists
+      const customShape = localStorage.getItem('customShape');
+      if (customShape) {
+        try {
+          state.customImageData = JSON.parse(customShape);
+          const btn = document.getElementById('diy-custom-btn');
+          if (btn) {
+            btn.querySelector('.diy-icon').style.backgroundImage = `url(${state.customImageData.dataUrl})`;
+            btn.querySelector('.diy-icon').style.backgroundSize = 'contain';
+            btn.querySelector('.diy-icon').style.backgroundRepeat = 'no-repeat';
+            btn.querySelector('.diy-icon').style.backgroundPosition = 'center';
+            btn.querySelector('.diy-icon').style.width = '55px';
+            btn.querySelector('.diy-icon').style.height = '55px';
+            btn.querySelector('.diy-icon').style.margin = '0 auto 8px auto';
+            btn.querySelector('.diy-icon').innerHTML = '';
+          }
+        } catch (e) { }
+      }
+
+      // Dashboard Update
+      updateDashboard();
+
+      // Save/Unload hook
+      window.addEventListener('beforeunload', savePhysicsState);
+    });
+
+    function requestSensor() {
+      document.getElementById('sensor-modal').classList.add('hidden');
+      localStorage.setItem('sensorGranted', 'true');
+      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(s => {
+          if (s === 'granted') window.addEventListener('deviceorientation', handleOrientation, true);
+          finishSensorSetup();
+        }).catch(e => {
+          console.log(e);
+          finishSensorSetup();
+        });
+      } else {
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        finishSensorSetup();
+      }
+    }
+
+    function finishSensorSetup() {
+      let data = getRecords();
+      if (data.userName === '나') {
+        document.getElementById('login-modal').classList.remove('hidden');
+      }
+    }
+
+    function spawnSpecialObject(type) {
+      const w = window.innerWidth;
+      let cfg = {};
+      switch (type) {
+        case 'gold-book':
+          cfg.width = 140; cfg.height = 40;
+          cfg.textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${cfg.width}" height="${cfg.height}"><rect width="${cfg.width}" height="${cfg.height}" rx="4" fill="#FFC000"/><rect x="0" y="4" width="${cfg.width - 6}" height="${cfg.height - 8}" fill="#ffffff"/><rect x="6" y="0" width="${cfg.width - 6}" height="${cfg.height}" rx="4" fill="#FFDF00"/><rect x="15" y="8" width="${cfg.width - 30}" height="${cfg.height - 16}" rx="3" fill="rgba(255,255,255,0.4)"/><text x="${cfg.width / 2}" y="${cfg.height / 2 + 5}" font-family="sans-serif" font-size="16" font-weight="bold" fill="#fff" text-anchor="middle">👑</text></svg>`;
+          break;
+        case 'gold-fridge':
+          cfg.width = 100; cfg.height = 200;
+          cfg.textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${cfg.width}" height="${cfg.height}"><rect width="${cfg.width}" height="${cfg.height}" rx="8" fill="#FFDF00" stroke="#DAA520" stroke-width="3"/><rect x="6" y="6" width="${cfg.width - 12}" height="70" rx="4" fill="#FFEC8B" opacity="0.8"/><rect x="6" y="85" width="${cfg.width - 12}" height="${cfg.height - 95}" rx="4" fill="#FFEC8B" opacity="0.8"/><path d="M14 25 L20 25 L20 55 L14 55 Z" fill="#DAA520"/><path d="M14 100 L20 100 L20 140 L14 140 Z" fill="#DAA520"/><text x="${cfg.width / 2}" y="45" font-size="24" text-anchor="middle">✨</text></svg>`;
+          break;
+        case 'gold-diploma':
+          cfg.width = 130; cfg.height = 80;
+          cfg.textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${cfg.width}" height="${cfg.height}"><rect width="${cfg.width}" height="${cfg.height}" fill="#fff8e7" stroke="#DAA520" stroke-width="4"/><rect x="6" y="6" width="${cfg.width - 12}" height="${cfg.height - 12}" fill="none" stroke="#B8860B" stroke-width="1"/><circle cx="${cfg.width / 2}" cy="${cfg.height / 2}" r="15" fill="#FFDF00"/><path d="M${cfg.width / 2 - 5} ${cfg.height / 2 + 10} L${cfg.width / 2 - 10} ${cfg.height / 2 + 25} L${cfg.width / 2} ${cfg.height / 2 + 15} L${cfg.width / 2 + 10} ${cfg.height / 2 + 25} L${cfg.width / 2 + 5} ${cfg.height / 2 + 10} Z" fill="#D2691E"/><text x="${cfg.width / 2}" y="${cfg.height / 2 + 4}" font-size="20" text-anchor="middle" fill="#B8860B" font-weight="bold">A+</text></svg>`;
+          break;
+      }
+
+      let groundY = window.innerHeight + 50;
+      let highestY = groundY;
+      state.books.forEach(b => {
+        if (b.position.y < highestY && Math.abs(b.velocity.y) < 3) {
+          highestY = b.position.y;
+        }
+      });
+      const spawnX = w / 2;
+      const spawnY = highestY - cfg.height - 150;
+
+      const texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(cfg.textureSVG);
+      const newObj = Bodies.rectangle(spawnX, spawnY, cfg.width, cfg.height, {
+        restitution: 0.1, friction: 0.9, density: 0.5,
+        customType: type, customW: cfg.width, customH: cfg.height,
+        render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
+      });
+      state.books.push(newObj);
+      Composite.add(engine.world, newObj);
+      savePhysicsState();
+    }
+
+    function showFailPopup() {
+      state.isPaused = true;
+      runnerObj.enabled = false;
+      document.getElementById('fail-modal').classList.remove('hidden');
+    }
+
+    function restartFromFail() {
+      document.getElementById('fail-modal').classList.add('hidden');
+      quitSession();
+    }
+
+    function goToTimerAndConfig() {
+      switchTab('timer');
+      openPomodoroConfig();
+    }
+
+    function resetSession() {
+      if (!confirm("현재 쌓은 탑과 타이머를 초기화하시겠습니까? (기록은 삭제되지 않습니다)")) return;
+
+      // Clear books
+      state.books.forEach(b => Composite.remove(engine.world, b));
+      state.books = [];
+      savePhysicsState();
+
+      // Reset timer
+      state.timeLeft = state.mode === 'study' ? state.studyGoalMins * 60 : state.restGoalMins * 60;
+      document.getElementById('time-display').innerText = formatTime(state.timeLeft);
+      calculateHeight(); // will reset height text/theme
+    }
+
+    function saveNicknameFromSetting() {
+      const name = document.getElementById('setting-nickname').value.trim();
+      if (name) {
+        let d = getRecords();
+        d.userName = name;
+        localStorage.setItem('bookTowerv2', JSON.stringify(d));
+        alert("닉네임이 변경되었습니다.");
+        updateDashboard();
+      }
+    }
+
+    function saveIntervalSetting() {
+      let val = parseInt(document.getElementById('setting-interval').value);
+      if (val >= 1 && val <= 600) {
+        let d = getRecords();
+        d.dropInterval = val;
+        localStorage.setItem('bookTowerv2', JSON.stringify(d));
+        alert("사물 떨어지는 주기가 " + val + "초로 변경되었습니다.");
+      } else {
+        alert("올바른 주기를 입력해주세요 (1초 ~ 600초).");
+      }
+    }
+
+    function handleCustomImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          let w = img.width; let h = img.height;
+          const MAX = 120;
+          if (w > MAX || h > MAX) {
+            if (w > h) { h = Math.round((h / w) * MAX); w = MAX; }
+            else { w = Math.round((w / h) * MAX); h = MAX; }
+          }
+          if (w < 30) w = 30; if (h < 30) h = 30;
+
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/png');
+
+          state.customImageData = { w, h, dataUrl };
+          localStorage.setItem('customShape', JSON.stringify(state.customImageData));
+
+          const btn = document.getElementById('diy-custom-btn');
+          btn.querySelector('.diy-icon').style.backgroundImage = `url(${dataUrl})`;
+          btn.querySelector('.diy-icon').style.backgroundSize = 'contain';
+          btn.querySelector('.diy-icon').style.backgroundRepeat = 'no-repeat';
+          btn.querySelector('.diy-icon').style.backgroundPosition = 'center';
+          btn.querySelector('.diy-icon').style.width = '60px';
+          btn.querySelector('.diy-icon').style.height = '60px';
+          btn.querySelector('.diy-icon').style.margin = '0 auto 8px auto';
+          btn.querySelector('.diy-icon').innerHTML = '';
+
+          setShape('diy-custom', btn);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function toggleVibration() {
+      let d = getRecords();
+      d.vibrate = d.vibrate === false ? true : false;
+      localStorage.setItem('bookTowerv2', JSON.stringify(d));
+      document.getElementById('btn-vibrate').innerText = d.vibrate ? '진동: 켜짐' : '진동: 꺼짐';
+    }
+
+    function resetData() {
+      if (confirm("모든 데이터를 초기화하시겠습니까? (이 작업은 되돌릴 수 없습니다.)")) {
+        localStorage.removeItem('bookTowerv2');
+        localStorage.removeItem('bookPhysicsState');
+        localStorage.removeItem('sensorGranted');
+        localStorage.removeItem('customShape');
+        alert("데이터가 초기화되었습니다.");
+        location.reload();
+      }
+    }
+
+    function getProjectileConfig(type, isMovingRight) {
+      let w, h, svg;
+      if (type === 'airplane') {
+        w = 140; h = 60;
+        svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><path d="${isMovingRight ? 'M10 30 L80 15 L120 30 L80 45 Z M40 30 L60 0 L70 30 M40 30 L60 60 L70 30' : 'M130 30 L60 15 L20 30 L60 45 Z M100 30 L80 0 L70 30 M100 30 L80 60 L70 30'}" fill="#3182F6"/></svg>`;
+      } else if (type === 'rocket') {
+        w = 120; h = 50;
+        svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><path d="${isMovingRight ? 'M10 15 L80 15 L110 25 L80 35 L10 35 Z M0 15 L15 25 L0 35 Z M20 25 L40 25' : 'M110 15 L40 15 L10 25 L40 35 L110 35 Z M120 15 L105 25 L120 35 Z M100 25 L80 25'}" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/><circle cx="${isMovingRight ? 60 : 60}" cy="25" r="5" fill="#fff"/></svg>`;
+      } else if (type === 'planet') {
+        w = 90; h = 90;
+        svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><circle cx="45" cy="45" r="35" fill="#f59e0b"/><ellipse cx="45" cy="45" rx="42" ry="12" transform="rotate(20 45 45)" fill="none" stroke="#d97706" stroke-width="6"/></svg>`;
+      }
+      return { w, h, svg };
+    }
+
+    function spawnProjectile() {
+      if (runnerObj && !runnerObj.enabled) runnerObj.enabled = true;
+
+      let highestY = window.innerHeight;
+      state.books.forEach(b => { if (b.position.y < highestY) highestY = b.position.y; });
+
+      const screenBottom = window.innerHeight;
+      let hMeter = Math.max(0, (screenBottom - highestY) / PX_PER_METER);
+
+      let type = 'airplane';
+      if (hMeter >= 15) {
+        type = Math.random() > 0.5 ? 'rocket' : 'planet';
+      }
+
+      let isMovingRight = Math.random() > 0.5;
+      let spawnX = isMovingRight ? -200 : window.innerWidth + 200;
+      let velocityX = isMovingRight ? 35 : -35;
+
+      let pCfg = getProjectileConfig(type, isMovingRight);
+      const texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(pCfg.svg);
+
+      // 엄청난 질량과 충격량을 지닌 물체
+      const proj = Bodies.rectangle(spawnX, highestY + 40, pCfg.w, pCfg.h, {
+        restitution: 0.2, friction: 0.1, density: 50.0,
+        frictionAir: 0,
+        render: { sprite: { texture: texUrl } }
+      });
+
+      Composite.add(engine.world, proj);
+      Matter.Body.setVelocity(proj, { x: velocityX, y: (Math.random() - 0.5) * 5 });
+
+      if (navigator.vibrate) try { navigator.vibrate([300, 100, 500]); } catch (e) { }
+      alert("쾅! 딴 짓 경고 누적으로 방해물이 날아왔습니다!");
+    }
+
+    function handleCheatDetected() {
+      // 타이머만 정지 (물리는 계속 돌아가서 날아온 물체에 탑이 파괴됨)
+      state.isPaused = true;
+      spawnProjectile();
+      showWarningPopup();
+    }
+
+    function showWarningPopup() {
+      document.getElementById('warning-modal').classList.remove('hidden');
+      if (navigator.vibrate) try { navigator.vibrate([200, 200]); } catch (e) { }
+    }
+
+    function closeWarningPopup() {
+      document.getElementById('warning-modal').classList.add('hidden');
+      state.isPaused = false; // 타이머 다시 재개
+
+      // 0.1초 쿨타임 (닫고 폰 자세 안바꾸면 또 다른 방해물이 날아옵니다)
+      state.isWarningCooldown = true;
+      setTimeout(() => { state.isWarningCooldown = false; }, 100);
+    }
+
+  </script>
+</body>
+
+</html>
