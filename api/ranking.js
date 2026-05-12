@@ -1,4 +1,4 @@
-const { kv } = require('@vercel/kv');
+import { kv } from '@vercel/kv';
 
 export default async function handler(request, response) {
   // CORS 처리
@@ -10,7 +10,12 @@ export default async function handler(request, response) {
     return response.status(200).end();
   }
 
-  const EXPECTED_DIGEST = '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da';
+  // Vercel 환경 변수에서 로드
+  const EXPECTED_DIGEST = process.env.SERVER_DIGEST;
+  
+  if (process.env.SERVER_ID) {
+    console.log(`[${process.env.SERVER_ID}] API Called`);
+  }
 
   try {
     if (request.method === 'GET') {
