@@ -9,6 +9,9 @@
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <!-- Three.js r128 + OrbitControls (global build) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
   <style>
     :root {
@@ -885,33 +888,30 @@
 
   <!-- View 3: Avatar & Collection (Items) -->
   <div id="diy-view" class="view-wrapper hidden" style="padding: 0; display: flex; flex-direction: column;">
-    <!-- Top 1/2: Avatar Display -->
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e0f2fe; position: relative; overflow: hidden; min-height: 250px;">
-      <div style="font-size: 20px; font-weight: 800; position: absolute; top: 20px; color: var(--toss-blue);">나의 아바타</div>
-      <!-- Base Avatar -->
-      <div style="width: 200px; height: 200px; position: relative;">
-        <!-- SVG Base Avatar -->
-        <div id="avatar-base" style="width: 100%; height: 100%; position: absolute; z-index: 1;">
-          <svg width="100%" height="100%" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-            <rect x="75" y="100" width="50" height="50" rx="20" fill="#fef08a" />
-            <rect x="55" y="105" width="25" height="35" rx="12.5" fill="#fef08a" />
-            <rect x="120" y="105" width="25" height="35" rx="12.5" fill="#fef08a" />
-            <rect x="80" y="140" width="16" height="35" rx="8" fill="#fde047" />
-            <rect x="104" y="140" width="16" height="35" rx="8" fill="#fde047" />
-            <circle cx="100" cy="70" r="45" fill="#fef08a" />
-            <circle cx="82" cy="65" r="5" fill="#333D4B" />
-            <circle cx="118" cy="65" r="5" fill="#333D4B" />
-            <circle cx="65" cy="75" r="6" fill="#fca5a5" opacity="0.6" />
-            <circle cx="135" cy="75" r="6" fill="#fca5a5" opacity="0.6" />
-            <path d="M 95 82 Q 100 88 105 82" stroke="#333D4B" stroke-width="3" fill="none" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <!-- Item Layers -->
-        <div id="avatar-layer-bottom" style="width: 100%; height: 100%; position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 65px; transform: translateY(40px);"></div>
-        <div id="avatar-layer-shoes" style="width: 100%; height: 100%; position: absolute; z-index: 3; display: flex; align-items: flex-end; justify-content: center; font-size: 55px; transform: translateY(20px);"></div>
-        <div id="avatar-layer-top" style="width: 100%; height: 100%; position: absolute; z-index: 4; display: flex; align-items: center; justify-content: center; font-size: 85px; transform: translateY(10px);"></div>
-        <div id="avatar-layer-head" style="width: 100%; height: 100%; position: absolute; z-index: 5; display: flex; align-items: flex-start; justify-content: center; font-size: 80px; transform: translateY(-5px);"></div>
+    <!-- Top: 3D Avatar Viewer (Three.js) -->
+    <div id="avatar-3d-wrap" style="flex: 1; position: relative; background: #dbeafe; overflow: hidden; min-height: 260px;">
+      <!-- touch-action:none → 터치 드래그 시 브라우저 스크롤 방지 (모바일 핵심) -->
+      <canvas id="avatar-3d-canvas" style="width:100%; height:100%; display:block; touch-action:none;"></canvas>
+
+      <!-- 로딩 표시 -->
+      <div id="avatar-3d-loading" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--toss-text-gray); pointer-events:none;">
+        3D 뷰 초기화 중...
       </div>
+
+      <!-- 상단 라벨 -->
+      <div style="position:absolute; top:12px; left:50%; transform:translateX(-50%); font-size:13px; font-weight:800; color:#1e40af; background:rgba(255,255,255,0.7); padding:4px 12px; border-radius:20px; pointer-events:none;">
+        나의 3D 아바타
+      </div>
+
+      <!-- 오늘은 여기까지 보상 버튼 -->
+      <!-- stopPropagation으로 OrbitControls 이벤트 버블링 차단 -->
+      <button id="btn-reward-3d"
+        onmousedown="event.stopPropagation()"
+        ontouchstart="event.stopPropagation()"
+        onclick="handleRewardButton(event)"
+        style="position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#3182F6,#6366f1); color:white; border:none; padding:10px 24px; border-radius:20px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(49,130,246,0.4); white-space:nowrap; z-index:5;">
+        🎁 오늘은 여기까지
+      </button>
     </div>
     
     <!-- Bottom 1/2: Item Tabs -->
@@ -2995,8 +2995,406 @@
       state.isWarningCooldown = true;
       setTimeout(() => { state.isWarningCooldown = false; }, 100);
     }
+    /* =======================================
+       3D Avatar Viewer (Three.js)
+    ======================================= */
+    const REWARD_API = '/api/reward';
+    const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    // Three.js 전역 참조
+    let t3 = { scene: null, camera: null, renderer: null, controls: null, animId: null };
+    let bones = {};          // bone 이름 → THREE.Object3D
+    let slot3D = {};         // slot 이름 → { meshes: [], geos: [], mats: [] }  (dispose용)
+    let viewerReady = false;
+
+    // ── 1. 뷰어 초기화 ────────────────────────────────────────
+    function init3DViewer() {
+      if (viewerReady) return;
+      const canvas = document.getElementById('avatar-3d-canvas');
+      const wrap   = document.getElementById('avatar-3d-wrap');
+      if (!canvas || !wrap || typeof THREE === 'undefined') return;
+
+      const W = wrap.clientWidth, H = wrap.clientHeight;
+
+      // Scene
+      t3.scene = new THREE.Scene();
+      t3.scene.background = new THREE.Color(0xdbeafe);
+      t3.scene.fog = new THREE.FogExp2(0xdbeafe, 0.18);
+
+      // Camera
+      t3.camera = new THREE.PerspectiveCamera(42, W / H, 0.05, 50);
+      t3.camera.position.set(0, 1.1, 2.8);
+
+      // Renderer
+      t3.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      t3.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 모바일 배터리 절약
+      t3.renderer.setSize(W, H);
+      t3.renderer.shadowMap.enabled = true;
+      t3.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+      // Lighting
+      t3.scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+      const sun = new THREE.DirectionalLight(0xfff4e0, 0.9);
+      sun.position.set(3, 6, 4); sun.castShadow = true;
+      sun.shadow.mapSize.set(512, 512);
+      t3.scene.add(sun);
+      const fill = new THREE.DirectionalLight(0x8ecfff, 0.3);
+      fill.position.set(-3, 1, -3);
+      t3.scene.add(fill);
+
+      // Ground disc
+      const gMesh = new THREE.Mesh(
+        new THREE.CircleGeometry(1.5, 48),
+        new THREE.MeshLambertMaterial({ color: 0xbfdbfe })
+      );
+      gMesh.rotation.x = -Math.PI / 2; gMesh.receiveShadow = true;
+      t3.scene.add(gMesh);
+
+      // OrbitControls ──────────────────────────────────────────
+      t3.controls = new THREE.OrbitControls(t3.camera, canvas);
+      t3.controls.enableDamping   = true;      // 부드러운 관성
+      t3.controls.dampingFactor   = 0.05;
+      t3.controls.screenSpacePanning = true;   // 화면 밖 이탈 방지
+      t3.controls.rotateSpeed    = isMobileDevice ? 0.7 : 1.0; // 모바일 정교 조작
+      t3.controls.minDistance    = 1.2;
+      t3.controls.maxDistance    = 5.5;
+      t3.controls.maxPolarAngle  = Math.PI * 0.88;
+      t3.controls.target.set(0, 0.95, 0);
+      t3.controls.update();
+
+      // Build character
+      buildCharacter();
+      refreshEquipped3D();
+
+      // 로딩 표시 제거
+      document.getElementById('avatar-3d-loading').style.display = 'none';
+      viewerReady = true;
+
+      // ResizeObserver
+      new ResizeObserver(() => {
+        if (!t3.renderer) return;
+        const nW = wrap.clientWidth, nH = wrap.clientHeight;
+        t3.camera.aspect = nW / nH;
+        t3.camera.updateProjectionMatrix();
+        t3.renderer.setSize(nW, nH);
+      }).observe(wrap);
+
+      // Animation loop
+      (function loop() {
+        t3.animId = requestAnimationFrame(loop);
+        t3.controls.update(); // damping에 필수
+        t3.renderer.render(t3.scene, t3.camera);
+      })();
+    }
+
+    // ── 2. 캐릭터 빌드 (T-Pose 본 계층 + 메시) ────────────────
+    function buildCharacter() {
+      const root = new THREE.Group();
+      t3.scene.add(root);
+
+      // Bone 노드 생성 헬퍼
+      function bone(name, px, py, pz) {
+        const b = new THREE.Object3D(); b.name = name;
+        b.position.set(px, py, pz);
+        bones[name] = b; return b;
+      }
+
+      // 본 계층 ───────────────────────────────────────────────
+      const hips     = bone('Hips',         0,  0.88, 0);
+      const spine    = bone('Spine',        0,  0.14, 0);
+      const chest    = bone('Chest',        0,  0.18, 0);
+      const neck     = bone('Neck',         0,  0.21, 0);
+      const head     = bone('Head',         0,  0.13, 0);
+      const lArm     = bone('LeftArm',     -0.21, 0.16, 0);
+      const lFore    = bone('LeftForearm',  0, -0.24, 0);
+      const lHand    = bone('LeftHand',     0, -0.24, 0);
+      const rArm     = bone('RightArm',     0.21, 0.16, 0);
+      const rFore    = bone('RightForearm', 0, -0.24, 0);
+      const rHand    = bone('RightHand',    0, -0.24, 0);
+      const lThigh   = bone('LeftThigh',  -0.10, -0.05, 0);
+      const lShin    = bone('LeftShin',    0, -0.38, 0);
+      const lFoot    = bone('LeftFoot',    0, -0.38, 0);
+      const rThigh   = bone('RightThigh',  0.10, -0.05, 0);
+      const rShin    = bone('RightShin',   0, -0.38, 0);
+      const rFoot    = bone('RightFoot',   0, -0.38, 0);
+
+      root.add(hips);
+      hips.add(spine); spine.add(chest);
+      chest.add(neck); neck.add(head);
+      chest.add(lArm); lArm.add(lFore); lFore.add(lHand);
+      chest.add(rArm); rArm.add(rFore); rFore.add(rHand);
+      hips.add(lThigh); lThigh.add(lShin); lShin.add(lFoot);
+      hips.add(rThigh); rThigh.add(rShin); rShin.add(rFoot);
+
+      // 메시 추가 헬퍼
+      const skin = new THREE.MeshLambertMaterial({ color: 0xf5c5a3 });
+      const hair = new THREE.MeshLambertMaterial({ color: 0x2c1a0e });
+
+      function m(geo, mat, parent, ox, oy, oz) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(ox, oy, oz);
+        mesh.castShadow = true;
+        parent.add(mesh);
+      }
+
+      // 얼굴 / 머리
+      m(new THREE.SphereGeometry(0.135, 16, 16), skin, head, 0, 0.068, 0);
+      m(new THREE.SphereGeometry(0.138, 16, 16), hair, head, 0, 0.09, 0);
+      // 눈 (작은 구)
+      const eyeMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2e });
+      m(new THREE.SphereGeometry(0.018, 8, 8), eyeMat, head, -0.045, 0.065, 0.125);
+      m(new THREE.SphereGeometry(0.018, 8, 8), eyeMat, head,  0.045, 0.065, 0.125);
+      // 볼 홍조
+      const blushMat = new THREE.MeshLambertMaterial({ color: 0xf9a8d4, transparent: true, opacity: 0.5 });
+      m(new THREE.SphereGeometry(0.03, 8, 8), blushMat, head, -0.075, 0.048, 0.115);
+      m(new THREE.SphereGeometry(0.03, 8, 8), blushMat, head,  0.075, 0.048, 0.115);
+      // 목
+      m(new THREE.CylinderGeometry(0.048, 0.055, 0.11, 8), skin, neck, 0, 0.055, 0);
+      // 몸통 (기본 피부색 - 옷으로 가려짐)
+      m(new THREE.BoxGeometry(0.34, 0.38, 0.16), skin, chest, 0, 0, 0);
+      // 팔
+      m(new THREE.CylinderGeometry(0.05, 0.046, 0.22, 8), skin, lArm,  0, -0.11, 0);
+      m(new THREE.CylinderGeometry(0.05, 0.046, 0.22, 8), skin, rArm,  0, -0.11, 0);
+      m(new THREE.CylinderGeometry(0.042, 0.038, 0.22, 8), skin, lFore, 0, -0.11, 0);
+      m(new THREE.CylinderGeometry(0.042, 0.038, 0.22, 8), skin, rFore, 0, -0.11, 0);
+      m(new THREE.SphereGeometry(0.055, 8, 8), skin, lHand, 0, -0.03, 0);
+      m(new THREE.SphereGeometry(0.055, 8, 8), skin, rHand, 0, -0.03, 0);
+      // 허리
+      m(new THREE.BoxGeometry(0.28, 0.17, 0.15), skin, hips, 0, -0.01, 0);
+      // 다리
+      m(new THREE.CylinderGeometry(0.08, 0.072, 0.36, 8), skin, lThigh, 0, -0.18, 0);
+      m(new THREE.CylinderGeometry(0.08, 0.072, 0.36, 8), skin, rThigh, 0, -0.18, 0);
+      m(new THREE.CylinderGeometry(0.062, 0.054, 0.36, 8), skin, lShin,  0, -0.18, 0);
+      m(new THREE.CylinderGeometry(0.062, 0.054, 0.36, 8), skin, rShin,  0, -0.18, 0);
+      // 발 (기본)
+      m(new THREE.BoxGeometry(0.096, 0.058, 0.17), skin, lFoot,  0.008, -0.03, 0.038);
+      m(new THREE.BoxGeometry(0.096, 0.058, 0.17), skin, rFoot, -0.008, -0.03, 0.038);
+    }
+
+    // ── 3. 슬롯 Dispose (메모리 해제 핵심) ────────────────────
+    // 아이템 교체 시 이전 메시의 geometry + material을 명시적으로 dispose
+    function disposeSlot3D(slot) {
+      const prev = slot3D[slot];
+      if (!prev) return;
+      prev.meshes.forEach(mesh => {
+        if (mesh.parent) mesh.parent.remove(mesh);
+        prev.geos.forEach(g => { try { g.dispose(); } catch(e){} });
+        prev.mats.forEach(mat => {
+          if (mat.map) mat.map.dispose();
+          try { mat.dispose(); } catch(e){}
+        });
+      });
+      slot3D[slot] = null;
+    }
+
+    // ── 4. 아이템 메시 생성 & 본에 attach ─────────────────────
+    const ITEM_COLORS = {
+      h1: 0x1e3a8a, h2: 0xd4a017, h3: 0x6d28d9, h4: 0xfbbf24, h5: 0x111827,
+      t1: 0xffffff,  t2: 0x3b82f6, t3: 0x1c1c1e, t4: 0xf59e0b,
+      b1: 0x1d4ed8,  b2: 0x38bdf8, b3: 0x374151, b4: 0xfcd34d,
+      s1: 0xe2e8f0,  s2: 0x1e293b, s3: 0x7f1d1d, s4: 0xfbbf24
+    };
+
+    function buildItemMeshes(slot, itemId) {
+      const color = ITEM_COLORS[itemId] || 0x888888;
+      const mat = () => new THREE.MeshLambertMaterial({ color });
+      const geos = [], mats = [], meshes = [];
+
+      function mk(geo, parent, ox, oy, oz, customMat) {
+        const m2 = customMat || mat();
+        const mesh = new THREE.Mesh(geo, m2);
+        mesh.position.set(ox, oy, oz);
+        mesh.castShadow = true;
+        parent.add(mesh);
+        geos.push(geo); mats.push(m2); meshes.push(mesh);
+      }
+
+      if (slot === 'head') {
+        const b = bones['Head'];
+        if (itemId === 'h1') { // 야구 모자
+          mk(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 16), b, 0, 0.17, 0);
+          mk(new THREE.CylinderGeometry(0.17, 0.17, 0.015, 16), b, 0, 0.14, 0.04);
+        } else if (itemId === 'h2') { // 밀짚 모자
+          mk(new THREE.CylinderGeometry(0.08, 0.13, 0.1, 16), b, 0, 0.2, 0);
+          mk(new THREE.CylinderGeometry(0.22, 0.22, 0.012, 16), b, 0, 0.155, 0);
+        } else if (itemId === 'h3') { // 마법사 모자
+          mk(new THREE.ConeGeometry(0.11, 0.28, 16), b, 0, 0.29, 0);
+          mk(new THREE.CylinderGeometry(0.18, 0.18, 0.015, 16), b, 0, 0.155, 0);
+        } else if (itemId === 'h4') { // 황금 왕관
+          mk(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 16), b, 0, 0.19, 0);
+          [0,1,2,3,4].forEach(i => {
+            const a = (i / 5) * Math.PI * 2;
+            mk(new THREE.ConeGeometry(0.02, 0.07, 6), b,
+              Math.sin(a) * 0.1, 0.26, Math.cos(a) * 0.1);
+          });
+        } else if (itemId === 'h5') { // 총장 모자
+          mk(new THREE.CylinderGeometry(0.14, 0.14, 0.04, 16), b, 0, 0.155, 0);
+          mk(new THREE.BoxGeometry(0.32, 0.015, 0.32), b, 0, 0.175, 0);
+          mk(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 16), b, 0, 0.22, 0);
+        }
+
+      } else if (slot === 'top') {
+        const c = bones['Chest'], la = bones['LeftArm'], ra = bones['RightArm'];
+        const lf = bones['LeftForearm'], rf = bones['RightForearm'];
+        const isGold = itemId === 't4';
+        const tMat = new THREE.MeshLambertMaterial({ color, metalness: isGold ? 0.8 : 0 });
+        mk(new THREE.BoxGeometry(0.38, 0.42, 0.2), c, 0, 0, 0, tMat);
+        mk(new THREE.CylinderGeometry(0.058, 0.052, 0.23, 8), la,  0, -0.115, 0);
+        mk(new THREE.CylinderGeometry(0.058, 0.052, 0.23, 8), ra,  0, -0.115, 0);
+        mk(new THREE.CylinderGeometry(0.048, 0.044, 0.23, 8), lf,  0, -0.115, 0);
+        mk(new THREE.CylinderGeometry(0.048, 0.044, 0.23, 8), rf,  0, -0.115, 0);
+
+      } else if (slot === 'bottom') {
+        const h2 = bones['Hips'], lt = bones['LeftThigh'], rt = bones['RightThigh'];
+        const ls = bones['LeftShin'],  rs = bones['RightShin'];
+        const isShort = itemId === 'b2';
+        mk(new THREE.BoxGeometry(0.32, 0.19, 0.17), h2, 0, -0.01, 0);
+        mk(new THREE.CylinderGeometry(0.086, 0.076, isShort ? 0.2 : 0.38, 8), lt, 0, isShort ? -0.1 : -0.19, 0);
+        mk(new THREE.CylinderGeometry(0.086, 0.076, isShort ? 0.2 : 0.38, 8), rt, 0, isShort ? -0.1 : -0.19, 0);
+        if (!isShort) {
+          mk(new THREE.CylinderGeometry(0.067, 0.059, 0.38, 8), ls, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.067, 0.059, 0.38, 8), rs, 0, -0.19, 0);
+        }
+
+      } else if (slot === 'shoes') {
+        const lf2 = bones['LeftFoot'], rf2 = bones['RightFoot'];
+        const h = itemId === 's3' ? 0.12 : 0.065; // 부츠는 더 높게
+        mk(new THREE.BoxGeometry(0.105, h, 0.19), lf2,  0.008, -(h/2), 0.04);
+        mk(new THREE.BoxGeometry(0.105, h, 0.19), rf2, -0.008, -(h/2), 0.04);
+      }
+
+      slot3D[slot] = { meshes, geos, mats };
+    }
+
+    // ── 5. 장착 아이템 3D 갱신 ────────────────────────────────
+    function refreshEquipped3D() {
+      if (!viewerReady) return;
+      const data = getRecords();
+      const eq = data.equipped || {};
+      ['head', 'top', 'bottom', 'shoes'].forEach(slot => {
+        disposeSlot3D(slot);
+        if (eq[slot]) buildItemMeshes(slot, eq[slot]);
+      });
+    }
+
+    // ── 6. 보상 버튼 핸들러 ───────────────────────────────────
+    async function handleRewardButton(event) {
+      event.stopPropagation(); // OrbitControls 이벤트 버블링 차단
+      const btn = document.getElementById('btn-reward-3d');
+      if (btn.disabled) return;
+
+      const data = getRecords();
+      const todayStr = getTodayStr();
+      const studySeconds = data.daily[todayStr]?.total || 0;
+
+      if (studySeconds < 300) {
+        alert(`보상을 받으려면 오늘 최소 5분 이상 집중해야 합니다.\n현재: ${Math.floor(studySeconds/60)}분 ${studySeconds%60}초`);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ 보상 확인 중...';
+
+      try {
+        const res = await fetch(REWARD_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.userId,
+            studySeconds,
+            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
+          })
+        });
+        const result = await res.json();
+
+        if (!res.ok) {
+          alert(result.error || '보상 수령에 실패했습니다.');
+          return;
+        }
+
+        // 로컬 아이템 잠금 해제
+        if (!data.unlockedItems) data.unlockedItems = [];
+        if (!data.unlockedItems.includes(result.item.id)) {
+          data.unlockedItems.push(result.item.id);
+        }
+        // 자동 장착
+        if (!data.equipped) data.equipped = {};
+        data.equipped[result.item.slot] = result.item.id;
+        localStorage.setItem('bookTowerv2', JSON.stringify(data));
+
+        // 3D 본에 즉시 attach
+        if (viewerReady) {
+          disposeSlot3D(result.item.slot);
+          buildItemMeshes(result.item.slot, result.item.id);
+        }
+
+        // 도감 UI 갱신 (window.renderCollection 호출 → 항상 최신 버전)
+        window.renderCollection();
+
+        const gradeNames = { common: '일반', rare: '희귀', epic: '영웅', legend: '전설' };
+        alert(`🎁 보상 획득!\n[${gradeNames[result.item.grade] || result.item.grade}] 아이템을 획득하고 자동 장착했습니다!`);
+
+      } catch (e) {
+        console.error('Reward fetch error:', e);
+        alert('서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🎁 오늘은 여기까지';
+      }
+    }
+
+    // ── 7. 페이지 종료 시 Three.js GPU 메모리 해제 ───────────
+    window.addEventListener('beforeunload', () => {
+      if (t3.animId) cancelAnimationFrame(t3.animId);
+      if (t3.renderer) { t3.renderer.dispose(); t3.renderer = null; }
+      Object.keys(slot3D).forEach(disposeSlot3D);
+    });
 
   </script>
+
+  <!--
+    ★ 별도 <script> 블록 ★
+    메인 스크립트와 분리해야 함수 호이스팅 버그를 피할 수 있습니다.
+    같은 블록에서 function renderCollection() 을 재선언하면
+    JS 엔진이 두 선언을 모두 호이스팅하여 _orig가 새 함수를 가리켜
+    무한 재귀가 발생합니다.
+    별도 <script>에서 window.renderCollection = ... 으로 덮어쓰면
+    _orig는 첫 번째 스크립트의 원본을 캡처합니다.
+  -->
+  <script>
+    // ── 훅: renderCollection ─────────────────────────────────
+    // diy 탭 진입 시 Three.js 뷰어를 지연 초기화 (첫 진입에만 실행)
+    // ★ 별도 <script> 블록: 첫 번째 스크립트의 function 선언은 window에 등록되므로
+    //   window.renderCollection 으로 원본 캡처 후 덮어쓰기 가능.
+    //   단, 'let viewerReady'는 window에 올라가지 않으므로 직접 변수명으로 참조해야 함.
+    (function() {
+      const _origRC = window.renderCollection;
+      window.renderCollection = function() {
+        _origRC.apply(this, arguments);
+        // viewerReady: 첫 번째 <script>의 전역 let → 직접 참조 가능 (동일 브라우저 스코프)
+        if (!viewerReady && typeof THREE !== 'undefined') {
+          requestAnimationFrame(() => init3DViewer());
+        }
+      };
+    })();
+
+    // ── 훅: equipItem ────────────────────────────────────────
+    // 아이템 장착 시 3D 메시도 동기화. 이전 메시는 dispose로 메모리 해제.
+    (function() {
+      const _origEI = window.equipItem;
+      window.equipItem = function(category, itemId) {
+        _origEI.apply(this, arguments);
+        // viewerReady, disposeSlot3D, buildItemMeshes: 모두 첫 번째 스크립트의 전역
+        if (viewerReady) {
+          disposeSlot3D(category);
+          const data = getRecords();
+          const eq = data.equipped || {};
+          if (eq[category]) buildItemMeshes(category, eq[category]);
+        }
+      };
+    })();
+  </script>
+
 </body>
 
-</html>
+</html>

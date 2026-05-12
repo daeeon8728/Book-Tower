@@ -1,3 +1,7 @@
 {
-  "outputDirectory": "www"
+  "outputDirectory": "www",
+  "functions": {
+    "api/ranking.js": { "memory": 128, "maxDuration": 10 },
+    "api/reward.js":  { "memory": 128, "maxDuration": 10 }
+  }
 }
