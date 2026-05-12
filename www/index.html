@@ -1660,11 +1660,11 @@
       
       let type = item.id;
 
-      // 아이템 박스 외형 설정
+      // 아이템 박스 외형 설정: 책과 비슷한 폭, 두께만 2배 (60px)
       let boxColor = grade === 'legend' ? '#FFDF00' : grade === 'epic' ? '#a855f7' : grade === 'rare' ? '#f97316' : '#9ca3af';
-      let boxWidth = 90;
-      let boxHeight = 90;
-      let textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${boxWidth}" height="${boxHeight}"><rect width="${boxWidth}" height="${boxHeight}" rx="8" fill="${boxColor}" stroke="#ffffff" stroke-width="4"/><text x="${boxWidth/2}" y="${boxHeight/2 + 10}" font-size="40" text-anchor="middle">${item.icon}</text></svg>`;
+      let boxWidth = 110 + Math.random() * 30;  // 책과 동일한 폭 범위
+      let boxHeight = 60;                       // 책 두께(30px)의 2배
+      let textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${boxWidth}" height="${boxHeight}"><rect width="${boxWidth}" height="${boxHeight}" rx="6" fill="${boxColor}" stroke="#ffffff" stroke-width="3"/><rect x="4" y="4" width="${boxWidth-8}" height="${boxHeight-8}" rx="4" fill="${boxColor}" opacity="0.7"/><text x="${boxWidth/2}" y="${boxHeight/2 + 6}" font-size="20" font-weight="bold" text-anchor="middle" fill="#fff" style="text-shadow:1px 1px 2px rgba(0,0,0,0.5);">${item.name}</text></svg>`;
 
       let groundY = window.innerHeight + 50;
       let highestY = groundY;
@@ -1715,7 +1715,8 @@
           renderCollection();
           ['head', 'top', 'bottom', 'shoes'].forEach(cat => {
             let count = AVATAR_ITEMS[cat].filter(i => data.unlockedItems.includes(i.id)).length;
-            document.getElementById(`count-${cat}`).innerText = `${count}/4`;
+            let total = AVATAR_ITEMS[cat].length;
+            document.getElementById(`count-${cat}`).innerText = `${count}/${total}`;
           });
       }
     }
@@ -3455,9 +3456,22 @@
       const _origRC = window.renderCollection;
       window.renderCollection = function() {
         _origRC.apply(this, arguments);
-        // viewerReady: 첫 번째 <script>의 전역 let → 직접 참조 가능 (동일 브라우저 스코프)
         if (!viewerReady && typeof THREE !== 'undefined') {
+          // 첫 진입: Three.js 초기화
           requestAnimationFrame(() => init3DViewer());
+        } else if (viewerReady && t3.renderer) {
+          // 재진입: hidden→visible 전환 시 캔버스 크기가 0이 되어 있으므로 강제 리사이즈
+          requestAnimationFrame(() => {
+            const wrap = document.getElementById('avatar-3d-wrap');
+            if (wrap) {
+              const nW = wrap.clientWidth, nH = wrap.clientHeight;
+              if (nW > 0 && nH > 0) {
+                t3.camera.aspect = nW / nH;
+                t3.camera.updateProjectionMatrix();
+                t3.renderer.setSize(nW, nH);
+              }
+            }
+          });
         }
       };
     })();
