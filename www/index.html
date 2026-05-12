@@ -15,13 +15,13 @@
       color-scheme: light dark;
       --toss-blue: #3182F6;
       --toss-blue-hover: #1b64da;
-      --toss-bg-light: #F2F4F6;
+      --toss-bg-light: #FFFFFF;
       --toss-card: #FFFFFF;
-      --toss-text-dark: #333D4B;
+      --toss-text-dark: #191F28;
       --toss-text-gray: #8B95A1;
       --toss-border: #E5E8EB;
 
-      --bg-stage-0: #F2F4F6;
+      --bg-stage-0: #FFFFFF;
       --bg-stage-1: #D6EBFF;
       --bg-stage-2: #2C3E50;
       --bg-stage-3: #1A1A1B;
@@ -69,6 +69,17 @@
 
     :root[data-theme="light"] {
       color-scheme: light;
+      --toss-bg-light: #FFFFFF;
+      --toss-card: #FFFFFF;
+      --toss-text-dark: #191F28;
+      --toss-text-gray: #8B95A1;
+      --toss-border: #E5E8EB;
+      --bg-stage-0: #FFFFFF;
+      
+      --nav-bg: rgba(255, 255, 255, 0.85);
+      --hud-bg: rgba(255, 255, 255, 0.9);
+      --hud-btn-bg: rgba(255, 255, 255, 0.8);
+      --timer-shadow: 0 4px 24px rgba(255, 255, 255, 0.8);
     }
 
     * {
@@ -183,13 +194,14 @@
     .toss-card {
       background: var(--toss-card);
       border-radius: 24px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02);
       padding: 24px;
       width: 100%;
       max-width: 340px;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      border: 1px solid var(--toss-border);
     }
 
     .modal-overlay {
@@ -479,7 +491,8 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--toss-border);
     }
 
     .stat-label {
@@ -510,7 +523,8 @@
       padding: 20px;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--toss-border);
     }
 
     .cal-title {
@@ -578,7 +592,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--toss-border);
       margin-bottom: 8px;
     }
 
@@ -715,7 +730,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--toss-border);
     }
 
     .rank-left {
@@ -777,9 +793,9 @@
 <body>
 
   <div id="stage-container">
-    <div class="bg-layer" id="bg-0" style="background: linear-gradient(180deg, #E2E8F0 0%, #F8FAFC 100%); opacity: 1;">
+    <div class="bg-layer" id="bg-0" style="background: linear-gradient(180deg, #F0F6FF 0%, #FFFFFF 100%); opacity: 1;">
     </div>
-    <div class="bg-layer" id="bg-1" style="background: linear-gradient(180deg, #7DD3FC 0%, #E0F2FE 100%); opacity: 0;">
+    <div class="bg-layer" id="bg-1" style="background: linear-gradient(180deg, #BAE6FD 0%, #E0F2FE 100%); opacity: 0;">
     </div>
     <div class="bg-layer" id="bg-2" style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 100%); opacity: 0;">
     </div>
