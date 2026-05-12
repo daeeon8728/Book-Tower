@@ -3061,11 +3061,13 @@
 
       // Build character
       buildCharacter();
-      refreshEquipped3D();
 
       // 로딩 표시 제거
       document.getElementById('avatar-3d-loading').style.display = 'none';
       viewerReady = true;
+
+      // ★ viewerReady를 먼저 true로 설정한 후 장착 아이템 로드
+      refreshEquipped3D();
 
       // ResizeObserver
       new ResizeObserver(() => {
