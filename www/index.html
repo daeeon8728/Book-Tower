@@ -903,24 +903,16 @@
         나의 3D 아바타
       </div>
 
-      <!-- 오늘은 여기까지 보상 버튼 -->
-      <!-- stopPropagation으로 OrbitControls 이벤트 버블링 차단 -->
-      <button id="btn-reward-3d"
-        onmousedown="event.stopPropagation()"
-        ontouchstart="event.stopPropagation()"
-        onclick="handleRewardButton(event)"
-        style="position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:linear-gradient(135deg,#3182F6,#6366f1); color:white; border:none; padding:10px 24px; border-radius:20px; font-size:14px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(49,130,246,0.4); white-space:nowrap; z-index:5;">
-        🎁 오늘은 여기까지
-      </button>
+      <!-- 아이템은 공부 중 5분마다 가챠로 해금됩니다 -->
     </div>
     
     <!-- Bottom 1/2: Item Tabs -->
     <div style="flex: 1; background: var(--toss-bg-light); border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 16px rgba(0,0,0,0.05); margin-top: -20px;">
       <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--toss-border); padding-bottom: 10px; margin-bottom: 16px;">
-        <div class="avatar-tab active" onclick="switchAvatarTab('head')" id="tab-head" style="font-weight: 700; cursor: pointer; color: var(--toss-blue); text-align: center; flex: 1;">머리<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-head">0/4</span></div>
-        <div class="avatar-tab" onclick="switchAvatarTab('top')" id="tab-top" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">상의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-top">0/4</span></div>
-        <div class="avatar-tab" onclick="switchAvatarTab('bottom')" id="tab-bottom" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">하의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-bottom">0/4</span></div>
-        <div class="avatar-tab" onclick="switchAvatarTab('shoes')" id="tab-shoes" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">신발<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-shoes">0/4</span></div>
+        <div class="avatar-tab active" onclick="switchAvatarTab('head')" id="tab-head" style="font-weight: 700; cursor: pointer; color: var(--toss-blue); text-align: center; flex: 1;">머리<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-head">0/5</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('top')" id="tab-top" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">상의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-top">0/5</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('bottom')" id="tab-bottom" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">하의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-bottom">0/5</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('shoes')" id="tab-shoes" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">신발<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-shoes">0/5</span></div>
       </div>
       <div class="diy-grid" id="collection-grid" style="overflow-y: auto; padding-bottom: 80px;">
         <!-- JS Generated -->
@@ -2272,28 +2264,31 @@
     const AVATAR_ITEMS = {
       head: [
         { id: 'h1', name: '야구 모자', icon: '🧢', desc: '흔한 모자', grade: 'common' },
-        { id: 'h2', name: '밀짚 모자', icon: '👒', desc: '여름 나기', grade: 'rare' },
-        { id: 'h3', name: '마법사 모자', icon: '🧙', desc: '마력이 깃든 모자', grade: 'epic' },
-        { id: 'h4', name: '황금 왕관', icon: '👑', desc: '전설의 왕관', grade: 'legend' },
+        { id: 'h2', name: '비니', icon: '🎿', desc: '따뜻한 겨울 모자', grade: 'common' },
+        { id: 'h3', name: '밀짚 모자', icon: '👒', desc: '여름 나기', grade: 'rare' },
+        { id: 'h4', name: '마법사 모자', icon: '🧙', desc: '마력이 깃든 모자', grade: 'epic' },
         { id: 'h5', name: '총장 모자', icon: '<div style="background:black; color:white; font-weight:900; font-size:14px; padding:4px 8px; border-radius:4px; display:inline-block; line-height:1; border:2px solid #555;">총장</div>', desc: '학교의 지배자', grade: 'legend' }
       ],
       top: [
         { id: 't1', name: '흰 티셔츠', icon: '👕', desc: '가장 무난한 옷', grade: 'common' },
-        { id: 't2', name: '체크 셔츠', icon: '👔', desc: '공대생 필수품', grade: 'rare' },
-        { id: 't3', name: '가죽 자켓', icon: '🧥', desc: '멋쟁이 자켓', grade: 'epic' },
-        { id: 't4', name: '황금 갑옷', icon: '🛡️', desc: '무적의 갑옷', grade: 'legend' }
+        { id: 't2', name: '후드티', icon: '🧥', desc: '편안한 후드티', grade: 'common' },
+        { id: 't3', name: '체크 셔츠', icon: '👔', desc: '공대생 필수품', grade: 'rare' },
+        { id: 't4', name: '가죽 자켓', icon: '🧥', desc: '멋쟁이 자켓', grade: 'epic' },
+        { id: 't5', name: '황금 갑옷', icon: '🛡️', desc: '무적의 갑옷', grade: 'legend' }
       ],
       bottom: [
         { id: 'b1', name: '청바지', icon: '👖', desc: '국민 바지', grade: 'common' },
-        { id: 'b2', name: '반바지', icon: '🩳', desc: '시원한 바지', grade: 'rare' },
-        { id: 'b3', name: '정장 바지', icon: '🕴️', desc: '깔끔한 바지', grade: 'epic' },
-        { id: 'b4', name: '황금 바지', icon: '✨', desc: '눈이 부신 바지', grade: 'legend' }
+        { id: 'b2', name: '트레이닝', icon: '🏃', desc: '편안한 운동복', grade: 'common' },
+        { id: 'b3', name: '반바지', icon: '🩳', desc: '시원한 바지', grade: 'rare' },
+        { id: 'b4', name: '정장 바지', icon: '🕴️', desc: '깔끔한 바지', grade: 'epic' },
+        { id: 'b5', name: '황금 바지', icon: '✨', desc: '눈이 부신 바지', grade: 'legend' }
       ],
       shoes: [
         { id: 's1', name: '운동화', icon: '👟', desc: '편안한 신발', grade: 'common' },
-        { id: 's2', name: '구두', icon: '👞', desc: '단정한 구두', grade: 'rare' },
-        { id: 's3', name: '부츠', icon: '👢', desc: '멋진 부츠', grade: 'epic' },
-        { id: 's4', name: '황금 신발', icon: '✨👟', desc: '빛의 속도', grade: 'legend' }
+        { id: 's2', name: '슬리퍼', icon: '🩴', desc: '캐주얼 슬리퍼', grade: 'common' },
+        { id: 's3', name: '구두', icon: '👞', desc: '단정한 구두', grade: 'rare' },
+        { id: 's4', name: '부츠', icon: '👢', desc: '멋진 부츠', grade: 'epic' },
+        { id: 's5', name: '황금 신발', icon: '✨👟', desc: '빛의 속도', grade: 'legend' }
       ]
     };
 
@@ -3189,10 +3184,10 @@
 
     // ── 4. 아이템 메시 생성 & 본에 attach ─────────────────────
     const ITEM_COLORS = {
-      h1: 0x1e3a8a, h2: 0xd4a017, h3: 0x6d28d9, h4: 0xfbbf24, h5: 0x111827,
-      t1: 0xffffff,  t2: 0x3b82f6, t3: 0x1c1c1e, t4: 0xf59e0b,
-      b1: 0x1d4ed8,  b2: 0x38bdf8, b3: 0x374151, b4: 0xfcd34d,
-      s1: 0xe2e8f0,  s2: 0x1e293b, s3: 0x7f1d1d, s4: 0xfbbf24
+      h1: 0x1e3a8a, h2: 0x8b5cf6, h3: 0xd4a017, h4: 0x6d28d9, h5: 0x111111,
+      t1: 0xffffff, t2: 0x64748b, t3: 0x3b82f6, t4: 0x1c1c1e, t5: 0xf59e0b,
+      b1: 0x1d4ed8, b2: 0x374151, b3: 0x38bdf8, b4: 0x334155, b5: 0xfcd34d,
+      s1: 0xe2e8f0, s2: 0xf472b6, s3: 0x1e293b, s4: 0x7f1d1d, s5: 0xfbbf24
     };
 
     function buildItemMeshes(slot, itemId) {
@@ -3209,58 +3204,147 @@
         geos.push(geo); mats.push(m2); meshes.push(mesh);
       }
 
+      // ── HEAD ──
       if (slot === 'head') {
         const b = bones['Head'];
         if (itemId === 'h1') { // 야구 모자
           mk(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 16), b, 0, 0.17, 0);
           mk(new THREE.CylinderGeometry(0.17, 0.17, 0.015, 16), b, 0, 0.14, 0.04);
-        } else if (itemId === 'h2') { // 밀짚 모자
+        } else if (itemId === 'h2') { // 비니
+          mk(new THREE.SphereGeometry(0.14, 16, 12, 0, Math.PI*2, 0, Math.PI*0.6), b, 0, 0.16, 0);
+          mk(new THREE.SphereGeometry(0.035, 8, 8), b, 0, 0.28, 0); // 꼭대기 폼폼
+        } else if (itemId === 'h3') { // 밀짚 모자
           mk(new THREE.CylinderGeometry(0.08, 0.13, 0.1, 16), b, 0, 0.2, 0);
           mk(new THREE.CylinderGeometry(0.22, 0.22, 0.012, 16), b, 0, 0.155, 0);
-        } else if (itemId === 'h3') { // 마법사 모자
+        } else if (itemId === 'h4') { // 마법사 모자
           mk(new THREE.ConeGeometry(0.11, 0.28, 16), b, 0, 0.29, 0);
           mk(new THREE.CylinderGeometry(0.18, 0.18, 0.015, 16), b, 0, 0.155, 0);
-        } else if (itemId === 'h4') { // 황금 왕관
-          mk(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 16), b, 0, 0.19, 0);
-          [0,1,2,3,4].forEach(i => {
-            const a = (i / 5) * Math.PI * 2;
-            mk(new THREE.ConeGeometry(0.02, 0.07, 6), b,
-              Math.sin(a) * 0.1, 0.26, Math.cos(a) * 0.1);
-          });
-        } else if (itemId === 'h5') { // 총장 모자
-          mk(new THREE.CylinderGeometry(0.14, 0.14, 0.04, 16), b, 0, 0.155, 0);
-          mk(new THREE.BoxGeometry(0.32, 0.015, 0.32), b, 0, 0.175, 0);
-          mk(new THREE.CylinderGeometry(0.12, 0.12, 0.08, 16), b, 0, 0.22, 0);
+        } else if (itemId === 'h5') { // 총장 모자 - 검정 모자 + 흰 글씨 "총장"
+          // 모자 몸체
+          const capMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+          mk(new THREE.CylinderGeometry(0.135, 0.135, 0.08, 16), b, 0, 0.175, 0, capMat);
+          // 챙
+          mk(new THREE.CylinderGeometry(0.18, 0.18, 0.012, 16), b, 0, 0.14, 0.05, capMat);
+          // "총장" 글자 텍스처 (Canvas → Texture)
+          try {
+            const cvs = document.createElement('canvas');
+            cvs.width = 128; cvs.height = 64;
+            const ctx = cvs.getContext('2d');
+            ctx.fillStyle = '#111111';
+            ctx.fillRect(0, 0, 128, 64);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 32px Pretendard, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('총장', 64, 32);
+            const tex = new THREE.CanvasTexture(cvs);
+            const labelMat = new THREE.MeshBasicMaterial({ map: tex });
+            const labelGeo = new THREE.PlaneGeometry(0.14, 0.06);
+            const label = new THREE.Mesh(labelGeo, labelMat);
+            label.position.set(0, 0.175, 0.138);
+            b.add(label);
+            geos.push(labelGeo); mats.push(labelMat); meshes.push(label);
+          } catch(e) {}
         }
 
+      // ── TOP ──
       } else if (slot === 'top') {
         const c = bones['Chest'], la = bones['LeftArm'], ra = bones['RightArm'];
         const lf = bones['LeftForearm'], rf = bones['RightForearm'];
-        const isGold = itemId === 't4';
-        const tMat = new THREE.MeshLambertMaterial({ color, metalness: isGold ? 0.8 : 0 });
-        mk(new THREE.BoxGeometry(0.38, 0.42, 0.2), c, 0, 0, 0, tMat);
-        mk(new THREE.CylinderGeometry(0.058, 0.052, 0.23, 8), la,  0, -0.115, 0);
-        mk(new THREE.CylinderGeometry(0.058, 0.052, 0.23, 8), ra,  0, -0.115, 0);
-        mk(new THREE.CylinderGeometry(0.048, 0.044, 0.23, 8), lf,  0, -0.115, 0);
-        mk(new THREE.CylinderGeometry(0.048, 0.044, 0.23, 8), rf,  0, -0.115, 0);
-
-      } else if (slot === 'bottom') {
-        const h2 = bones['Hips'], lt = bones['LeftThigh'], rt = bones['RightThigh'];
-        const ls = bones['LeftShin'],  rs = bones['RightShin'];
-        const isShort = itemId === 'b2';
-        mk(new THREE.BoxGeometry(0.32, 0.19, 0.17), h2, 0, -0.01, 0);
-        mk(new THREE.CylinderGeometry(0.086, 0.076, isShort ? 0.2 : 0.38, 8), lt, 0, isShort ? -0.1 : -0.19, 0);
-        mk(new THREE.CylinderGeometry(0.086, 0.076, isShort ? 0.2 : 0.38, 8), rt, 0, isShort ? -0.1 : -0.19, 0);
-        if (!isShort) {
-          mk(new THREE.CylinderGeometry(0.067, 0.059, 0.38, 8), ls, 0, -0.19, 0);
-          mk(new THREE.CylinderGeometry(0.067, 0.059, 0.38, 8), rs, 0, -0.19, 0);
+        if (itemId === 't1') { // 흰 티셔츠
+          mk(new THREE.BoxGeometry(0.37, 0.40, 0.19), c, 0, 0, 0);
+          mk(new THREE.CylinderGeometry(0.056, 0.050, 0.20, 8), la, 0, -0.10, 0);
+          mk(new THREE.CylinderGeometry(0.056, 0.050, 0.20, 8), ra, 0, -0.10, 0);
+        } else if (itemId === 't2') { // 후드티
+          mk(new THREE.BoxGeometry(0.40, 0.44, 0.21), c, 0, 0, 0);
+          mk(new THREE.SphereGeometry(0.08, 8, 8), c, 0, 0.24, -0.06); // 후드
+          mk(new THREE.CylinderGeometry(0.060, 0.054, 0.24, 8), la, 0, -0.12, 0);
+          mk(new THREE.CylinderGeometry(0.060, 0.054, 0.24, 8), ra, 0, -0.12, 0);
+          mk(new THREE.CylinderGeometry(0.050, 0.046, 0.24, 8), lf, 0, -0.12, 0);
+          mk(new THREE.CylinderGeometry(0.050, 0.046, 0.24, 8), rf, 0, -0.12, 0);
+        } else if (itemId === 't3') { // 체크 셔츠
+          mk(new THREE.BoxGeometry(0.38, 0.42, 0.19), c, 0, 0, 0);
+          mk(new THREE.CylinderGeometry(0.056, 0.050, 0.23, 8), la, 0, -0.115, 0);
+          mk(new THREE.CylinderGeometry(0.056, 0.050, 0.23, 8), ra, 0, -0.115, 0);
+          mk(new THREE.CylinderGeometry(0.048, 0.044, 0.23, 8), lf, 0, -0.115, 0);
+          mk(new THREE.CylinderGeometry(0.048, 0.044, 0.23, 8), rf, 0, -0.115, 0);
+        } else if (itemId === 't4') { // 가죽 자켓
+          mk(new THREE.BoxGeometry(0.40, 0.44, 0.21), c, 0, 0, 0);
+          mk(new THREE.CylinderGeometry(0.060, 0.054, 0.23, 8), la, 0, -0.115, 0);
+          mk(new THREE.CylinderGeometry(0.060, 0.054, 0.23, 8), ra, 0, -0.115, 0);
+          mk(new THREE.CylinderGeometry(0.050, 0.046, 0.23, 8), lf, 0, -0.115, 0);
+          mk(new THREE.CylinderGeometry(0.050, 0.046, 0.23, 8), rf, 0, -0.115, 0);
+        } else if (itemId === 't5') { // 황금 갑옷
+          const gMat = new THREE.MeshLambertMaterial({ color: 0xf59e0b, emissive: 0x7a4f00, emissiveIntensity: 0.15 });
+          mk(new THREE.BoxGeometry(0.42, 0.46, 0.22), c, 0, 0, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.062, 0.056, 0.23, 8), la, 0, -0.115, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.062, 0.056, 0.23, 8), ra, 0, -0.115, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.052, 0.048, 0.23, 8), lf, 0, -0.115, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.052, 0.048, 0.23, 8), rf, 0, -0.115, 0, gMat);
         }
 
+      // ── BOTTOM ──
+      } else if (slot === 'bottom') {
+        const h2 = bones['Hips'], lt = bones['LeftThigh'], rt = bones['RightThigh'];
+        const ls = bones['LeftShin'], rs = bones['RightShin'];
+        if (itemId === 'b1') { // 청바지
+          mk(new THREE.BoxGeometry(0.30, 0.18, 0.16), h2, 0, -0.01, 0);
+          mk(new THREE.CylinderGeometry(0.084, 0.074, 0.38, 8), lt, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.084, 0.074, 0.38, 8), rt, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.066, 0.058, 0.38, 8), ls, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.066, 0.058, 0.38, 8), rs, 0, -0.19, 0);
+        } else if (itemId === 'b2') { // 트레이닝
+          mk(new THREE.BoxGeometry(0.32, 0.19, 0.17), h2, 0, -0.01, 0);
+          mk(new THREE.CylinderGeometry(0.088, 0.078, 0.38, 8), lt, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.088, 0.078, 0.38, 8), rt, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.070, 0.064, 0.38, 8), ls, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.070, 0.064, 0.38, 8), rs, 0, -0.19, 0);
+        } else if (itemId === 'b3') { // 반바지
+          mk(new THREE.BoxGeometry(0.30, 0.18, 0.16), h2, 0, -0.01, 0);
+          mk(new THREE.CylinderGeometry(0.086, 0.078, 0.22, 8), lt, 0, -0.11, 0);
+          mk(new THREE.CylinderGeometry(0.086, 0.078, 0.22, 8), rt, 0, -0.11, 0);
+        } else if (itemId === 'b4') { // 정장 바지
+          mk(new THREE.BoxGeometry(0.30, 0.18, 0.16), h2, 0, -0.01, 0);
+          mk(new THREE.CylinderGeometry(0.082, 0.072, 0.38, 8), lt, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.082, 0.072, 0.38, 8), rt, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.064, 0.056, 0.38, 8), ls, 0, -0.19, 0);
+          mk(new THREE.CylinderGeometry(0.064, 0.056, 0.38, 8), rs, 0, -0.19, 0);
+        } else if (itemId === 'b5') { // 황금 바지
+          const gMat = new THREE.MeshLambertMaterial({ color: 0xfcd34d, emissive: 0x7a4f00, emissiveIntensity: 0.1 });
+          mk(new THREE.BoxGeometry(0.32, 0.19, 0.17), h2, 0, -0.01, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.086, 0.076, 0.38, 8), lt, 0, -0.19, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.086, 0.076, 0.38, 8), rt, 0, -0.19, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.068, 0.060, 0.38, 8), ls, 0, -0.19, 0, gMat);
+          mk(new THREE.CylinderGeometry(0.068, 0.060, 0.38, 8), rs, 0, -0.19, 0, gMat);
+        }
+
+      // ── SHOES ──
       } else if (slot === 'shoes') {
         const lf2 = bones['LeftFoot'], rf2 = bones['RightFoot'];
-        const h = itemId === 's3' ? 0.12 : 0.065; // 부츠는 더 높게
-        mk(new THREE.BoxGeometry(0.105, h, 0.19), lf2,  0.008, -(h/2), 0.04);
-        mk(new THREE.BoxGeometry(0.105, h, 0.19), rf2, -0.008, -(h/2), 0.04);
+        if (itemId === 's1') { // 운동화
+          mk(new THREE.BoxGeometry(0.10, 0.065, 0.18), lf2, 0.008, -0.03, 0.04);
+          mk(new THREE.BoxGeometry(0.10, 0.065, 0.18), rf2, -0.008, -0.03, 0.04);
+        } else if (itemId === 's2') { // 슬리퍼
+          mk(new THREE.BoxGeometry(0.11, 0.03, 0.20), lf2, 0.008, -0.045, 0.04);
+          mk(new THREE.BoxGeometry(0.11, 0.03, 0.20), rf2, -0.008, -0.045, 0.04);
+        } else if (itemId === 's3') { // 구두
+          mk(new THREE.BoxGeometry(0.10, 0.07, 0.19), lf2, 0.008, -0.03, 0.04);
+          mk(new THREE.BoxGeometry(0.10, 0.07, 0.19), rf2, -0.008, -0.03, 0.04);
+          // 굽
+          mk(new THREE.BoxGeometry(0.08, 0.03, 0.06), lf2, 0.008, -0.06, -0.04);
+          mk(new THREE.BoxGeometry(0.08, 0.03, 0.06), rf2, -0.008, -0.06, -0.04);
+        } else if (itemId === 's4') { // 부츠
+          mk(new THREE.BoxGeometry(0.105, 0.07, 0.19), lf2, 0.008, -0.03, 0.04);
+          mk(new THREE.BoxGeometry(0.105, 0.07, 0.19), rf2, -0.008, -0.03, 0.04);
+          // 부츠 목
+          const ls2 = bones['LeftShin'], rs2 = bones['RightShin'];
+          mk(new THREE.CylinderGeometry(0.064, 0.060, 0.14, 8), ls2, 0, -0.31, 0);
+          mk(new THREE.CylinderGeometry(0.064, 0.060, 0.14, 8), rs2, 0, -0.31, 0);
+        } else if (itemId === 's5') { // 황금 신발
+          const gMat = new THREE.MeshLambertMaterial({ color: 0xfbbf24, emissive: 0x7a4f00, emissiveIntensity: 0.15 });
+          mk(new THREE.BoxGeometry(0.105, 0.07, 0.19), lf2, 0.008, -0.03, 0.04, gMat);
+          mk(new THREE.BoxGeometry(0.105, 0.07, 0.19), rf2, -0.008, -0.03, 0.04, gMat);
+        }
       }
 
       slot3D[slot] = { meshes, geos, mats };
