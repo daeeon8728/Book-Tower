@@ -12,6 +12,7 @@
 
   <style>
     :root {
+      color-scheme: light dark;
       --toss-blue: #3182F6;
       --toss-blue-hover: #1b64da;
       --toss-bg-light: #F2F4F6;
@@ -35,6 +36,7 @@
     }
 
     :root[data-theme="dark"] {
+      color-scheme: dark;
       --toss-bg-light: #121212;
       --toss-card: #1E1E1E;
       --toss-text-dark: #E5E8EB;
@@ -50,6 +52,7 @@
 
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
+        color-scheme: dark;
         --toss-bg-light: #121212;
         --toss-card: #1E1E1E;
         --toss-text-dark: #E5E8EB;
@@ -62,6 +65,10 @@
         --hud-btn-bg: rgba(45, 45, 45, 0.8);
         --timer-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
       }
+    }
+
+    :root[data-theme="light"] {
+      color-scheme: light;
     }
 
     * {
@@ -2345,11 +2352,12 @@
           setupRankObserver();
         }
       } catch (e) {
+        console.error("fetchRanking Error:", e);
         container.innerHTML = `
       <div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">
         <p>📡 서버에 접속할 수 없습니다.</p>
-        <p style="font-size:13px; margin-top:8px;">노트북 서버(server.js)를 실행해주세요.</p>
-        <p style="font-size:13px; margin-top:4px;">현재 내 누적 기록: ${Math.floor(getRecords().total / 60)}분</p>
+        <p style="font-size:13px; margin-top:8px; color:#F04438;">에러 내용: ${e.message}</p>
+        <p style="font-size:13px; margin-top:8px;">Vercel 로그를 확인해주세요.</p>
       </div>
     `;
       }
