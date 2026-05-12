@@ -2087,9 +2087,9 @@
 
         // items every 5 mins (300 sec)
         if (elapsed > 0 && elapsed % 300 === 0) {
-          spawnGachaItem();
+          try { spawnGachaItem(); } catch(e) { console.error('spawnGachaItem error:', e); }
         } else if (elapsed > 0 && elapsed % 60 === 0) {
-          spawnObject(); // normal book every 1 min
+          try { spawnObject(); } catch(e) { console.error('spawnObject error:', e); }
         }
       }
 
@@ -3000,6 +3000,11 @@
       if (!canvas || !wrap || typeof THREE === 'undefined') return;
 
       const W = wrap.clientWidth, H = wrap.clientHeight;
+      // hidden 상태에서 호출되면 크기가 0 → Three.js 크래시 방지
+      if (W <= 0 || H <= 0) {
+        // 나중에 탭이 보일 때 다시 호출될 것
+        return;
+      }
 
       // Scene
       t3.scene = new THREE.Scene();
