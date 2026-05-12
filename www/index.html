@@ -2199,6 +2199,17 @@
           views.diy.classList.remove('hidden'); allNavs[1].classList.add('active');
           renderCollection();
           updateTheme(0);
+          // 3D 뷰어: 탭 전환 후 캔버스 리사이즈 (hidden 해제 후 레이아웃 안정화 대기)
+          if (typeof viewerReady !== 'undefined' && viewerReady && typeof t3 !== 'undefined' && t3.renderer) {
+            setTimeout(function() {
+              var wrap = document.getElementById('avatar-3d-wrap');
+              if (wrap && wrap.clientWidth > 0 && wrap.clientHeight > 0) {
+                t3.camera.aspect = wrap.clientWidth / wrap.clientHeight;
+                t3.camera.updateProjectionMatrix();
+                t3.renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+              }
+            }, 200);
+          }
           break;
         case 'ranking':
           views.ranking.classList.remove('hidden'); allNavs[2].classList.add('active');
@@ -3446,23 +3457,9 @@
       const _origRC = window.renderCollection;
       window.renderCollection = function() {
         _origRC.apply(this, arguments);
+        // 첫 진입 시에만 Three.js 초기화 (viewerReady가 false일 때)
         if (!viewerReady && typeof THREE !== 'undefined') {
-          // 첫 진입: Three.js 초기화 (100ms 대기 → 브라우저 리플로우 완료 후)
-          setTimeout(() => init3DViewer(), 100);
-        } else if (viewerReady && t3.renderer) {
-          // 재진입: hidden→visible 전환 시 캔버스 크기가 0이었으므로 강제 리사이즈
-          // setTimeout 100ms: hidden 클래스 제거 후 브라우저 리플로우 대기
-          setTimeout(() => {
-            const wrap = document.getElementById('avatar-3d-wrap');
-            if (wrap) {
-              const nW = wrap.clientWidth, nH = wrap.clientHeight;
-              if (nW > 0 && nH > 0) {
-                t3.camera.aspect = nW / nH;
-                t3.camera.updateProjectionMatrix();
-                t3.renderer.setSize(nW, nH);
-              }
-            }
-          }, 100);
+          setTimeout(() => init3DViewer(), 200);
         }
       };
     })();
