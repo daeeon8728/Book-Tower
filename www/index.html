@@ -2333,22 +2333,11 @@
       let eq = data.equipped || { head: null, top: null, bottom: null, shoes: null };
       equippedItems = eq;
       
-      const cats = ['head', 'top', 'bottom', 'shoes'];
-      cats.forEach(cat => {
-        let el = document.getElementById(`avatar-layer-${cat}`);
-        if(eq[cat]) {
-          let item = AVATAR_ITEMS[cat].find(i => i.id === eq[cat]);
-          if(item) {
-            if (item.id === 'h5') {
-               el.innerHTML = `<div style="transform:scale(1.2) translateY(-10px);">${item.icon}</div>`;
-            } else {
-               el.innerHTML = item.icon;
-            }
-          }
-        } else {
-          el.innerHTML = '';
-        }
-      });
+      // 2D SVG 레이어는 3D 캔버스로 교체되어 더 이상 존재하지 않음
+      // → 3D 뷰어가 활성화되어 있으면 3D 장착 갱신
+      if (viewerReady) {
+        refreshEquipped3D();
+      }
     }
 
     function renderCollection() {
@@ -3457,11 +3446,12 @@
       window.renderCollection = function() {
         _origRC.apply(this, arguments);
         if (!viewerReady && typeof THREE !== 'undefined') {
-          // 첫 진입: Three.js 초기화
-          requestAnimationFrame(() => init3DViewer());
+          // 첫 진입: Three.js 초기화 (100ms 대기 → 브라우저 리플로우 완료 후)
+          setTimeout(() => init3DViewer(), 100);
         } else if (viewerReady && t3.renderer) {
-          // 재진입: hidden→visible 전환 시 캔버스 크기가 0이 되어 있으므로 강제 리사이즈
-          requestAnimationFrame(() => {
+          // 재진입: hidden→visible 전환 시 캔버스 크기가 0이었으므로 강제 리사이즈
+          // setTimeout 100ms: hidden 클래스 제거 후 브라우저 리플로우 대기
+          setTimeout(() => {
             const wrap = document.getElementById('avatar-3d-wrap');
             if (wrap) {
               const nW = wrap.clientWidth, nH = wrap.clientHeight;
@@ -3471,7 +3461,7 @@
                 t3.renderer.setSize(nW, nH);
               }
             }
-          });
+          }, 100);
         }
       };
     })();
