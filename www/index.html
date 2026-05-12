@@ -902,7 +902,7 @@
 
   <!-- View 4: Ranking -->
   <div id="ranking-view" class="view-wrapper hidden">
-    <div class="dash-title">실시간 랭킹 (Local)</div>
+    <div class="dash-title">실시간 랭킹</div>
     <div class="rank-list" id="rank-list" style="padding-bottom: 80px;">
       <!-- JS Generated -->
       <div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">불러오는 중...</div>
@@ -2291,7 +2291,7 @@
       // Removed old diy logic
     }
 
-    // Ranking API Call (Local DB constraint requested)
+    // Ranking API Call
     async function syncRanking() {
       let r = getRecords();
       try {
@@ -2300,7 +2300,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             name: r.userName, 
-            score: r.total,
+            score: parseFloat((r.maxHeight || 0).toFixed(1)), // 높이를 점수로 전송
             digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
           })
         });
@@ -2328,7 +2328,7 @@
             <div class="rank-num">${i + 1}</div>
             <div class="rank-name">${isMe ? '나 (' + user.name + ')' : user.name}</div>
           </div>
-          <div class="rank-score">${Math.floor(user.score / 60)}분</div>
+          <div class="rank-score">${Number(user.score).toFixed(1)}m</div>
         </div>
       `;
         });
@@ -2340,7 +2340,7 @@
           <div class="rank-num" style="color:white;">${myRankInfo.rank}</div>
           <div class="rank-name" style="color:white;">나 (${myName})</div>
         </div>
-        <div class="rank-score" style="color:white;">${Math.floor(myRankInfo.score / 60)}분</div>
+        <div class="rank-score" style="color:white;">${Number(myRankInfo.score).toFixed(1)}m</div>
       `;
           setupRankObserver();
         }
