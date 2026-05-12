@@ -1508,7 +1508,7 @@
        3. Matter.js Setup & Persistence
     ======================================= */
     const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
-    const engine = Engine.create({ positionIterations: 12, velocityIterations: 10 });
+    const engine = Engine.create({ positionIterations: 30, velocityIterations: 20 });
     engine.world.gravity.x = 0;
     engine.world.gravity.y = 1;
 
@@ -1530,7 +1530,7 @@
         options: { width: w, height: h, wireframes: false, background: 'transparent' }
       });
 
-      ground = Bodies.rectangle(w / 2, h + 50, w * 3, 100, { isStatic: true, friction: 1, frictionStatic: 1, render: { fillStyle: 'transparent' } });
+      ground = Bodies.rectangle(w / 2, h + 50, w * 3, 100, { isStatic: true, friction: 1, frictionStatic: 10, restitution: 0, render: { fillStyle: 'transparent' } });
       Composite.add(engine.world, [ground]);
 
       Render.run(render);
@@ -1676,12 +1676,12 @@
       const spawnY = highestY - boxHeight - 150;
       const texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
 
-      // 책보다 약간만 무겁게 (기존: density 5~45 → 책들 짓눌러 겹침 유발)
+      // 책과 완전히 동일한 무게/마찰 (무거운 아이템이 아래 책을 짓누르는 문제 방지)
       const newObj = Matter.Bodies.rectangle(spawnX, spawnY, boxWidth, boxHeight, {
         restitution: 0.0,
-        friction: 0.95,          // 책(0.9)과 비슷한 수준
-        frictionStatic: 4.0,     // 미끄러지지 않도록 적당한 정적 마찰
-        density: 0.7,            // 책(0.5)보다 약간 무거운 정도
+        friction: 0.9,           // 책과 동일
+        frictionStatic: 3.0,     // 책과 동일 (easy 모드)
+        density: 0.5,            // 책과 완전히 동일한 무게
         slop: 0.01,              // 겹침 허용 범위 축소 (기존 0.05 → 0.01)
         angle: 0,
         customType: type,
