@@ -46,7 +46,7 @@
       --toss-text-gray: #A0AAB5;
       --toss-border: #333D4B;
       --bg-stage-0: #121212;
-      
+
       --nav-bg: rgba(30, 30, 30, 0.85);
       --hud-bg: rgba(30, 30, 30, 0.9);
       --hud-btn-bg: rgba(45, 45, 45, 0.8);
@@ -62,7 +62,7 @@
         --toss-text-gray: #A0AAB5;
         --toss-border: #333D4B;
         --bg-stage-0: #121212;
-        
+
         --nav-bg: rgba(30, 30, 30, 0.85);
         --hud-bg: rgba(30, 30, 30, 0.9);
         --hud-btn-bg: rgba(45, 45, 45, 0.8);
@@ -78,7 +78,7 @@
       --toss-text-gray: #8B95A1;
       --toss-border: #E5E8EB;
       --bg-stage-0: #FFFFFF;
-      
+
       --nav-bg: rgba(255, 255, 255, 0.85);
       --hud-bg: rgba(255, 255, 255, 0.9);
       --hud-btn-bg: rgba(255, 255, 255, 0.8);
@@ -158,9 +158,22 @@
     }
 
     @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(-8px); }
-      60% { transform: translateY(-4px); }
+
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateY(0);
+      }
+
+      40% {
+        transform: translateY(-8px);
+      }
+
+      60% {
+        transform: translateY(-4px);
+      }
     }
 
     canvas {
@@ -834,9 +847,11 @@
 
     <div class="calendar-card" style="margin-top: 16px;">
       <div class="cal-title" style="display:flex; justify-content:space-between; align-items:center;">
-        <span onclick="changeCalendarMonth(-1)" style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">◀</span>
+        <span onclick="changeCalendarMonth(-1)"
+          style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">◀</span>
         <span id="cal-month-title">이번 달 기록 달력</span>
-        <span onclick="changeCalendarMonth(1)" style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">▶</span>
+        <span onclick="changeCalendarMonth(1)"
+          style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">▶</span>
       </div>
       <div id="monthly-calendar"
         style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; text-align:center;">
@@ -847,9 +862,12 @@
     <div
       style="width:100%; max-width:400px; margin-top: 32px; font-size: 18px; font-weight: 800; color: var(--toss-text-dark); text-align: left; position: relative;">
       오늘의 집중 과목
-      <div id="subject-tooltip" style="position: absolute; right: 0; top: -10px; background: var(--toss-blue); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; animation: bounce 2s infinite; pointer-events: none;">
+      <div id="subject-tooltip"
+        style="position: absolute; right: 0; top: -10px; background: var(--toss-blue); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; animation: bounce 2s infinite; pointer-events: none;">
         과목을 선택해서 시작!
-        <div style="position: absolute; bottom: -4px; right: 20px; width: 8px; height: 8px; background: var(--toss-blue); transform: rotate(45deg);"></div>
+        <div
+          style="position: absolute; bottom: -4px; right: 20px; width: 8px; height: 8px; background: var(--toss-blue); transform: rotate(45deg);">
+        </div>
       </div>
     </div>
     <div class="subject-list" id="subject-list-container">
@@ -889,30 +907,43 @@
   <!-- View 3: Avatar & Collection (Items) -->
   <div id="diy-view" class="view-wrapper hidden" style="padding: 0; display: flex; flex-direction: column;">
     <!-- Top: 3D Avatar Viewer (Three.js) -->
-    <div id="avatar-3d-wrap" style="flex: 1; position: relative; background: #dbeafe; overflow: hidden; min-height: 260px;">
+    <div id="avatar-3d-wrap"
+      style="flex: 1; position: relative; background: #dbeafe; overflow: hidden; min-height: 260px;">
       <!-- touch-action:none → 터치 드래그 시 브라우저 스크롤 방지 (모바일 핵심) -->
       <canvas id="avatar-3d-canvas" style="width:100%; height:100%; display:block; touch-action:none;"></canvas>
 
       <!-- 로딩 표시 -->
-      <div id="avatar-3d-loading" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--toss-text-gray); pointer-events:none;">
+      <div id="avatar-3d-loading"
+        style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--toss-text-gray); pointer-events:none;">
         3D 뷰 초기화 중...
       </div>
 
       <!-- 상단 라벨 -->
-      <div style="position:absolute; top:12px; left:50%; transform:translateX(-50%); font-size:13px; font-weight:800; color:#1e40af; background:rgba(255,255,255,0.7); padding:4px 12px; border-radius:20px; pointer-events:none;">
+      <div
+        style="position:absolute; top:12px; left:50%; transform:translateX(-50%); font-size:13px; font-weight:800; color:#1e40af; background:rgba(255,255,255,0.7); padding:4px 12px; border-radius:20px; pointer-events:none;">
         나의 3D 아바타
       </div>
 
       <!-- 아이템은 공부 중 5분마다 가챠로 해금됩니다 -->
     </div>
-    
+
     <!-- Bottom 1/2: Item Tabs -->
-    <div style="flex: 1; background: var(--toss-bg-light); border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 16px rgba(0,0,0,0.05); margin-top: -20px;">
-      <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--toss-border); padding-bottom: 10px; margin-bottom: 16px;">
-        <div class="avatar-tab active" onclick="switchAvatarTab('head')" id="tab-head" style="font-weight: 700; cursor: pointer; color: var(--toss-blue); text-align: center; flex: 1;">머리<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-head">0/5</span></div>
-        <div class="avatar-tab" onclick="switchAvatarTab('top')" id="tab-top" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">상의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-top">0/5</span></div>
-        <div class="avatar-tab" onclick="switchAvatarTab('bottom')" id="tab-bottom" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">하의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-bottom">0/5</span></div>
-        <div class="avatar-tab" onclick="switchAvatarTab('shoes')" id="tab-shoes" style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">신발<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-shoes">0/5</span></div>
+    <div
+      style="flex: 1; background: var(--toss-bg-light); border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 16px rgba(0,0,0,0.05); margin-top: -20px;">
+      <div
+        style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--toss-border); padding-bottom: 10px; margin-bottom: 16px;">
+        <div class="avatar-tab active" onclick="switchAvatarTab('head')" id="tab-head"
+          style="font-weight: 700; cursor: pointer; color: var(--toss-blue); text-align: center; flex: 1;">머리<br><span
+            style="font-size: 12px; color: var(--toss-text-gray);" id="count-head">0/5</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('top')" id="tab-top"
+          style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">
+          상의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-top">0/5</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('bottom')" id="tab-bottom"
+          style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">
+          하의<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-bottom">0/5</span></div>
+        <div class="avatar-tab" onclick="switchAvatarTab('shoes')" id="tab-shoes"
+          style="font-weight: 600; cursor: pointer; color: var(--toss-text-gray); text-align: center; flex: 1;">
+          신발<br><span style="font-size: 12px; color: var(--toss-text-gray);" id="count-shoes">0/5</span></div>
       </div>
       <div class="diy-grid" id="collection-grid" style="overflow-y: auto; padding-bottom: 80px;">
         <!-- JS Generated -->
@@ -948,7 +979,8 @@
       </div>
 
       <div class="toss-card" style="padding: 20px;">
-        <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-theme" onclick="toggleTheme()">테마: 시스템 기본</button>
+        <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-theme" onclick="toggleTheme()">테마: 시스템
+          기본</button>
         <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-vibrate" onclick="toggleVibration()">진동:
           켜짐</button>
         <button class="btn btn-secondary" style="color: #F04438;" onclick="resetData()">데이터 초기화</button>
@@ -1130,8 +1162,10 @@
       <div class="form-group" style="margin-top: 16px;">
         <div class="form-label" style="text-align: left;">오늘의 할 일/메모</div>
         <div style="display:flex; gap:8px;">
-          <input type="text" id="cal-detail-memo" class="form-input" style="flex:1; font-size:14px; font-weight:normal;" placeholder="메모를 입력하세요">
-          <button class="btn btn-primary" style="width: max-content; padding: 0 16px; border-radius: 12px;" onclick="saveDayMemo()">저장</button>
+          <input type="text" id="cal-detail-memo" class="form-input" style="flex:1; font-size:14px; font-weight:normal;"
+            placeholder="메모를 입력하세요">
+          <button class="btn btn-primary" style="width: max-content; padding: 0 16px; border-radius: 12px;"
+            onclick="saveDayMemo()">저장</button>
         </div>
       </div>
 
@@ -1198,7 +1232,7 @@
       isWarningCooldown: false,
       currentSubject: '수학'
     };
-    
+
     let calendarViewDate = getOffsetDate();
     let currentDetailDateStr = '';
 
@@ -1270,7 +1304,7 @@
       if (needsSave) {
         localStorage.setItem('bookTowerv2', JSON.stringify(data));
       }
-      
+
       return data;
     }
 
@@ -1346,7 +1380,7 @@
 
           let isToday = (day === now.getDate() && calendarViewDate.getMonth() === now.getMonth() && calendarViewDate.getFullYear() === now.getFullYear());
           let border = isToday ? '2px solid var(--toss-blue)' : 'none';
-          
+
           let effectHtml = memo ? `<div style="position:absolute; top:4px; right:4px; width:6px; height:6px; background:var(--toss-blue); border-radius:50%; box-shadow: 0 0 4px rgba(49, 130, 246, 0.5);"></div>` : '';
 
           calEl.innerHTML += `<div onclick="showDayDetail('${key}')" style="position:relative; cursor:pointer; padding:8px 0; border-radius:8px; background:${bgColor}; color:${textColor}; font-size:13px; font-weight:600; border:${border};">${day}${effectHtml}</div>`;
@@ -1454,7 +1488,7 @@
       // Hide tooltip once clicked
       const tooltip = document.getElementById('subject-tooltip');
       if (tooltip) tooltip.style.display = 'none';
-      
+
       if (state.mode !== 'idle') {
         // 이미 진행 중인 세션이 있다면 타이머 화면으로 바로 이동
         switchTab('timer');
@@ -1468,7 +1502,7 @@
       currentDetailDateStr = dateStr;
       let data = getRecords();
       let dayData = data.daily[dateStr] || { total: 0, subjects: {}, subjectList: [], memo: '' };
-      
+
       document.getElementById('cal-detail-title').innerText = dateStr;
       document.getElementById('cal-detail-total').innerText = Math.floor((dayData.total || 0) / 60) + "분";
 
@@ -1508,7 +1542,11 @@
        3. Matter.js Setup & Persistence
     ======================================= */
     const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
-    const engine = Engine.create({ positionIterations: 30, velocityIterations: 20 });
+    const engine = Engine.create({
+      positionIterations: 30,
+      velocityIterations: 20,
+      enableSleeping: true       // 안정된 책은 자동 sleep → 자체 붕괴 방지, 기울이면 wake
+    });
     engine.world.gravity.x = 0;
     engine.world.gravity.y = 1;
 
@@ -1630,7 +1668,7 @@
       const w = window.innerWidth;
       let r = Math.random() * 100;
       let grade = 'common';
-      
+
       // 1% 전설, 4% 영웅, 20% 희귀, 75% 일반
       if (r < 1) grade = 'legend';
       else if (r < 5) grade = 'epic';
@@ -1643,28 +1681,28 @@
         let items = AVATAR_ITEMS[cat].filter(i => i.grade === grade);
         candidates = candidates.concat(items);
       });
-      
+
       let item;
       if (grade === 'legend') {
-          // 전설 내에서 총장 모자(h5)가 뜰 확률은 1%
-          if (Math.random() * 100 < 1) {
-              item = candidates.find(i => i.id === 'h5');
-          } else {
-              // 나머지는 총장 모자를 제외한 전설템 중에서 균등 픽
-              let others = candidates.filter(i => i.id !== 'h5');
-              item = others[Math.floor(Math.random() * others.length)];
-          }
+        // 전설 내에서 총장 모자(h5)가 뜰 확률은 1%
+        if (Math.random() * 100 < 1) {
+          item = candidates.find(i => i.id === 'h5');
+        } else {
+          // 나머지는 총장 모자를 제외한 전설템 중에서 균등 픽
+          let others = candidates.filter(i => i.id !== 'h5');
+          item = others[Math.floor(Math.random() * others.length)];
+        }
       } else {
-          item = candidates[Math.floor(Math.random() * candidates.length)];
+        item = candidates[Math.floor(Math.random() * candidates.length)];
       }
-      
+
       let type = item.id;
 
       // 아이템 박스 외형 설정: 책과 비슷한 폭, 두께만 2배 (60px)
       let boxColor = grade === 'legend' ? '#FFDF00' : grade === 'epic' ? '#a855f7' : grade === 'rare' ? '#f97316' : '#9ca3af';
       let boxWidth = 110 + Math.random() * 30;  // 책과 동일한 폭 범위
       let boxHeight = 60;                       // 책 두께(30px)의 2배
-      let textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${boxWidth}" height="${boxHeight}"><rect width="${boxWidth}" height="${boxHeight}" rx="6" fill="${boxColor}" stroke="#ffffff" stroke-width="3"/><rect x="4" y="4" width="${boxWidth-8}" height="${boxHeight-8}" rx="4" fill="${boxColor}" opacity="0.7"/><text x="${boxWidth/2}" y="${boxHeight/2 + 6}" font-size="20" font-weight="bold" text-anchor="middle" fill="#fff" style="text-shadow:1px 1px 2px rgba(0,0,0,0.5);">${item.name}</text></svg>`;
+      let textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${boxWidth}" height="${boxHeight}"><rect width="${boxWidth}" height="${boxHeight}" rx="6" fill="${boxColor}" stroke="#ffffff" stroke-width="3"/><rect x="4" y="4" width="${boxWidth - 8}" height="${boxHeight - 8}" rx="4" fill="${boxColor}" opacity="0.7"/><text x="${boxWidth / 2}" y="${boxHeight / 2 + 6}" font-size="20" font-weight="bold" text-anchor="middle" fill="#fff" style="text-shadow:1px 1px 2px rgba(0,0,0,0.5);">${item.name}</text></svg>`;
 
       let groundY = window.innerHeight + 50;
       let highestY = groundY;
@@ -1705,15 +1743,15 @@
       // 알림 표시
       let gradeName = grade === 'legend' ? '전설' : grade === 'epic' ? '영웅' : grade === 'rare' ? '희귀' : '일반';
       spawnNotification("아이템 획득!", `[${gradeName}] ${item.name}을(를) 획득했습니다!`);
-      
+
       // 즉시 도감 업데이트 (열려있을 경우)
       if (!document.getElementById('diy-view').classList.contains('hidden')) {
-          renderCollection();
-          ['head', 'top', 'bottom', 'shoes'].forEach(cat => {
-            let count = AVATAR_ITEMS[cat].filter(i => data.unlockedItems.includes(i.id)).length;
-            let total = AVATAR_ITEMS[cat].length;
-            document.getElementById(`count-${cat}`).innerText = `${count}/${total}`;
-          });
+        renderCollection();
+        ['head', 'top', 'bottom', 'shoes'].forEach(cat => {
+          let count = AVATAR_ITEMS[cat].filter(i => data.unlockedItems.includes(i.id)).length;
+          let total = AVATAR_ITEMS[cat].length;
+          document.getElementById(`count-${cat}`).innerText = `${count}/${total}`;
+        });
       }
     }
 
@@ -1922,12 +1960,12 @@
 
         // 탑을 무너뜨리기 위해 모든 객체에 강한 랜덤 힘 적용 (FR-10)
         state.books.forEach(b => {
-           Matter.Body.applyForce(b, b.position, {
-              x: (Math.random() - 0.5) * 0.5,
-              y: -Math.random() * 0.5
-           });
+          Matter.Body.applyForce(b, b.position, {
+            x: (Math.random() - 0.5) * 0.5,
+            y: -Math.random() * 0.5
+          });
         });
-        
+
         gX += (Math.random() - 0.5) * 6;
         gY = 1.0 + (Math.random() * 2);
 
@@ -1937,6 +1975,13 @@
       } else {
         dot.classList.remove('unstable');
         if (txt) txt.innerText = '안정 (집중 중)';
+      }
+
+      // 폰 기울임 시 잠든 책들을 깨워서 물리 반응하게 함
+      if (isCheat || Math.abs(gX) > 0.05) {
+        state.books.forEach(b => {
+          if (b.isSleeping) Matter.Sleeping.set(b, false);
+        });
       }
 
       engine.world.gravity.x = gX; engine.world.gravity.y = gY;
@@ -1995,9 +2040,9 @@
 
       if (state.books.length === 0) spawnObject();
       saveSessionState();
-      
+
       if (window.AndroidPinning) {
-          window.AndroidPinning.startPinning();
+        window.AndroidPinning.startPinning();
       }
     }
 
@@ -2010,7 +2055,7 @@
         // 물리 엔진 완전 정지 (공중의 책도 스탑)
         if (runnerObj) runnerObj.enabled = false;
         if (window.AndroidPinning) {
-            window.AndroidPinning.stopPinning();
+          window.AndroidPinning.stopPinning();
         }
       } else {
         btn.innerText = '일시정지';
@@ -2018,7 +2063,7 @@
         if (runnerObj) runnerObj.enabled = true;
         state.lastTickTime = Date.now();
         if (window.AndroidPinning) {
-            window.AndroidPinning.startPinning();
+          window.AndroidPinning.startPinning();
         }
       }
       saveSessionState();
@@ -2035,7 +2080,7 @@
       }
 
       if (window.AndroidPinning) {
-          window.AndroidPinning.stopPinning();
+        window.AndroidPinning.stopPinning();
       }
 
       document.getElementById('rest-modal').classList.add('hidden');
@@ -2065,7 +2110,7 @@
       let now = Date.now();
       let delta = Math.floor((now - state.lastTickTime) / 1000);
       if (delta < 1) return; // Wait for full second
-      
+
       state.lastTickTime += delta * 1000;
 
       if (state.timerMode === 'normal') {
@@ -2083,9 +2128,9 @@
 
         // items every 5 mins (300 sec)
         if (elapsed > 0 && elapsed % 300 === 0) {
-          try { spawnGachaItem(); } catch(e) { console.error('spawnGachaItem error:', e); }
+          try { spawnGachaItem(); } catch (e) { console.error('spawnGachaItem error:', e); }
         } else if (elapsed > 0 && elapsed % 60 === 0) {
-          try { spawnObject(); } catch(e) { console.error('spawnObject error:', e); }
+          try { spawnObject(); } catch (e) { console.error('spawnObject error:', e); }
         }
       }
 
@@ -2097,17 +2142,17 @@
 
           state.mode = 'rest';
           if (window.AndroidPinning) {
-              window.AndroidPinning.stopPinning();
+            window.AndroidPinning.stopPinning();
           }
           state.timeLeft = state.restGoalMins * 60;
           state.lastTickTime = Date.now();
           state.timerInterval = setInterval(tick, 1000);
           spawnNotification("집중 완료!", "휴식 시간이 자동으로 시작되었습니다.");
-          
+
           // YouTube 자동 재생 (FR-09)
           const iframe = document.getElementById('rest-youtube-iframe');
           if (iframe && iframe.contentWindow) {
-             iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+            iframe.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
           }
         } else {
           if (navigator.vibrate) try { navigator.vibrate([200, 100, 200]); } catch (e) { }
@@ -2125,8 +2170,8 @@
             state.lastTickTime = Date.now();
             state.timerInterval = setInterval(tick, 1000);
             if (window.AndroidPinning) {
-                window.AndroidPinning.startPinning();
-                window.AndroidPinning.startForegroundService();
+              window.AndroidPinning.startPinning();
+              window.AndroidPinning.startForegroundService();
             }
             spawnNotification("휴식 완료!", "다음 뽀모도로를 시작합니다!");
           } else {
@@ -2201,7 +2246,7 @@
           updateTheme(0);
           // 3D 뷰어: 탭 전환 후 캔버스 리사이즈 (hidden 해제 후 레이아웃 안정화 대기)
           if (typeof viewerReady !== 'undefined' && viewerReady && typeof t3 !== 'undefined' && t3.renderer) {
-            setTimeout(function() {
+            setTimeout(function () {
               var wrap = document.getElementById('avatar-3d-wrap');
               if (wrap && wrap.clientWidth > 0 && wrap.clientHeight > 0) {
                 t3.camera.aspect = wrap.clientWidth / wrap.clientHeight;
@@ -2322,14 +2367,14 @@
     function equipItem(category, itemId) {
       let data = getRecords();
       if (!data.equipped) data.equipped = { head: null, top: null, bottom: null, shoes: null };
-      
+
       // Toggle logic
       if (data.equipped[category] === itemId) {
         data.equipped[category] = null;
       } else {
         data.equipped[category] = itemId;
       }
-      
+
       localStorage.setItem('bookTowerv2', JSON.stringify(data));
       updateAvatarPreview();
       renderCollection();
@@ -2339,7 +2384,7 @@
       let data = getRecords();
       let eq = data.equipped || { head: null, top: null, bottom: null, shoes: null };
       equippedItems = eq;
-      
+
       // 2D SVG 레이어는 3D 캔버스로 교체되어 더 이상 존재하지 않음
       // → 3D 뷰어가 활성화되어 있으면 3D 장착 갱신
       if (viewerReady) {
@@ -2364,7 +2409,7 @@
         let isUnlocked = unlocked.includes(item.id);
         let isEquipped = (eq[currentAvatarTab] === item.id);
         let borderStyle = isEquipped ? 'border: 2px solid var(--toss-blue); background:#F0F6FF;' : 'border: 2px solid transparent; background:var(--toss-card);';
-        
+
         let gradeColors = { common: '#9ca3af', rare: '#f97316', epic: '#a855f7', legend: '#eab308' };
         let gColor = gradeColors[item.grade];
 
@@ -2634,12 +2679,12 @@
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('top-hud').classList.remove('hidden');
             document.getElementById('btn-pause').innerText = '다시 시작';
-            
+
             initMatter(); // 물리 엔진 초기화 및 책 복구
             if (runnerObj) runnerObj.enabled = false; // 물리 엔진 정지
           }
         }
-      } catch(e) {}
+      } catch (e) { }
     }
 
     // Initial Loads
@@ -2829,7 +2874,7 @@
       document.getElementById('time-display').innerText = formatTime(state.timeLeft);
       document.getElementById('height-display').innerText = `0.0m (0개)`;
       updateTheme(0);
-      
+
       alert("타이머가 초기화 되었습니다. 새로 시작해주세요!");
       switchTab('home');
     }
@@ -3003,7 +3048,7 @@
     function init3DViewer() {
       if (viewerReady) return;
       const canvas = document.getElementById('avatar-3d-canvas');
-      const wrap   = document.getElementById('avatar-3d-wrap');
+      const wrap = document.getElementById('avatar-3d-wrap');
       if (!canvas || !wrap || typeof THREE === 'undefined') return;
 
       const W = wrap.clientWidth, H = wrap.clientHeight;
@@ -3049,13 +3094,13 @@
 
       // OrbitControls ──────────────────────────────────────────
       t3.controls = new THREE.OrbitControls(t3.camera, canvas);
-      t3.controls.enableDamping   = true;      // 부드러운 관성
-      t3.controls.dampingFactor   = 0.05;
+      t3.controls.enableDamping = true;      // 부드러운 관성
+      t3.controls.dampingFactor = 0.05;
       t3.controls.screenSpacePanning = true;   // 화면 밖 이탈 방지
-      t3.controls.rotateSpeed    = isMobileDevice ? 0.7 : 1.0; // 모바일 정교 조작
-      t3.controls.minDistance    = 1.2;
-      t3.controls.maxDistance    = 5.5;
-      t3.controls.maxPolarAngle  = Math.PI * 0.88;
+      t3.controls.rotateSpeed = isMobileDevice ? 0.7 : 1.0; // 모바일 정교 조작
+      t3.controls.minDistance = 1.2;
+      t3.controls.maxDistance = 5.5;
+      t3.controls.maxPolarAngle = Math.PI * 0.88;
       t3.controls.target.set(0, 0.95, 0);
       t3.controls.update();
 
@@ -3099,23 +3144,23 @@
       }
 
       // 본 계층 ───────────────────────────────────────────────
-      const hips     = bone('Hips',         0,  0.88, 0);
-      const spine    = bone('Spine',        0,  0.14, 0);
-      const chest    = bone('Chest',        0,  0.18, 0);
-      const neck     = bone('Neck',         0,  0.21, 0);
-      const head     = bone('Head',         0,  0.13, 0);
-      const lArm     = bone('LeftArm',     -0.21, 0.16, 0);
-      const lFore    = bone('LeftForearm',  0, -0.24, 0);
-      const lHand    = bone('LeftHand',     0, -0.24, 0);
-      const rArm     = bone('RightArm',     0.21, 0.16, 0);
-      const rFore    = bone('RightForearm', 0, -0.24, 0);
-      const rHand    = bone('RightHand',    0, -0.24, 0);
-      const lThigh   = bone('LeftThigh',  -0.10, -0.05, 0);
-      const lShin    = bone('LeftShin',    0, -0.38, 0);
-      const lFoot    = bone('LeftFoot',    0, -0.38, 0);
-      const rThigh   = bone('RightThigh',  0.10, -0.05, 0);
-      const rShin    = bone('RightShin',   0, -0.38, 0);
-      const rFoot    = bone('RightFoot',   0, -0.38, 0);
+      const hips = bone('Hips', 0, 0.88, 0);
+      const spine = bone('Spine', 0, 0.14, 0);
+      const chest = bone('Chest', 0, 0.18, 0);
+      const neck = bone('Neck', 0, 0.21, 0);
+      const head = bone('Head', 0, 0.13, 0);
+      const lArm = bone('LeftArm', -0.21, 0.16, 0);
+      const lFore = bone('LeftForearm', 0, -0.24, 0);
+      const lHand = bone('LeftHand', 0, -0.24, 0);
+      const rArm = bone('RightArm', 0.21, 0.16, 0);
+      const rFore = bone('RightForearm', 0, -0.24, 0);
+      const rHand = bone('RightHand', 0, -0.24, 0);
+      const lThigh = bone('LeftThigh', -0.10, -0.05, 0);
+      const lShin = bone('LeftShin', 0, -0.38, 0);
+      const lFoot = bone('LeftFoot', 0, -0.38, 0);
+      const rThigh = bone('RightThigh', 0.10, -0.05, 0);
+      const rShin = bone('RightShin', 0, -0.38, 0);
+      const rFoot = bone('RightFoot', 0, -0.38, 0);
 
       root.add(hips);
       hips.add(spine); spine.add(chest);
@@ -3142,18 +3187,18 @@
       // 눈 (작은 구)
       const eyeMat = new THREE.MeshLambertMaterial({ color: 0x1a1a2e });
       m(new THREE.SphereGeometry(0.018, 8, 8), eyeMat, head, -0.045, 0.065, 0.125);
-      m(new THREE.SphereGeometry(0.018, 8, 8), eyeMat, head,  0.045, 0.065, 0.125);
+      m(new THREE.SphereGeometry(0.018, 8, 8), eyeMat, head, 0.045, 0.065, 0.125);
       // 볼 홍조
       const blushMat = new THREE.MeshLambertMaterial({ color: 0xf9a8d4, transparent: true, opacity: 0.5 });
       m(new THREE.SphereGeometry(0.03, 8, 8), blushMat, head, -0.075, 0.048, 0.115);
-      m(new THREE.SphereGeometry(0.03, 8, 8), blushMat, head,  0.075, 0.048, 0.115);
+      m(new THREE.SphereGeometry(0.03, 8, 8), blushMat, head, 0.075, 0.048, 0.115);
       // 목
       m(new THREE.CylinderGeometry(0.048, 0.055, 0.11, 8), skin, neck, 0, 0.055, 0);
       // 몸통 (기본 피부색 - 옷으로 가려짐)
       m(new THREE.BoxGeometry(0.34, 0.38, 0.16), skin, chest, 0, 0, 0);
       // 팔
-      m(new THREE.CylinderGeometry(0.05, 0.046, 0.22, 8), skin, lArm,  0, -0.11, 0);
-      m(new THREE.CylinderGeometry(0.05, 0.046, 0.22, 8), skin, rArm,  0, -0.11, 0);
+      m(new THREE.CylinderGeometry(0.05, 0.046, 0.22, 8), skin, lArm, 0, -0.11, 0);
+      m(new THREE.CylinderGeometry(0.05, 0.046, 0.22, 8), skin, rArm, 0, -0.11, 0);
       m(new THREE.CylinderGeometry(0.042, 0.038, 0.22, 8), skin, lFore, 0, -0.11, 0);
       m(new THREE.CylinderGeometry(0.042, 0.038, 0.22, 8), skin, rFore, 0, -0.11, 0);
       m(new THREE.SphereGeometry(0.055, 8, 8), skin, lHand, 0, -0.03, 0);
@@ -3163,10 +3208,10 @@
       // 다리
       m(new THREE.CylinderGeometry(0.08, 0.072, 0.36, 8), skin, lThigh, 0, -0.18, 0);
       m(new THREE.CylinderGeometry(0.08, 0.072, 0.36, 8), skin, rThigh, 0, -0.18, 0);
-      m(new THREE.CylinderGeometry(0.062, 0.054, 0.36, 8), skin, lShin,  0, -0.18, 0);
-      m(new THREE.CylinderGeometry(0.062, 0.054, 0.36, 8), skin, rShin,  0, -0.18, 0);
+      m(new THREE.CylinderGeometry(0.062, 0.054, 0.36, 8), skin, lShin, 0, -0.18, 0);
+      m(new THREE.CylinderGeometry(0.062, 0.054, 0.36, 8), skin, rShin, 0, -0.18, 0);
       // 발 (기본)
-      m(new THREE.BoxGeometry(0.096, 0.058, 0.17), skin, lFoot,  0.008, -0.03, 0.038);
+      m(new THREE.BoxGeometry(0.096, 0.058, 0.17), skin, lFoot, 0.008, -0.03, 0.038);
       m(new THREE.BoxGeometry(0.096, 0.058, 0.17), skin, rFoot, -0.008, -0.03, 0.038);
     }
 
@@ -3177,10 +3222,10 @@
       if (!prev) return;
       prev.meshes.forEach(mesh => {
         if (mesh.parent) mesh.parent.remove(mesh);
-        prev.geos.forEach(g => { try { g.dispose(); } catch(e){} });
+        prev.geos.forEach(g => { try { g.dispose(); } catch (e) { } });
         prev.mats.forEach(mat => {
           if (mat.map) mat.map.dispose();
-          try { mat.dispose(); } catch(e){}
+          try { mat.dispose(); } catch (e) { }
         });
       });
       slot3D[slot] = null;
@@ -3215,7 +3260,7 @@
           mk(new THREE.CylinderGeometry(0.13, 0.13, 0.07, 16), b, 0, 0.17, 0);
           mk(new THREE.CylinderGeometry(0.17, 0.17, 0.015, 16), b, 0, 0.14, 0.04);
         } else if (itemId === 'h2') { // 비니
-          mk(new THREE.SphereGeometry(0.14, 16, 12, 0, Math.PI*2, 0, Math.PI*0.6), b, 0, 0.16, 0);
+          mk(new THREE.SphereGeometry(0.14, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.6), b, 0, 0.16, 0);
           mk(new THREE.SphereGeometry(0.035, 8, 8), b, 0, 0.28, 0); // 꼭대기 폼폼
         } else if (itemId === 'h3') { // 밀짚 모자
           mk(new THREE.CylinderGeometry(0.08, 0.13, 0.1, 16), b, 0, 0.2, 0);
@@ -3248,10 +3293,10 @@
             label.position.set(0, 0.175, 0.138);
             b.add(label);
             geos.push(labelGeo); mats.push(labelMat); meshes.push(label);
-          } catch(e) {}
+          } catch (e) { }
         }
 
-      // ── TOP ──
+        // ── TOP ──
       } else if (slot === 'top') {
         const c = bones['Chest'], la = bones['LeftArm'], ra = bones['RightArm'];
         const lf = bones['LeftForearm'], rf = bones['RightForearm'];
@@ -3287,7 +3332,7 @@
           mk(new THREE.CylinderGeometry(0.052, 0.048, 0.23, 8), rf, 0, -0.115, 0, gMat);
         }
 
-      // ── BOTTOM ──
+        // ── BOTTOM ──
       } else if (slot === 'bottom') {
         const h2 = bones['Hips'], lt = bones['LeftThigh'], rt = bones['RightThigh'];
         const ls = bones['LeftShin'], rs = bones['RightShin'];
@@ -3322,7 +3367,7 @@
           mk(new THREE.CylinderGeometry(0.068, 0.060, 0.38, 8), rs, 0, -0.19, 0, gMat);
         }
 
-      // ── SHOES ──
+        // ── SHOES ──
       } else if (slot === 'shoes') {
         const lf2 = bones['LeftFoot'], rf2 = bones['RightFoot'];
         if (itemId === 's1') { // 운동화
@@ -3376,7 +3421,7 @@
       const studySeconds = data.daily[todayStr]?.total || 0;
 
       if (studySeconds < 300) {
-        alert(`보상을 받으려면 오늘 최소 5분 이상 집중해야 합니다.\n현재: ${Math.floor(studySeconds/60)}분 ${studySeconds%60}초`);
+        alert(`보상을 받으려면 오늘 최소 5분 이상 집중해야 합니다.\n현재: ${Math.floor(studySeconds / 60)}분 ${studySeconds % 60}초`);
         return;
       }
 
@@ -3455,9 +3500,9 @@
     // ★ 별도 <script> 블록: 첫 번째 스크립트의 function 선언은 window에 등록되므로
     //   window.renderCollection 으로 원본 캡처 후 덮어쓰기 가능.
     //   단, 'let viewerReady'는 window에 올라가지 않으므로 직접 변수명으로 참조해야 함.
-    (function() {
+    (function () {
       const _origRC = window.renderCollection;
-      window.renderCollection = function() {
+      window.renderCollection = function () {
         _origRC.apply(this, arguments);
         // 첫 진입 시에만 Three.js 초기화 (viewerReady가 false일 때)
         if (!viewerReady && typeof THREE !== 'undefined') {
@@ -3468,9 +3513,9 @@
 
     // ── 훅: equipItem ────────────────────────────────────────
     // 아이템 장착 시 3D 메시도 동기화. 이전 메시는 dispose로 메모리 해제.
-    (function() {
+    (function () {
       const _origEI = window.equipItem;
-      window.equipItem = function(category, itemId) {
+      window.equipItem = function (category, itemId) {
         _origEI.apply(this, arguments);
         // viewerReady, disposeSlot3D, buildItemMeshes: 모두 첫 번째 스크립트의 전역
         if (viewerReady) {
@@ -3485,4 +3530,4 @@
 
 </body>
 
-</html>
+</html>
