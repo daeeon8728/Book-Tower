@@ -1196,12 +1196,18 @@
     ======================================= */
     function getRecords() {
       let data = JSON.parse(localStorage.getItem('bookTowerv2'));
+      let needsSave = false;
       if (!data) {
         data = { total: 0, daily: {}, userName: '나', maxHeight: 0, vibrate: true, dropInterval: 60 };
+        needsSave = true;
       }
-      if (data.maxHeight === undefined) data.maxHeight = 0;
-      if (data.vibrate === undefined) data.vibrate = true;
-      if (data.dropInterval === undefined) data.dropInterval = 60;
+      if (!data.userId) {
+        data.userId = 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
+        needsSave = true;
+      }
+      if (data.maxHeight === undefined) { data.maxHeight = 0; needsSave = true; }
+      if (data.vibrate === undefined) { data.vibrate = true; needsSave = true; }
+      if (data.dropInterval === undefined) { data.dropInterval = 60; needsSave = true; }
 
       // Data Schema Migration & Initialization for Today
       const todayStr = getTodayStr();
@@ -1209,6 +1215,7 @@
       Object.keys(data.daily).forEach(k => {
         if (typeof data.daily[k] === 'number') {
           data.daily[k] = { total: data.daily[k], subjects: {}, subjectList: ['수학', '영어'] };
+          needsSave = true;
         }
       });
 
@@ -1220,13 +1227,21 @@
           if (lastDay && lastDay.subjectList) recentList = [...lastDay.subjectList];
         }
         data.daily[todayStr] = { total: 0, subjects: {}, subjectList: recentList };
+        needsSave = true;
       }
 
       // Ensure 'subjects' map is initialized
       data.daily[todayStr].subjectList.forEach(sj => {
-        if (data.daily[todayStr].subjects[sj] === undefined) data.daily[todayStr].subjects[sj] = 0;
+        if (data.daily[todayStr].subjects[sj] === undefined) {
+          data.daily[todayStr].subjects[sj] = 0;
+          needsSave = true;
+        }
       });
 
+      if (needsSave) {
+        localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      }
+      
       return data;
     }
 
@@ -2306,6 +2321,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
+            userId: r.userId,
             username: r.userName, 
             score: parseFloat((r.maxHeight || 0).toFixed(1)), // 높이를 점수로 전송
             digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
@@ -2330,10 +2346,11 @@
 
         let html = '';
         let myRankInfo = null;
+        let myId = getRecords().userId;
         let myName = getRecords().userName;
 
         data.forEach((user, i) => {
-          let isMe = (user.username === myName);
+          let isMe = (user.userId === myId); // 고유 ID로 사용자 매칭
           if (isMe) myRankInfo = { rank: i + 1, score: user.score, username: myName };
 
           html += `

@@ -27,9 +27,9 @@ export default async function handler(request, response) {
       // 닉네임 중복 체크 (FR-02)
       const { check } = request.query;
       if (check) {
-        const score = await kv.zscore('leaderboard', check);
-        // 존재하면 score는 숫자(또는 0), 없으면 null
-        if (score !== null) {
+        const nameTaken = await kv.get(`username:${check}:id`);
+        const oldScore = await kv.zscore('leaderboard', check);
+        if (nameTaken || oldScore !== null) {
           return response.status(200).json({ exists: true });
         } else {
           return response.status(200).json({ exists: false });
@@ -44,27 +44,42 @@ export default async function handler(request, response) {
         if (typeof leaderboard[0] === 'object' && leaderboard[0] !== null) {
           formatted = leaderboard.map((item, index) => ({
             id: index.toString(),
-            username: item.member,
+            userId: item.member,
             score: item.score
           }));
         } else {
-          // Flat array 처리 (예: ['username1', score1, 'username2', score2])
+          // Flat array 처리 (예: ['user_abc', score1, 'user_xyz', score2])
           for (let i = 0; i < leaderboard.length; i += 2) {
             formatted.push({
               id: Math.floor(i/2).toString(),
-              username: leaderboard[i],
+              userId: leaderboard[i],
               score: Number(leaderboard[i+1])
             });
           }
         }
       }
+
+      if (formatted.length === 0) return response.status(200).json([]);
+
+      const userKeys = formatted.map(f => `user:${f.userId}:name`);
+      let usernames = [];
+      if (userKeys.length > 0) {
+        usernames = await kv.mget(...userKeys);
+      }
+
+      const finalData = formatted.map((f, i) => ({
+        id: f.id,
+        userId: f.userId,
+        username: usernames[i] || f.userId, // 기존 데이터면 member 자체가 이름이므로 fallback 처리
+        score: f.score
+      }));
       
-      return response.status(200).json(JSON.parse(JSON.stringify(formatted)));
+      return response.status(200).json(JSON.parse(JSON.stringify(finalData)));
 
     } else if (request.method === 'POST') {
-      const { username, score, digest } = request.body;
+      const { userId, username, score, digest } = request.body;
       
-      if (!username || typeof score !== 'number') {
+      if (!userId || !username || typeof score !== 'number') {
         return response.status(400).json({ error: '잘못된 요청입니다.' });
       }
 
@@ -73,12 +88,39 @@ export default async function handler(request, response) {
         return response.status(403).json({ error: '데이터 위변조가 감지되었습니다. (Digest 불일치)' });
       }
 
+      const currentName = await kv.get(`user:${userId}:name`);
+      
+      if (currentName !== username) {
+        const nameTaken = await kv.get(`username:${username}:id`);
+        const oldScore = await kv.zscore('leaderboard', username);
+        
+        if (nameTaken && nameTaken !== userId) {
+          return response.status(400).json({ error: '이미 사용 중인 닉네임입니다.' });
+        }
+        
+        if (!nameTaken && oldScore !== null && currentName !== null) {
+          return response.status(400).json({ error: '이미 존재하는 과거 닉네임입니다.' });
+        }
+
+        if (currentName) {
+          await kv.del(`username:${currentName}:id`);
+        }
+        await kv.set(`username:${username}:id`, userId);
+        await kv.set(`user:${userId}:name`, username);
+
+        // 구 버전 사용자의 마이그레이션 처리 (이름으로 기록된 score를 userId로 이전)
+        if (!nameTaken && oldScore !== null && currentName === null) {
+          await kv.zadd('leaderboard', { score: oldScore, member: userId });
+          await kv.zrem('leaderboard', username);
+        }
+      }
+
       // 기존 점수 확인
-      const currentScore = await kv.zscore('leaderboard', username);
+      const currentScore = await kv.zscore('leaderboard', userId);
       
       // 기존 점수가 없거나 새로운 점수가 더 높을 경우에만 업데이트
       if (currentScore === null || score > currentScore) {
-        await kv.zadd('leaderboard', { score: score, member: username });
+        await kv.zadd('leaderboard', { score: score, member: userId });
       }
       
       return response.status(200).json({ success: true });
