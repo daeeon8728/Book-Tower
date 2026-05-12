@@ -464,6 +464,7 @@
       background: var(--toss-bg-light);
       padding: 24px;
       padding-top: 40px;
+      padding-bottom: 120px;
       align-items: center;
       gap: 16px;
     }
@@ -829,7 +830,11 @@
     </div>
 
     <div class="calendar-card" style="margin-top: 16px;">
-      <div class="cal-title">이번 달 기록 달력</div>
+      <div class="cal-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span onclick="changeCalendarMonth(-1)" style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">◀</span>
+        <span id="cal-month-title">이번 달 기록 달력</span>
+        <span onclick="changeCalendarMonth(1)" style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">▶</span>
+      </div>
       <div id="monthly-calendar"
         style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; text-align:center;">
         <!-- JS generated -->
@@ -1130,7 +1135,15 @@
         <!-- JS Generated -->
       </div>
 
-      <button class="btn btn-primary" style="margin-top: 16px;"
+      <div class="form-group" style="margin-top: 16px;">
+        <div class="form-label" style="text-align: left;">오늘의 할 일/메모</div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="cal-detail-memo" class="form-input" style="flex:1; font-size:14px; font-weight:normal;" placeholder="메모를 입력하세요">
+          <button class="btn btn-primary" style="width: max-content; padding: 0 16px; border-radius: 12px;" onclick="saveDayMemo()">저장</button>
+        </div>
+      </div>
+
+      <button class="btn btn-secondary" style="margin-top: 16px;"
         onclick="document.getElementById('calendar-detail-modal').classList.add('hidden')">닫기</button>
     </div>
   </div>
@@ -1193,6 +1206,14 @@
       isWarningCooldown: false,
       currentSubject: '수학'
     };
+    
+    let calendarViewDate = getOffsetDate();
+    let currentDetailDateStr = '';
+
+    function changeCalendarMonth(delta) {
+      calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+      updateDashboard();
+    }
 
     const PX_PER_METER = 100;
     const RANKING_API = '/api/ranking';
@@ -1306,32 +1327,37 @@
           calEl.innerHTML += `<div style="font-size:12px; font-weight:bold; color:var(--toss-text-gray); padding-bottom:4px;">${day}</div>`;
         });
 
-        let firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-        let lastDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        document.getElementById('cal-month-title').innerText = `${calendarViewDate.getFullYear()}년 ${calendarViewDate.getMonth() + 1}월 달력`;
+
+        let firstDay = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), 1).getDay();
+        let lastDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 0).getDate();
 
         for (let i = 0; i < firstDay; i++) calEl.innerHTML += `<div></div>`;
 
         for (let day = 1; day <= lastDate; day++) {
-          let loopD = new Date(now.getFullYear(), now.getMonth(), day);
+          let loopD = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth(), day);
           let key = loopD.toLocaleDateString('ko-KR');
           let val = data.daily[key]?.total || 0;
           let mins = Math.floor(val / 60);
+          let memo = data.daily[key]?.memo;
 
           let bgColor = 'transparent';
           let textColor = 'var(--toss-text-dark)';
           if (mins >= 60) {
             textColor = 'white';
-            if (mins >= 300) bgColor = '#B71C1C';
-            else if (mins >= 240) bgColor = '#D32F2F';
-            else if (mins >= 180) bgColor = '#F44336';
-            else if (mins >= 120) bgColor = '#E57373';
-            else bgColor = '#FFCDD2';
+            if (mins >= 300) bgColor = '#8B0000'; // darkest red (5시간 이상)
+            else if (mins >= 240) bgColor = '#B71C1C';
+            else if (mins >= 180) bgColor = '#D32F2F';
+            else if (mins >= 120) bgColor = '#EF5350';
+            else bgColor = '#EF9A9A'; // light red (1시간)
           }
 
-          let isToday = (day === now.getDate());
+          let isToday = (day === now.getDate() && calendarViewDate.getMonth() === now.getMonth() && calendarViewDate.getFullYear() === now.getFullYear());
           let border = isToday ? '2px solid var(--toss-blue)' : 'none';
+          
+          let effectHtml = memo ? `<div style="position:absolute; top:4px; right:4px; width:6px; height:6px; background:var(--toss-blue); border-radius:50%; box-shadow: 0 0 4px rgba(49, 130, 246, 0.5);"></div>` : '';
 
-          calEl.innerHTML += `<div onclick="showDayDetail('${key}')" style="cursor:pointer; padding:6px 0; border-radius:8px; background:${bgColor}; color:${textColor}; font-size:13px; font-weight:600; border:${border};">${day}</div>`;
+          calEl.innerHTML += `<div onclick="showDayDetail('${key}')" style="position:relative; cursor:pointer; padding:8px 0; border-radius:8px; background:${bgColor}; color:${textColor}; font-size:13px; font-weight:600; border:${border};">${day}${effectHtml}</div>`;
         }
       }
 
@@ -1440,14 +1466,12 @@
     }
 
     function showDayDetail(dateStr) {
+      currentDetailDateStr = dateStr;
       let data = getRecords();
-      let dayData = data.daily[dateStr];
-      if (!dayData || dayData.total === 0) {
-        alert("해당 날짜에 공부 기록이 없습니다.");
-        return;
-      }
+      let dayData = data.daily[dateStr] || { total: 0, subjects: {}, subjectList: [], memo: '' };
+      
       document.getElementById('cal-detail-title').innerText = dateStr;
-      document.getElementById('cal-detail-total').innerText = Math.floor(dayData.total / 60) + "분";
+      document.getElementById('cal-detail-total').innerText = Math.floor((dayData.total || 0) / 60) + "분";
 
       let html = '';
       if (dayData.subjects) {
@@ -1462,10 +1486,23 @@
           }
         });
       }
-      if (html === '') html = '<div style="text-align:center;font-size:14px;color:var(--toss-text-gray);">세부 기록이 없습니다.</div>';
+      if (html === '') html = '<div style="text-align:center;font-size:14px;color:var(--toss-text-gray);">공부 기록이 없습니다.</div>';
 
       document.getElementById('cal-detail-list').innerHTML = html;
+      document.getElementById('cal-detail-memo').value = dayData.memo || '';
       document.getElementById('calendar-detail-modal').classList.remove('hidden');
+    }
+
+    function saveDayMemo() {
+      let memo = document.getElementById('cal-detail-memo').value;
+      let data = getRecords();
+      if (!data.daily[currentDetailDateStr]) {
+        data.daily[currentDetailDateStr] = { total: 0, subjects: {}, subjectList: [] };
+      }
+      data.daily[currentDetailDateStr].memo = memo;
+      localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      updateDashboard();
+      document.getElementById('calendar-detail-modal').classList.add('hidden');
     }
 
     /* =======================================
