@@ -862,13 +862,27 @@
       <div style="font-size: 20px; font-weight: 800; position: absolute; top: 20px; color: var(--toss-blue);">나의 아바타</div>
       <!-- Base Avatar -->
       <div style="width: 200px; height: 200px; position: relative;">
-        <!-- Placeholder for generated base -->
-        <div id="avatar-base" style="width: 100%; height: 100%; background-image: url('avatar_base_1778555239711.png'); background-size: cover; background-position: center; mix-blend-mode: multiply; position: absolute; z-index: 1;"></div>
+        <!-- SVG Base Avatar -->
+        <div id="avatar-base" style="width: 100%; height: 100%; position: absolute; z-index: 1;">
+          <svg width="100%" height="100%" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <rect x="75" y="100" width="50" height="50" rx="20" fill="#fef08a" />
+            <rect x="55" y="105" width="25" height="35" rx="12.5" fill="#fef08a" />
+            <rect x="120" y="105" width="25" height="35" rx="12.5" fill="#fef08a" />
+            <rect x="80" y="140" width="16" height="35" rx="8" fill="#fde047" />
+            <rect x="104" y="140" width="16" height="35" rx="8" fill="#fde047" />
+            <circle cx="100" cy="70" r="45" fill="#fef08a" />
+            <circle cx="82" cy="65" r="5" fill="#333D4B" />
+            <circle cx="118" cy="65" r="5" fill="#333D4B" />
+            <circle cx="65" cy="75" r="6" fill="#fca5a5" opacity="0.6" />
+            <circle cx="135" cy="75" r="6" fill="#fca5a5" opacity="0.6" />
+            <path d="M 95 82 Q 100 88 105 82" stroke="#333D4B" stroke-width="3" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
         <!-- Item Layers -->
-        <div id="avatar-layer-bottom" style="width: 100%; height: 100%; position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 60px; transform: translateY(30px);"></div>
-        <div id="avatar-layer-shoes" style="width: 100%; height: 100%; position: absolute; z-index: 3; display: flex; align-items: flex-end; justify-content: center; font-size: 50px; transform: translateY(10px);"></div>
-        <div id="avatar-layer-top" style="width: 100%; height: 100%; position: absolute; z-index: 4; display: flex; align-items: center; justify-content: center; font-size: 80px; transform: translateY(10px);"></div>
-        <div id="avatar-layer-head" style="width: 100%; height: 100%; position: absolute; z-index: 5; display: flex; align-items: flex-start; justify-content: center; font-size: 70px; transform: translateY(-10px);"></div>
+        <div id="avatar-layer-bottom" style="width: 100%; height: 100%; position: absolute; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 65px; transform: translateY(40px);"></div>
+        <div id="avatar-layer-shoes" style="width: 100%; height: 100%; position: absolute; z-index: 3; display: flex; align-items: flex-end; justify-content: center; font-size: 55px; transform: translateY(20px);"></div>
+        <div id="avatar-layer-top" style="width: 100%; height: 100%; position: absolute; z-index: 4; display: flex; align-items: center; justify-content: center; font-size: 85px; transform: translateY(10px);"></div>
+        <div id="avatar-layer-head" style="width: 100%; height: 100%; position: absolute; z-index: 5; display: flex; align-items: flex-start; justify-content: center; font-size: 80px; transform: translateY(-5px);"></div>
       </div>
     </div>
     
@@ -2219,15 +2233,8 @@
         if(eq[cat]) {
           let item = AVATAR_ITEMS[cat].find(i => i.id === eq[cat]);
           if(item) {
-            // Apply image generated for legendary or fallback to icon
-            if (item.grade === 'legend') {
-               if(cat === 'head') {
-                 if (item.id === 'h5') el.innerHTML = `<div style="transform:scale(1.5) translateY(-5px);">${item.icon}</div>`;
-                 else el.innerHTML = `<img src="item_crown_1778555264601.png" style="width:80px; mix-blend-mode:multiply;"/>`;
-               }
-               else if(cat === 'top') el.innerHTML = `<img src="item_shirt_1778555281469.png" style="width:100px; mix-blend-mode:multiply;"/>`;
-               else if(cat === 'shoes') el.innerHTML = `<img src="item_shoes_1778555321840.png" style="width:80px; mix-blend-mode:multiply;"/>`;
-               else el.innerHTML = item.icon;
+            if (item.id === 'h5') {
+               el.innerHTML = `<div style="transform:scale(1.2) translateY(-10px);">${item.icon}</div>`;
             } else {
                el.innerHTML = item.icon;
             }
