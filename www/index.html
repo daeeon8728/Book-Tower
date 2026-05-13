@@ -2034,12 +2034,15 @@
       let gamma = event.gamma; let beta = event.beta;
       if (gamma === null || beta === null) return;
 
-      // 15도 이상 이탈 감지 시 지진 발생
+      // 15도 이상 이탈 감지 시 대규모 지진 발생 (딴짓 패널티)
       let isCheat = (Math.abs(beta) >= 15 || Math.abs(gamma) >= 15);
+      // 5도 이상이면 책 깨우기 (소규모 흔들림)
+      let isAnyTilt = (Math.abs(beta) >= 5 || Math.abs(gamma) >= 5);
 
-      let gX = (gamma / 150);
-      if (Math.abs(gX) < 0.1) gX = 0;
-      if (gX > 0.3) gX = 0.3; if (gX < -0.3) gX = -0.3;
+      // 중력 감도 강화: 150 → 60 (더 예민하게 반응)
+      let gX = (gamma / 60);
+      if (Math.abs(gX) < 0.05) gX = 0;
+      if (gX > 0.6) gX = 0.6; if (gX < -0.6) gX = -0.6;
       let gY = 1.0;
 
       const dot = document.getElementById('gyro-dot');
@@ -2049,11 +2052,11 @@
         dot.classList.add('unstable');
         if (txt) txt.innerText = '경고! 탑 붕괴!';
 
-        // 탑을 무너뜨리기 위해 모든 객체에 강한 랜덤 힘 적용 (FR-10)
+        // 모든 Static 책 해제 + 강한 랜덤 충격력 적용
         state.books.forEach(b => {
-          // 3. 딴짓 감지 시 물리 깨우기 (Wake-up Trigger)
           if (b.isStatic && b !== ground) {
             Matter.Body.setStatic(b, false);
+            b.freezeCount = 0;
           }
           Matter.Body.applyForce(b, b.position, {
             x: (Math.random() - 0.5) * 0.5,
@@ -2067,23 +2070,26 @@
         if (getRecords().vibrate !== false && navigator.vibrate) {
           try { navigator.vibrate([100, 50, 100, 50, 200]); } catch (e) { }
         }
+      } else if (isAnyTilt) {
+        // 5도 이상 기울이면: Static으로 굳은 책들을 즉시 깨워서 중력에 반응하게 함
+        dot.classList.remove('unstable');
+        if (txt) txt.innerText = '흔들림 감지 중';
+
+        state.books.forEach(b => {
+          if (b.isStatic && b !== ground) {
+            Matter.Body.setStatic(b, false);
+            b.freezeCount = 0; // 프리즈 카운터 리셋 (다시 안정되면 재동결)
+          }
+          if (b.isSleeping) Matter.Sleeping.set(b, false);
+        });
       } else {
         dot.classList.remove('unstable');
         if (txt) txt.innerText = '안정 (집중 중)';
       }
 
-      // 폰 기울임 시 잠든 책들을 깨워서 물리 반응하게 함
-      if (isCheat || Math.abs(gX) > 0.05) {
-        state.books.forEach(b => {
-          // 3. 딴짓 감지 시 물리 깨우기 (Wake-up Trigger)
-          if (b.isStatic && b !== ground) {
-            Matter.Body.setStatic(b, false);
-          }
-          if (b.isSleeping) Matter.Sleeping.set(b, false);
-        });
-      }
-
-      engine.world.gravity.x = gX; engine.world.gravity.y = gY;
+      // 항상 중력 방향 업데이트
+      engine.world.gravity.x = gX;
+      engine.world.gravity.y = gY;
     }
 
     /* =======================================
@@ -2611,6 +2617,33 @@
     async function fetchRanking() {
       const container = document.getElementById('rank-list');
       container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">불러오는 중...</div>';
+
+      // 랭킹 탭 진입 시 현재 탑 높이를 자동으로 서버에 동기화 (내 닉네임이 항상 뜨도록)
+      try {
+        const localData = getRecords();
+        let currentHeightM = 0;
+        if (state.books && state.books.length > 0) {
+          const screenBottom = window.innerHeight;
+          let maxPx = 0;
+          state.books.forEach(b => {
+            let stackPx = screenBottom - b.position.y;
+            if (stackPx > maxPx) maxPx = stackPx;
+          });
+          currentHeightM = Math.max(0, maxPx / PX_PER_METER);
+        }
+        // 점수가 없어도 닉네임 등록을 위해 0점으로라도 업로드
+        await fetch(RANKING_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: localData.userId,
+            username: localData.userName,
+            score: parseFloat(currentHeightM.toFixed(1)),
+            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
+          })
+        });
+      } catch (e) { /* 오프라인 무시 */ }
+
       try {
         let res = await fetch(RANKING_API);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -2629,7 +2662,7 @@
         let myName = getRecords().userName;
 
         data.forEach((user, i) => {
-          let isMe = (user.userId === myId); // userId 기반으로 본인 매칭
+          let isMe = (user.userId === myId);
           if (isMe) myRankInfo = { rank: i + 1, score: user.score, username: user.username || myName };
 
           let rankMedal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
@@ -2637,7 +2670,7 @@
         <div class="rank-item ${isMe ? 'my-rank-item' : ''}" id="${isMe ? 'list-my-rank' : ''}">
           <div class="rank-left">
             <div class="rank-num">${rankMedal}</div>
-            <div class="rank-name">${isMe ? '나 (' + (user.username || '알 수 없음') + ')' : (user.username || '알 수 없음')}</div>
+            <div class="rank-name">${isMe ? '나 (' + (user.username || myName) + ')' : (user.username || '알 수 없음')}</div>
           </div>
           <div class="rank-score">${Number(user.score || 0).toFixed(1)}m</div>
         </div>
@@ -2656,8 +2689,16 @@
       `;
           setupRankObserver();
         } else {
-          document.getElementById('sticky-my-rank').innerHTML = '';
-          document.getElementById('sticky-my-rank').classList.add('hidden');
+          // 랭킹에 없어도 하단에 내 정보 표시
+          const localData = getRecords();
+          document.getElementById('sticky-my-rank').innerHTML = `
+        <div class="rank-left">
+          <div class="rank-num" style="color:white;">-</div>
+          <div class="rank-name" style="color:white;">나 (${localData.userName})</div>
+        </div>
+        <div class="rank-score" style="color:white;">0.0m</div>
+      `;
+          document.getElementById('sticky-my-rank').classList.remove('hidden');
         }
       } catch (e) {
         console.error('fetchRanking Error:', e);
