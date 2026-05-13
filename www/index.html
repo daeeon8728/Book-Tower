@@ -1490,8 +1490,12 @@
       if (tooltip) tooltip.style.display = 'none';
 
       if (state.mode !== 'idle') {
-        // 이미 진행 중인 세션이 있다면 타이머 화면으로 바로 이동
+        // 이미 진행 중인 세션이 있다면 타이머 화면으로 이동
+        // 일시정지 중이면 자동으로 재개 (책 누적 유지)
         switchTab('timer');
+        if (state.isPaused) {
+          togglePause(); // 자동 재개
+        }
       } else {
         // 새로운 세션 시작
         goToTimerAndConfig();
@@ -2082,6 +2086,7 @@
 
       state.lastTickTime = Date.now();
       clearInterval(state.timerInterval);
+      state.timerInterval = null;
       state.timerInterval = setInterval(tick, 1000);
       document.getElementById('time-display').innerText = formatTime(state.timeLeft);
 
@@ -2109,6 +2114,12 @@
         // 물리재개
         if (runnerObj) runnerObj.enabled = true;
         state.lastTickTime = Date.now();
+        // 타이머 인터벌이 죽어있을 수 있으므로 항상 재시작
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+        if (state.mode === 'study' || state.mode === 'rest') {
+          state.timerInterval = setInterval(tick, 1000);
+        }
         if (window.AndroidPinning) {
           window.AndroidPinning.startPinning();
         }
@@ -2183,6 +2194,7 @@
 
       if (state.timerMode === 'pomo' && state.timeLeft <= 0) {
         clearInterval(state.timerInterval);
+        state.timerInterval = null;
         if (state.mode === 'study') {
           if (navigator.vibrate) try { navigator.vibrate([200, 100, 200]); } catch (e) { }
           document.getElementById('rest-modal').classList.remove('hidden');
@@ -2630,10 +2642,12 @@
       const name = document.getElementById('input-nickname').value.trim();
       if (!name) return;
 
+      let data = getRecords();
+
       try {
         let res = await fetch(`${RANKING_API}?check=${encodeURIComponent(name)}`);
         let result = await res.json();
-        if (result.exists) {
+        if (result.exists && result.ownerId !== data.userId) {
           alert('이미 존재하는 닉네임입니다. 다른 닉네임을 사용해주세요.');
           return;
         }
@@ -2641,11 +2655,23 @@
         console.log('서버 연결 실패, 중복체크 건너뜀');
       }
 
-      let data = getRecords();
       data.userName = name;
       localStorage.setItem('bookTowerv2', JSON.stringify(data));
       document.getElementById('setting-nickname').value = name;
       document.getElementById('login-modal').classList.add('hidden');
+
+      // 닉네임 설정 후 즉시 서버 등록 (초기 등록용, 점수 없이)
+      try {
+        await fetch(RANKING_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.userId,
+            username: name,
+            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
+          })
+        });
+      } catch (e) {}
 
       checkSensorFlow();
     }
@@ -2926,14 +2952,59 @@
       switchTab('home');
     }
 
-    function saveNicknameFromSetting() {
+    async function saveNicknameFromSetting() {
       const name = document.getElementById('setting-nickname').value.trim();
-      if (name) {
-        let d = getRecords();
+      if (!name) return;
+
+      let d = getRecords();
+      if (d.userName === name) {
+        alert("기존과 동일한 닉네임입니다.");
+        return;
+      }
+
+      // 변경 버튼 찾기
+      const inputEl = document.getElementById('setting-nickname');
+      const btn = inputEl ? inputEl.nextElementSibling : null;
+      if (btn) btn.innerText = '변경중...';
+
+      try {
+        // 1. 중복 체크
+        let res = await fetch(`${RANKING_API}?check=${encodeURIComponent(name)}`);
+        let result = await res.json();
+        if (result.exists && result.ownerId !== d.userId) {
+          alert('이미 다른 사용자가 사용 중인 닉네임입니다. 다른 닉네임을 사용해주세요.');
+          if (btn) btn.innerText = '변경';
+          return;
+        }
+
+        // 2. 서버에 닉네임 업데이트 (점수 없이 이름만)
+        let updateRes = await fetch(RANKING_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: d.userId,
+            username: name,
+            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
+          })
+        });
+
+        if (!updateRes.ok) {
+          throw new Error('서버 오류');
+        }
+
+        // 3. 로컬 저장 및 UI 업데이트
         d.userName = name;
         localStorage.setItem('bookTowerv2', JSON.stringify(d));
-        alert("닉네임이 변경되었습니다.");
+        alert("닉네임이 성공적으로 변경되었으며, 랭킹에 연동되었습니다.");
         updateDashboard();
+        
+        // 4. 랭킹 뷰 갱신
+        fetchRanking();
+      } catch (e) {
+        alert("네트워크 오류로 닉네임을 변경하지 못했습니다.");
+        console.error(e);
+      } finally {
+        if (btn) btn.innerText = '변경';
       }
     }
 

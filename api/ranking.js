@@ -35,7 +35,7 @@ export default async function handler(request, response) {
       if (check) {
         const ownerId = await kv.get(`username:${check}:id`);
         if (ownerId) {
-          return response.status(200).json({ exists: true });
+          return response.status(200).json({ exists: true, ownerId });
         } else {
           return response.status(200).json({ exists: false });
         }
@@ -91,12 +91,12 @@ export default async function handler(request, response) {
       const { userId, username, score, digest } = request.body;
 
       // 필수 파라미터 검증
-      if (!userId || !username || typeof score !== 'number') {
-        return response.status(400).json({ error: '잘못된 요청입니다. userId, username, score(number)가 필요합니다.' });
+      if (!userId || !username) {
+        return response.status(400).json({ error: '잘못된 요청입니다. userId, username이 필요합니다.' });
       }
 
-      // 점수 범위 검증: 물리적으로 불가능한 극단적 값 차단 (예: 999m 이상)
-      if (score < 0 || score > 500) {
+      // 점수 범위 검증 (score가 제공된 경우에만)
+      if (score !== undefined && (typeof score !== 'number' || score < 0 || score > 500)) {
         return response.status(400).json({ error: '유효하지 않은 점수 범위입니다.' });
       }
 
@@ -130,11 +130,14 @@ export default async function handler(request, response) {
         console.log(`[RENAME] userId=${userId}: "${currentName}" → "${username}"`);
       }
 
-      // --- 현재 높이를 랭킹에 덮어쓰기 (최고 높이가 아닌 현재 높이) ---
-      // 항상 최신 값으로 갱신 (XX 옵션 없이 zadd하면 upsert 동작)
-      await kv.zadd('leaderboard', { score: score, member: userId });
+      // --- 현재 높이를 랭킹에 덮어쓰기 (score가 있는 경우에만) ---
+      if (score !== undefined) {
+        await kv.zadd('leaderboard', { score: score, member: userId });
+        console.log(`[RANK UPDATE] userId=${userId} (${username}): ${score}m`);
+      } else {
+        console.log(`[NAME UPDATE] userId=${userId} (${username})`);
+      }
 
-      console.log(`[RANK UPDATE] userId=${userId} (${username}): ${score}m`);
       return response.status(200).json({ success: true, score });
 
     } else {
