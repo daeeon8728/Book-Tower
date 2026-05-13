@@ -1595,7 +1595,37 @@
 
       Events.on(engine, 'collisionStart', (e) => {
         if (!state.isPaused && getRecords().vibrate !== false && navigator.vibrate) try { navigator.vibrate(5); } catch (err) { }
+        e.pairs.forEach(pair => {
+          if (pair.bodyA) pair.bodyA.hasTouched = true;
+          if (pair.bodyB) pair.bodyB.hasTouched = true;
+        });
       });
+
+      Events.on(engine, 'beforeUpdate', () => {
+        state.books.forEach(b => {
+          if (b.isStatic || b === ground) return;
+
+          // 2. 미세 진동 제거 (Velocity Damping)
+          if (b.speed < 0.05 && b.angularSpeed < 0.05) {
+            Matter.Body.setVelocity(b, { x: 0, y: 0 });
+            Matter.Body.setAngularVelocity(b, 0);
+          } else {
+            Matter.Body.setVelocity(b, { x: b.velocity.x * 0.9, y: b.velocity.y * 0.9 });
+            Matter.Body.setAngularVelocity(b, b.angularVelocity * 0.9);
+          }
+
+          // 1. 정적 상태 강제 전환 (Freezing Logic)
+          if (b.hasTouched && b.speed < 0.01 && b.angularSpeed < 0.01) {
+            b.freezeCount = (b.freezeCount || 0) + 1;
+            if (b.freezeCount > 30) {
+              Matter.Body.setStatic(b, true);
+            }
+          } else {
+            b.freezeCount = 0;
+          }
+        });
+      });
+
       Events.on(engine, 'afterUpdate', calculateHeight);
 
       // Restore previous physics state if any
@@ -1715,7 +1745,8 @@
       const texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
 
       // 책과 완전히 동일한 무게/마찰 (무거운 아이템이 아래 책을 짓누르는 문제 방지)
-      const newObj = Matter.Bodies.rectangle(spawnX, spawnY, boxWidth, boxHeight, {
+      const margin = 2; // 4. 충돌 박스 마진 (Collision Margin)
+      const newObj = Matter.Bodies.rectangle(spawnX, spawnY, boxWidth + margin, boxHeight + margin, {
         restitution: 0.0,
         friction: 0.9,           // 책과 동일
         frictionStatic: 3.0,     // 책과 동일 (easy 모드)
@@ -1725,8 +1756,10 @@
         customType: type,
         customColor: boxColor,
         customW: boxWidth, customH: boxHeight,
-        render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
+        render: { sprite: { texture: texUrl, xScale: boxWidth / (boxWidth + margin), yScale: boxHeight / (boxHeight + margin) } }
       });
+      newObj.hasTouched = false;
+      newObj.freezeCount = 0;
 
       state.books.push(newObj);
       Matter.Composite.add(engine.world, newObj);
@@ -1797,7 +1830,8 @@
       const baseFriction = isEasy ? 0.9 : 0.8;
       const statFriction = isEasy ? 3.0 : 1.0;
 
-      const newObj = Bodies.rectangle(spawnX, spawnY, cfg.width, cfg.height, {
+      const margin = 2; // 4. 충돌 박스 마진 (Collision Margin)
+      const newObj = Bodies.rectangle(spawnX, spawnY, cfg.width + margin, cfg.height + margin, {
         restitution: isEasy ? 0.0 : 0.01,
         friction: baseFriction,
         frictionStatic: statFriction,
@@ -1807,8 +1841,10 @@
         customType: state.currentShape,
         customColor: cfg.color,
         customW: cfg.width, customH: cfg.height,
-        render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
+        render: { sprite: { texture: texUrl, xScale: cfg.width / (cfg.width + margin), yScale: cfg.height / (cfg.height + margin) } }
       });
+      newObj.hasTouched = false;
+      newObj.freezeCount = 0;
 
       state.books.push(newObj);
       Composite.add(engine.world, newObj);
@@ -1918,13 +1954,16 @@
 
           if (!texUrl) texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
 
-          const b = Bodies.rectangle(item.x, item.y, item.w, item.h, {
+          const margin = 2; // 4. 충돌 박스 마진 (Collision Margin)
+          const b = Bodies.rectangle(item.x, item.y, item.w + margin, item.h + margin, {
             angle: item.angle, restitution: 0.01, friction: 0.9, density: 0.2, slop: 0.05,
             customType: item.type,
             customColor: item.color,
             customW: item.w, customH: item.h,
-            render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
+            render: { sprite: { texture: texUrl, xScale: item.w / (item.w + margin), yScale: item.h / (item.h + margin) } }
           });
+          b.hasTouched = true;
+          b.freezeCount = 31;
           if (item.vx !== undefined) Matter.Body.setVelocity(b, { x: item.vx, y: item.vy });
           if (item.av !== undefined) Matter.Body.setAngularVelocity(b, item.av);
           state.books.push(b);
@@ -1960,6 +1999,10 @@
 
         // 탑을 무너뜨리기 위해 모든 객체에 강한 랜덤 힘 적용 (FR-10)
         state.books.forEach(b => {
+          // 3. 딴짓 감지 시 물리 깨우기 (Wake-up Trigger)
+          if (b.isStatic && b !== ground) {
+            Matter.Body.setStatic(b, false);
+          }
           Matter.Body.applyForce(b, b.position, {
             x: (Math.random() - 0.5) * 0.5,
             y: -Math.random() * 0.5
@@ -1980,6 +2023,10 @@
       // 폰 기울임 시 잠든 책들을 깨워서 물리 반응하게 함
       if (isCheat || Math.abs(gX) > 0.05) {
         state.books.forEach(b => {
+          // 3. 딴짓 감지 시 물리 깨우기 (Wake-up Trigger)
+          if (b.isStatic && b !== ground) {
+            Matter.Body.setStatic(b, false);
+          }
           if (b.isSleeping) Matter.Sleeping.set(b, false);
         });
       }
