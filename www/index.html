@@ -54,7 +54,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]) {
+      :root:not([data-theme="light"]):not([data-theme="light"]) {
         color-scheme: dark;
         --toss-bg-light: #121212;
         --toss-card: #1E1E1E;
@@ -70,19 +70,67 @@
       }
     }
 
-    :root[data-theme="light"] {
+    /* 라이트 모드: 시스템 다크모드여도 강제 화이트 적용 */
+    :root[data-theme="light"],
+    :root[data-theme="light"] * {
       color-scheme: light;
-      --toss-bg-light: #FFFFFF;
-      --toss-card: #FFFFFF;
-      --toss-text-dark: #191F28;
-      --toss-text-gray: #8B95A1;
-      --toss-border: #E5E8EB;
-      --bg-stage-0: #FFFFFF;
+    }
+    :root[data-theme="light"] {
+      --toss-bg-light: #FFFFFF !important;
+      --toss-card: #FFFFFF !important;
+      --toss-text-dark: #191F28 !important;
+      --toss-text-gray: #8B95A1 !important;
+      --toss-border: #E5E8EB !important;
+      --bg-stage-0: #FFFFFF !important;
 
-      --nav-bg: rgba(255, 255, 255, 0.85);
-      --hud-bg: rgba(255, 255, 255, 0.9);
-      --hud-btn-bg: rgba(255, 255, 255, 0.8);
-      --timer-shadow: 0 4px 24px rgba(255, 255, 255, 0.8);
+      --nav-bg: rgba(255, 255, 255, 0.85) !important;
+      --hud-bg: rgba(255, 255, 255, 0.9) !important;
+      --hud-btn-bg: rgba(255, 255, 255, 0.8) !important;
+      --timer-shadow: 0 4px 24px rgba(255, 255, 255, 0.8) !important;
+    }
+
+    /* 라이트 모드 강제 - 시스템 다크모드를 완전히 무시 */
+    [data-theme="light"] body,
+    [data-theme="light"] #home-view,
+    [data-theme="light"] #settings-view,
+    [data-theme="light"] #diy-view,
+    [data-theme="light"] #ranking-view {
+      background-color: #FFFFFF !important;
+      color: #191F28 !important;
+    }
+    [data-theme="light"] .toss-card,
+    [data-theme="light"] .stat-card,
+    [data-theme="light"] .subject-item,
+    [data-theme="light"] .calendar-card,
+    [data-theme="light"] .rank-item,
+    [data-theme="light"] .bottom-nav {
+      background: #FFFFFF !important;
+      background-color: #FFFFFF !important;
+      color: #191F28 !important;
+      border-color: #E5E8EB !important;
+    }
+    [data-theme="light"] .stat-label,
+    [data-theme="light"] .subject-time,
+    [data-theme="light"] .cal-day,
+    [data-theme="light"] .nav-item,
+    [data-theme="light"] .rank-score {
+      color: #8B95A1 !important;
+    }
+    [data-theme="light"] .stat-value,
+    [data-theme="light"] .subject-name,
+    [data-theme="light"] .rank-name,
+    [data-theme="light"] .dash-title,
+    [data-theme="light"] .modal-title,
+    [data-theme="light"] .form-label,
+    [data-theme="light"] .nav-item.active {
+      color: #191F28 !important;
+    }
+    [data-theme="light"] .bottom-nav {
+      background: rgba(255, 255, 255, 0.92) !important;
+      border-top: 1px solid rgba(0,0,0,0.06) !important;
+    }
+    [data-theme="light"] .modal-overlay .toss-card {
+      background: #FFFFFF !important;
     }
 
     * {
