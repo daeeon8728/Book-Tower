@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Book Tower: Toss Style Pomodoro</title>
+  <title>Book Tower</title>
 
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -1449,13 +1449,17 @@
       todayData.subjectList.forEach(sj => {
         let secs = todayData.subjects[sj] || 0;
         let m = Math.floor(secs / 60);
+        let safeId = sj.replace(/'/g, "\\'");
         html += `
         <div class="subject-item" style="border-left: 6px solid ${data.subjectColors && data.subjectColors[sj] ? data.subjectColors[sj] : 'var(--toss-blue)'};">
             <div class="subject-info">
                 <div class="subject-name">${sj}</div>
                 <div class="subject-time">${m}분 방어함</div>
             </div>
-            <button class="btn-play" onclick="startSubjectTimer('${sj}')">▶</button>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn-play" onclick="startSubjectTimer('${safeId}')" title="시작">▶</button>
+                <button onclick="deleteSubject('${safeId}')" title="삭제" style="background:transparent; border:none; cursor:pointer; font-size:18px; color:var(--toss-text-gray); padding:4px 2px; line-height:1; transition:color 0.15s;" onmouseenter="this.style.color='#F04438'" onmouseleave="this.style.color='var(--toss-text-gray)'">🗑️</button>
+            </div>
         </div>`;
       });
 
@@ -1530,6 +1534,21 @@
       closeAddSubjectModal();
     }
 
+
+    function deleteSubject(sj) {
+      if (!confirm(`"${sj}" 과목을 삭제할까요?\n(오늘 공부 기록은 유지됩니다)`)) return;
+      let data = getRecords();
+      const todayStr = getTodayStr();
+      if (data.daily[todayStr] && data.daily[todayStr].subjectList) {
+        data.daily[todayStr].subjectList = data.daily[todayStr].subjectList.filter(s => s !== sj);
+      }
+      // 전역 색상 맵에서도 제거
+      if (data.subjectColors && data.subjectColors[sj]) {
+        delete data.subjectColors[sj];
+      }
+      localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      renderSubjectList();
+    }
 
     function startSubjectTimer(subj) {
       state.currentSubject = subj;
