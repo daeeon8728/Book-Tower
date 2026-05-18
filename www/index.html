@@ -1065,6 +1065,11 @@
         <button class="control-btn" onclick="resetSession()">초기화</button>
         <button class="control-btn" style="color: #F04438;" onclick="quitSession()">오늘은 여기까지</button>
       </div>
+      <!-- 뷰 토글 버튼: 전체 보기 / 일반 모드 -->
+      <button id="btn-view-toggle" onclick="toggleViewMode()"
+        style="margin-top:6px; background:rgba(255,255,255,0.85); border:1.5px solid rgba(49,130,246,0.35); color:#3182F6; font-weight:700; font-size:13px; padding:8px 22px; border-radius:20px; cursor:pointer; backdrop-filter:blur(8px); box-shadow:0 2px 8px rgba(49,130,246,0.12); pointer-events:auto; transition:all 0.2s; letter-spacing:-0.2px;">
+        🔍 전체 보기
+      </button>
     </div>
   </div>
 
@@ -1394,7 +1399,8 @@
       difficulty: 'easy',
       warnings: 0,
       isWarningCooldown: false,
-      currentSubject: '수학'
+      currentSubject: '수학',
+      isFullView: false   // 전체 보기 / 일반 모드 토글
     };
 
     let calendarViewDate = getOffsetDate();
@@ -2057,13 +2063,45 @@
       state.books.forEach(b => { if (b.position.y < minY) minY = b.position.y; });
 
       let towerHeight = groundY - minY;
-      let autoScale = Math.max(1, (towerHeight + 150) / h);
-      let zoomFactor = autoScale * state.manualZoomScale;
 
-      Matter.Render.lookAt(render, {
-        min: { x: w / 2 - (w / 2) * zoomFactor, y: groundY - h * zoomFactor },
-        max: { x: w / 2 + (w / 2) * zoomFactor, y: groundY }
-      });
+      if (state.isFullView) {
+        // 전체 보기: 탑 전체(바닥~꼭대기)가 모두 보이도록 줌 아웃
+        let padding = 120;
+        let neededH = towerHeight + padding * 2;
+        let scale = Math.max(1, neededH / h); // how much to zoom out
+        let neededW = w * scale;
+        Matter.Render.lookAt(render, {
+          min: { x: w / 2 - neededW / 2, y: minY - padding },
+          max: { x: w / 2 + neededW / 2, y: groundY + padding }
+        });
+      } else {
+        // 일반 모드: 쌓이는 영역(탑 상단 ~ 바닥) 1:1 확대 추적
+        // 탑이 짧으면 바닥부터, 높으면 상단 중심으로 카메라 따라감
+        let focusTop = Math.min(minY - 80, groundY - h);
+        let focusBottom = groundY + 10;
+        let viewH = focusBottom - focusTop;
+        let zoomFactor = viewH / h; // 1:1 = 1.0
+        let neededW = w * zoomFactor;
+        Matter.Render.lookAt(render, {
+          min: { x: w / 2 - neededW / 2, y: focusTop },
+          max: { x: w / 2 + neededW / 2, y: focusBottom }
+        });
+      }
+    }
+
+    function toggleViewMode() {
+      state.isFullView = !state.isFullView;
+      const btn = document.getElementById('btn-view-toggle');
+      if (state.isFullView) {
+        btn.innerHTML = '📐 일반 모드';
+        btn.style.background = 'rgba(49,130,246,0.12)';
+        btn.style.borderColor = 'rgba(49,130,246,0.6)';
+      } else {
+        btn.innerHTML = '🔍 전체 보기';
+        btn.style.background = 'rgba(255,255,255,0.85)';
+        btn.style.borderColor = 'rgba(49,130,246,0.35)';
+      }
+      autoCenterCamera();
     }
 
     function spawnObject() {
