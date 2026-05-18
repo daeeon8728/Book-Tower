@@ -410,7 +410,7 @@
       font-size: 72px;
       font-weight: 800;
       color: var(--toss-text-dark);
-      letter-spacing: -2px;
+      letter-spacing: 0;
       font-variant-numeric: tabular-nums;
       text-shadow: var(--timer-shadow);
       pointer-events: auto;
@@ -451,12 +451,69 @@
     .tower-stats {
       font-size: 16px;
       font-weight: 800;
-      color: var(--toss-blue);
-      background: var(--hud-bg);
-      padding: 6px 16px;
-      border-radius: 100px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+      color: var(--toss-text-dark);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(248, 251, 255, 0.78));
+      padding: 10px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
       pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .tower-stats .hud-metric {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 68px;
+      line-height: 1.05;
+    }
+
+    .tower-stats .hud-label {
+      color: var(--toss-text-gray);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0;
+      margin-bottom: 4px;
+    }
+
+    .tower-stats .hud-value {
+      color: #1f6feb;
+      font-size: 20px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tower-stats .hud-divider {
+      width: 1px;
+      height: 30px;
+      background: rgba(148, 163, 184, 0.34);
+    }
+
+    .tower-stats.record-flash {
+      animation: recordFlash 1.25s ease-out;
+    }
+
+    @keyframes recordFlash {
+      0% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), 0 0 0 rgba(49, 130, 246, 0);
+      }
+
+      35% {
+        transform: translateY(-2px) scale(1.035);
+        box-shadow: 0 16px 38px rgba(15, 23, 42, 0.16), 0 0 28px rgba(49, 130, 246, 0.38), inset 0 0 20px rgba(255, 255, 255, 0.9);
+      }
+
+      100% {
+        transform: translateY(0) scale(1);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      }
     }
 
     /* Timer Controls */
@@ -858,9 +915,68 @@
 <body>
 
   <div id="stage-container">
-    <div class="bg-layer" id="bg-0" style="background: linear-gradient(180deg, #F0F6FF 0%, #FFFFFF 100%); opacity: 1;">
+    <div class="bg-layer" id="bg-0" style="background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 45%, #fafbff 100%); opacity: 1;">
+      <svg id="bg-deco" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;">
+        <defs>
+          <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fde68a" stop-opacity="0.9"/>
+            <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="grassGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#86efac"/>
+            <stop offset="1" stop-color="#22c55e" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <circle cx="88%" cy="10%" r="70" fill="url(#sunGlow)" opacity="0.5"/>
+        <circle cx="88%" cy="10%" r="34" fill="#fde68a" opacity="0.55"/>
+        <circle cx="88%" cy="10%" r="22" fill="#fbbf24" opacity="0.5"/>
+        <g style="animation:cloudDrift1 32s ease-in-out infinite">
+          <ellipse cx="160" cy="14%" rx="64" ry="24" fill="white" opacity="0.88"/>
+          <ellipse cx="196" cy="11%" rx="44" ry="30" fill="white" opacity="0.88"/>
+          <ellipse cx="128" cy="13%" rx="36" ry="22" fill="white" opacity="0.88"/>
+        </g>
+        <g style="animation:cloudDrift2 44s ease-in-out 6s infinite">
+          <ellipse cx="55%" cy="9%" rx="54" ry="20" fill="white" opacity="0.75"/>
+          <ellipse cx="58%" cy="7%" rx="38" ry="25" fill="white" opacity="0.75"/>
+          <ellipse cx="52%" cy="8%" rx="30" ry="18" fill="white" opacity="0.75"/>
+        </g>
+        <g style="animation:cloudDrift1 60s ease-in-out 20s infinite">
+          <ellipse cx="32%" cy="20%" rx="38" ry="14" fill="white" opacity="0.6"/>
+          <ellipse cx="34%" cy="18%" rx="26" ry="18" fill="white" opacity="0.6"/>
+        </g>
+        <rect x="0" y="74%" width="7%" height="26%" fill="#c4a882" opacity="0.22" rx="3"/>
+        <rect x="0.6%" y="70%" width="1.1%" height="4%" fill="#3b82f6" opacity="0.28" rx="2"/>
+        <rect x="2%"   y="68%" width="1.4%" height="6%" fill="#ef4444" opacity="0.28" rx="2"/>
+        <rect x="3.7%" y="71%" width="1.2%" height="3%" fill="#10b981" opacity="0.28" rx="2"/>
+        <rect x="5.2%" y="69%" width="1.3%" height="5%" fill="#f59e0b" opacity="0.28" rx="2"/>
+        <rect x="93%" y="74%" width="7%" height="26%" fill="#c4a882" opacity="0.22" rx="3"/>
+        <rect x="93.4%" y="70%" width="1.1%" height="4%" fill="#7c3aed" opacity="0.28" rx="2"/>
+        <rect x="94.8%" y="68%" width="1.4%" height="6%" fill="#0ea5e9" opacity="0.28" rx="2"/>
+        <rect x="96.6%" y="71%" width="1.2%" height="3%" fill="#f97316" opacity="0.28" rx="2"/>
+        <rect x="98.2%" y="69%" width="1.3%" height="5%" fill="#ec4899" opacity="0.28" rx="2"/>
+        <circle cx="12%" cy="35%" r="2.8" fill="#93c5fd" opacity="0.55" style="animation:twinkleS 3.2s ease-in-out infinite"/>
+        <circle cx="80%" cy="45%" r="2.2" fill="#a5b4fc" opacity="0.45" style="animation:twinkleS 4.5s ease-in-out 1.2s infinite"/>
+        <circle cx="45%" cy="28%" r="2" fill="#bfdbfe" opacity="0.5" style="animation:twinkleS 2.8s ease-in-out 0.6s infinite"/>
+        <circle cx="68%" cy="60%" r="2.5" fill="#c7d2fe" opacity="0.4" style="animation:twinkleS 5.2s ease-in-out 2.5s infinite"/>
+        <circle cx="25%" cy="55%" r="1.8" fill="#93c5fd" opacity="0.4" style="animation:twinkleS 3.8s ease-in-out 1.8s infinite"/>
+        <rect x="0" y="96%" width="100%" height="4%" fill="url(#grassGrad)" opacity="0.2"/>
+      </svg>
+      <style>
+        @keyframes cloudDrift1 {
+          0%,100% { transform: translateX(0px); }
+          50%      { transform: translateX(30px); }
+        }
+        @keyframes cloudDrift2 {
+          0%,100% { transform: translateX(0px); }
+          50%      { transform: translateX(-25px); }
+        }
+        @keyframes twinkleS {
+          0%,100% { opacity:0.55; transform:scale(1); }
+          50%      { opacity:0.12; transform:scale(0.5); }
+        }
+      </style>
     </div>
-    <div class="bg-layer" id="bg-1" style="background: linear-gradient(180deg, #BAE6FD 0%, #E0F2FE 100%); opacity: 0;">
+    <div class="bg-layer" id="bg-1" style="background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 50%, #e0f2fe 100%); opacity: 0;">
     </div>
     <div class="bg-layer" id="bg-2" style="background: linear-gradient(180deg, #1E3A8A 0%, #3B82F6 100%); opacity: 0;">
     </div>
@@ -1646,13 +1762,14 @@
       runnerObj = Runner.create();
       Runner.run(runnerObj, engine);
 
-      document.getElementById('stage-container').addEventListener('touchstart', e => {
-        if (e.touches.length === 2 && state.mode === 'study') {
+      // Pinch zoom on timer-view (stage-container is z-index:-1)
+      document.getElementById('timer-view').addEventListener('touchstart', e => {
+        if (e.touches.length === 2) {
           initialTouchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
         }
       }, { passive: true });
 
-      document.getElementById('stage-container').addEventListener('touchmove', e => {
+      document.getElementById('timer-view').addEventListener('touchmove', e => {
         if (e.touches.length === 2 && state.mode === 'study') {
           let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
           let delta = initialTouchDist - currentDist;
@@ -1715,14 +1832,84 @@
 
     const UNIV_SUBJECTS = ['화학I', '화학II', '물리I', '물리II', '미적분', '이산수학', '선형대수', '영어1', '영어2', '영어고급', '미디어와 사회', '프로그래밍', '자료구조', '알고리즘', '운영체제', '네트워크', '데이터베이스', '인공지능', '유기화학', '물리화학', '생화학', '세포생물학', '해부학', '생리학', '일반물리학', '현대물리', '전자기학', '양자역학', '거시경제학', '미시경제학'];
 
+    const PREMIUM_BOOK_TITLES = ['MATH', 'PHYSICS', 'CALCULUS', 'ENGLISH', 'ALGORITHM', 'DATABASE', 'ECONOMICS', 'CHEMISTRY', 'DESIGN', 'SYSTEMS'];
+
+    function escapeSvgText(value) {
+      return String(value || '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&apos;'
+      }[ch]));
+    }
+
+    function hexToRgb(color) {
+      if (!color || color.indexOf('#') !== 0) return null;
+      const hex = color.length === 4
+        ? color.slice(1).split('').map(ch => ch + ch).join('')
+        : color.slice(1, 7);
+      const num = parseInt(hex, 16);
+      if (Number.isNaN(num)) return null;
+      return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+    }
+
+    function shadeColor(color, amount) {
+      const rgb = hexToRgb(color);
+      if (!rgb) return color;
+      const clamp = value => Math.max(0, Math.min(255, value));
+      const shift = channel => clamp(Math.round(channel + (amount >= 0 ? (255 - channel) * amount : channel * amount)));
+      return `rgb(${shift(rgb.r)}, ${shift(rgb.g)}, ${shift(rgb.b)})`;
+    }
+
+    function normalizeBookColor(color) {
+      if (color && color.indexOf('#') === 0) return color;
+      const palette = ['#9b2c2c', '#1d4ed8', '#0f766e', '#7c3aed', '#b45309', '#be123c', '#2563eb', '#047857'];
+      return palette[Math.floor(Math.random() * palette.length)];
+    }
+
+    function createPremiumBookTexture(width, height, seedColor, title) {
+      const cover = normalizeBookColor(seedColor);
+      const light = shadeColor(cover, 0.34);
+      const dark = shadeColor(cover, -0.32);
+      const deeper = shadeColor(cover, -0.52);
+      const safeTitle = escapeSvgText(title || PREMIUM_BOOK_TITLES[Math.floor(Math.random() * PREMIUM_BOOK_TITLES.length)]);
+      const spineW = Math.max(12, Math.round(width * 0.16));
+      const pageW = Math.max(7, Math.round(width * 0.07));
+      const bandY1 = Math.max(5, Math.round(height * 0.22));
+      const bandY2 = Math.max(bandY1 + 7, Math.round(height * 0.66));
+      const titleSize = Math.max(9, Math.min(13, Math.round(height * 0.38)));
+
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <defs>
+          <linearGradient id="cover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${light}"/><stop offset="0.48" stop-color="${cover}"/><stop offset="1" stop-color="${dark}"/></linearGradient>
+          <linearGradient id="spine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${deeper}"/><stop offset="0.45" stop-color="${dark}"/><stop offset="1" stop-color="${light}"/></linearGradient>
+          <linearGradient id="pages" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#d6c5a7"/></linearGradient>
+          <pattern id="grain" width="9" height="5" patternUnits="userSpaceOnUse"><path d="M0 1 C2 0, 5 2, 9 1" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="0.55"/><path d="M0 4 C3 5, 6 3, 9 4" fill="none" stroke="rgba(0,0,0,0.13)" stroke-width="0.45"/></pattern>
+        </defs>
+        <rect x="0.5" y="2.5" width="${width - 1}" height="${height - 5}" rx="3" fill="url(#pages)"/>
+        <path d="M${pageW} 2.5 H${width - 3} Q${width - 0.5} ${height / 2} ${width - 3} ${height - 2.5} H${pageW} Z" fill="url(#cover)"/>
+        <path d="M${pageW} 2.5 H${width - 3} Q${width - 0.5} ${height / 2} ${width - 3} ${height - 2.5} H${pageW} Z" fill="url(#grain)" opacity="0.75"/>
+        <rect x="${pageW}" y="2.5" width="${spineW}" height="${height - 5}" rx="2.5" fill="url(#spine)"/>
+        <rect x="${pageW + 3}" y="${bandY1}" width="${spineW - 6}" height="2" rx="1" fill="rgba(255,245,215,0.58)"/>
+        <rect x="${pageW + 3}" y="${bandY2}" width="${spineW - 6}" height="2" rx="1" fill="rgba(255,245,215,0.48)"/>
+        <rect x="${pageW + spineW + 7}" y="${Math.max(5, height * 0.2)}" width="${Math.max(16, width - spineW - pageW - 24)}" height="${Math.max(8, height * 0.45)}" rx="2.5" fill="rgba(255,255,255,0.11)" stroke="rgba(255,255,255,0.18)" stroke-width="0.8"/>
+        <path d="M${pageW + 1} 3 H${width - 4}" stroke="rgba(255,255,255,0.42)" stroke-width="1"/>
+        <path d="M${pageW + 1} ${height - 3} H${width - 4}" stroke="rgba(0,0,0,0.28)" stroke-width="1.2"/>
+        <path d="M1 ${height - 6} C${width * 0.28} ${height - 2}, ${width * 0.68} ${height - 2}, ${width - 2} ${height - 6}" fill="none" stroke="rgba(0,0,0,0.16)" stroke-width="1"/>
+        <text x="${pageW + spineW + (width - pageW - spineW) / 2}" y="${height / 2 + titleSize / 3}" font-family="Arial, sans-serif" font-size="${titleSize}" font-weight="800" fill="#fff8e7" text-anchor="middle" style="paint-order:stroke; stroke:rgba(0,0,0,0.26); stroke-width:2px;">${safeTitle}</text>
+      </svg>`;
+    }
+
     function getShapeSettings(shapeType, seedColor) {
       let width, height, textureSVG;
       let color = seedColor || `hsl(${Math.floor(Math.random() * 360)}, 60%, 40%)`;
 
       if (shapeType === 'book' || shapeType === 'diy-custom') {
         width = 110 + Math.random() * 30; height = 30;
-        let title = UNIV_SUBJECTS[Math.floor(Math.random() * UNIV_SUBJECTS.length)];
-        textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect width="${width}" height="${height}" rx="2" fill="#e2e8f0"/><rect x="0" y="2" width="${width - 4}" height="${height - 4}" fill="#ffffff"/><rect x="4" y="0" width="${width - 4}" height="${height}" rx="2" fill="${color}"/><rect x="10" y="5" width="${width - 20}" height="${height - 10}" rx="2" fill="rgba(0,0,0,0.15)"/><text x="${width / 2}" y="${height / 2 + 4}" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">${title}</text></svg>`;
+        let title = PREMIUM_BOOK_TITLES[Math.floor(Math.random() * PREMIUM_BOOK_TITLES.length)];
+        color = normalizeBookColor(seedColor || color);
+        textureSVG = createPremiumBookTexture(width, height, color, title);
         return { width, height, textureSVG, color };
       } else if (shapeType === 'jokbo') {
         width = 90; height = 120;
@@ -1822,7 +2009,7 @@
         friction: 0.9,           // 책과 동일
         frictionStatic: 3.0,     // 책과 동일 (easy 모드)
         density: 0.5,            // 책과 완전히 동일한 무게
-        slop: 0.01,              // 겹침 허용 범위 축소 (기존 0.05 → 0.01)
+        slop: 0,                         // 겹침 허용 범위 축소 (기존 0.05 → 0.01)
         angle: 0,
         customType: type,
         customColor: boxColor,
@@ -1893,7 +2080,7 @@
       });
 
       const spawnX = w / 2;
-      const spawnY = highestY - cfg.height - 150;
+      const spawnY = highestY - cfg.height - 30; // gap 없이 바로 위에 소환
 
       const texUrl = cfg.textureURL ? cfg.textureURL : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(cfg.textureSVG);
 
@@ -1902,7 +2089,7 @@
       const statFriction = isEasy ? 3.0 : 1.0;
 
       const margin = 2; // 4. 충돌 박스 마진 (Collision Margin)
-      const newObj = Bodies.rectangle(spawnX, spawnY, cfg.width + margin, cfg.height + margin, {
+      const newObj = Bodies.rectangle(spawnX, spawnY, cfg.width, cfg.height, {
         restitution: isEasy ? 0.0 : 0.01,
         friction: baseFriction,
         frictionStatic: statFriction,
@@ -1912,7 +2099,7 @@
         customType: state.currentShape,
         customColor: cfg.color,
         customW: cfg.width, customH: cfg.height,
-        render: { sprite: { texture: texUrl, xScale: cfg.width / (cfg.width + margin), yScale: cfg.height / (cfg.height + margin) } }
+        render: { sprite: { texture: texUrl, xScale: 1, yScale: 1 } }
       });
       newObj.hasTouched = false;
       newObj.freezeCount = 0;
@@ -1922,11 +2109,28 @@
       savePhysicsState();
     }
 
+    function updateTowerHud(meterHeight, activeCount, isRecordBreak) {
+      const hud = document.getElementById('height-display');
+      if (!hud) return;
+
+      hud.innerHTML = `
+        <span class="hud-metric"><span class="hud-label">HEIGHT</span><span class="hud-value">${meterHeight.toFixed(1)}m</span></span>
+        <span class="hud-divider"></span>
+        <span class="hud-metric"><span class="hud-label">BOOKS</span><span class="hud-value">${activeCount}</span></span>
+      `;
+
+      if (isRecordBreak) {
+        hud.classList.remove('record-flash');
+        void hud.offsetWidth;
+        hud.classList.add('record-flash');
+      }
+    }
+
     function calculateHeight() {
       autoCenterCamera();
 
       if (state.books.length === 0) {
-        document.getElementById('height-display').innerText = `0.0m (0개)`;
+        updateTowerHud(0, 0, false);
         updateTheme(0);
         return;
       }
@@ -1953,13 +2157,15 @@
 
       let currentData = getRecords();
       if (!currentData.maxHeight) currentData.maxHeight = 0;
+      let previousMaxHeight = currentData.maxHeight;
+      let isRecordBreak = meterHeight > previousMaxHeight && Math.floor(meterHeight * 10) > Math.floor(previousMaxHeight * 10);
       if (meterHeight > currentData.maxHeight) {
         currentData.maxHeight = meterHeight;
         localStorage.setItem('bookTowerv2', JSON.stringify(currentData));
         try { document.getElementById('dash-max-height').innerText = `${meterHeight.toFixed(1)}m`; } catch (e) { }
       }
 
-      document.getElementById('height-display').innerText = `${meterHeight.toFixed(1)}m (${activeCount}개)`;
+      updateTowerHud(meterHeight, activeCount, isRecordBreak);
       updateTheme(meterHeight);
     }
 
@@ -2016,7 +2222,7 @@
           let textureSVG = '';
           let texUrl = '';
           if (item.type === 'book') {
-            textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${item.w}" height="${item.h}"><rect width="${item.w}" height="${item.h}" rx="2" fill="#e2e8f0"/><rect x="0" y="2" width="${item.w - 4}" height="${item.h - 4}" fill="#ffffff"/><rect x="4" y="0" width="${item.w - 4}" height="${item.h}" rx="2" fill="${item.color}"/><rect x="10" y="5" width="${item.w - 20}" height="${item.h - 10}" rx="2" fill="rgba(0,0,0,0.15)"/></svg>`;
+            textureSVG = createPremiumBookTexture(item.w, item.h, item.color, 'BOOK');
           } else {
             let c = getShapeSettings(item.type);
             if (c && c.textureURL) texUrl = c.textureURL;
@@ -3004,7 +3210,7 @@
         }
       });
       const spawnX = w / 2;
-      const spawnY = highestY - cfg.height - 150;
+      const spawnY = highestY - cfg.height - 30; // gap 없이 바로 위에 소환
 
       const texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(cfg.textureSVG);
       const newObj = Bodies.rectangle(spawnX, spawnY, cfg.width, cfg.height, {
@@ -3053,7 +3259,7 @@
       document.getElementById('start-screen').classList.remove('hidden');
       document.getElementById('top-hud').classList.add('hidden');
       document.getElementById('time-display').innerText = formatTime(state.timeLeft);
-      document.getElementById('height-display').innerText = `0.0m (0개)`;
+      updateTowerHud(0, 0, false);
       updateTheme(0);
 
       alert("타이머가 초기화 되었습니다. 새로 시작해주세요!");
