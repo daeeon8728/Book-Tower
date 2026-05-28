@@ -11,7 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- GLTFLoader removed: character is now built from pure Three.js primitives -->
 
   <style>
     :root {
@@ -2468,32 +2468,32 @@
 
     const AVATAR_ITEMS = {
       head: [
-        { id: 'h1', name: '야구 모자', icon: '🧢', desc: '흔한 모자', grade: 'common' },
-        { id: 'h2', name: '여우 모자', icon: '🦊', desc: '귀여운 여우 모자', grade: 'common' },
-        { id: 'h3', name: '카우보이 모자', icon: '🤠', desc: '서부의 총잡이', grade: 'rare' },
-        { id: 'h4', name: '솜브레로', icon: '🌮', desc: '뜨거운 태양 피하기', grade: 'epic' },
-        { id: 'h5', name: '마녀 모자', icon: '🧙', desc: '강력한 마력', grade: 'legend' }
+        { id: 'h1', name: '스냅백',       icon: '🧢', desc: '현실적인 캡 형태',          grade: 'common' },
+        { id: 'h2', name: '비니',          icon: '🎓', desc: '부드러운 천 질감',          grade: 'common' },
+        { id: 'h3', name: '볼캡',          icon: '🧢', desc: '클래식 볼캡',              grade: 'rare'   },
+        { id: 'h4', name: '벙거지 모자',   icon: '🪖', desc: '와이드 버킷 햇',           grade: 'epic'   },
+        { id: 'h5', name: '네온 왕관',     icon: '👑', desc: '[전설] 빛나는 네온 왕관',  grade: 'legend' }
       ],
       top: [
-        { id: 't1', name: '무지 티셔츠', icon: '👕', desc: '깔끔한 티셔츠', grade: 'common' },
-        { id: 't2', name: '로고 티셔츠', icon: '👕', desc: '포인트가 있는 티', grade: 'common' },
-        { id: 't3', name: '자켓', icon: '🧥', desc: '멋진 자켓', grade: 'rare' },
-        { id: 't4', name: '고급 자켓', icon: '🧥', desc: '명품 자켓', grade: 'epic' },
-        { id: 't5', name: '전설의 자켓', icon: '✨', desc: '빛나는 자켓', grade: 'legend' }
+        { id: 't1', name: '오버핏 후드티', icon: '👕', desc: '목뒤 후드 볼륨감 구현',    grade: 'common' },
+        { id: 't2', name: '맨투맨',        icon: '👕', desc: '깔끔한 맨투맨 티셔츠',     grade: 'common' },
+        { id: 't3', name: '체크 셔츠',     icon: '🟥', desc: '캐주얼 체크 패턴',         grade: 'rare'   },
+        { id: 't4', name: '가죽 자켓',     icon: '🧥', desc: '반사율 높은 광택 질감',    grade: 'epic'   },
+        { id: 't5', name: '테크웨어 아노락',icon:'⚡',  desc: '[영웅] 테크웨어 아노락',   grade: 'epic'   }
       ],
       bottom: [
-        { id: 'b1', name: '청바지', icon: '👖', desc: '국민 바지', grade: 'common' },
-        { id: 'b2', name: '트레이닝', icon: '🏃', desc: '편안한 운동복', grade: 'common' },
-        { id: 'b3', name: '반바지', icon: '🩳', desc: '시원한 바지', grade: 'rare' },
-        { id: 'b4', name: '정장 바지', icon: '🕴️', desc: '깔끔한 바지', grade: 'epic' },
-        { id: 'b5', name: '황금 바지', icon: '✨', desc: '눈이 부신 바지', grade: 'legend' }
+        { id: 'b1', name: '인디고 청바지', icon: '👖', desc: '데님 특유의 거친 질감',    grade: 'common' },
+        { id: 'b2', name: '블랙 슬랙스',  icon: '🖤', desc: '깔끔한 블랙 슬랙스',       grade: 'common' },
+        { id: 'b3', name: '회색 트레이닝', icon: '🩶', desc: '편안한 트레이닝 팬츠',     grade: 'rare'   },
+        { id: 'b4', name: '카고 바지',     icon: '🟫', desc: '포켓 많은 카고 팬츠',      grade: 'epic'   },
+        { id: 'b5', name: '반바지',        icon: '🩳', desc: '시원한 반바지',             grade: 'common' }
       ],
       shoes: [
-        { id: 's1', name: '스니커즈', icon: '👟', desc: '편안한 스니커즈', grade: 'common' },
-        { id: 's2', name: '샌들', icon: '🩴', desc: '시원한 샌들', grade: 'common' },
-        { id: 's3', name: '트레이닝화', icon: '🏃', desc: '운동용 신발', grade: 'rare' },
-        { id: 's4', name: '구두', icon: '👞', desc: '단정한 구두', grade: 'epic' },
-        { id: 's5', name: '황금 구두', icon: '✨', desc: '빛의 속도', grade: 'legend' }
+        { id: 's1', name: '캔버스 스니커즈',icon:'👟', desc: '클래식 캔버스 슈즈',       grade: 'common' },
+        { id: 's2', name: '러닝슈즈',      icon: '🏃', desc: '경량 러닝 슈즈',           grade: 'common' },
+        { id: 's3', name: '워커 부츠',     icon: '🥾', desc: '가죽 질감 워커 부츠',      grade: 'rare'   },
+        { id: 's4', name: '슬리퍼',        icon: '🩴', desc: '편안한 슬리퍼',            grade: 'common' },
+        { id: 's5', name: '불꽃 스니커즈', icon: '🔥', desc: '[전설] 불꽃 이펙트 슈즈',  grade: 'legend' }
       ]
     };
 
@@ -3263,7 +3263,7 @@
     const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
     // Three.js 전역 참조
-    let t3 = { scene: null, camera: null, renderer: null, controls: null, animId: null, gltfLoader: null, characterRoot: null, baseScale: 1, baseOffset: new THREE.Vector3() };
+    let t3 = { scene: null, camera: null, renderer: null, controls: null, animId: null, characterRoot: null, bonePts: {} };
     let bones = {};          // bone 이름 → THREE.Object3D
     let slot3D = {};         // slot 이름 → { meshes: [], geos: [], mats: [] }  (dispose용)
     let viewerReady = false;
@@ -3363,192 +3363,505 @@
       })();
     }
 
-    // ── 2. 캐릭터 빌드 (GLTF 로더 사용) ────────────────
+    // ── 2. 순수 Three.js 프로시저럴 캐릭터 빌드 (외부 파일 0%) ────────────────
     function buildCharacter() {
-      t3.gltfLoader = new THREE.GLTFLoader();
-      
-      t3.gltfLoader.load(encodeURI('./assets/avatar/Character Base.glb'), (gltf) => {
-        const root = gltf.scene;
-        // 정면을 보도록 회전
-        root.rotation.y = Math.PI; 
-        
-        // Auto-center and scale
-        const box = new THREE.Box3().setFromObject(root);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        
-        if (size.y > 0) {
-          t3.baseScale = 1.6 / size.y; // 캐릭터 키를 약 1.6 단위로 정규화
-          root.scale.set(t3.baseScale, t3.baseScale, t3.baseScale);
-        }
-        
-        const box2 = new THREE.Box3().setFromObject(root);
-        const center2 = new THREE.Vector3();
-        box2.getCenter(center2);
-        
-        // 카메라가 (0, 0.95, 0)을 보고 있으므로, 캐릭터 중심을 x=0, z=0, 바닥을 y=0으로
-        t3.baseOffset.set(-center2.x, -box2.min.y, -center2.z);
-        root.position.copy(t3.baseOffset);
-        
-        root.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-        
-        t3.characterRoot = root;
-        t3.scene.add(root);
+      const root = new THREE.Group();
 
-        // 로딩 표시 제거
-        document.getElementById('avatar-3d-loading').style.display = 'none';
-        viewerReady = true;
+      // ── 재질 팔레트 ──────────────────────────────────────────────
+      const matSkin    = new THREE.MeshStandardMaterial({ color: 0xF0C4A0, roughness: 0.75, metalness: 0.0 });
+      const matHoodie  = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.92, metalness: 0.0 });
+      const matJeans   = new THREE.MeshStandardMaterial({ color: 0x1D4ED8, roughness: 0.88, metalness: 0.0 });
+      const matShoe    = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.70, metalness: 0.1 });
+      const matEye     = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.4  });
+      const matHair    = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.9  });
+      const matSole    = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.6  });
 
-        // ★ viewerReady를 먼저 true로 설정한 후 장착 아이템 로드
-        refreshEquipped3D();
-      }, undefined, (error) => {
-        console.error('Character Base load error:', error);
-        document.getElementById('avatar-3d-loading').innerHTML = '<div style="color:red;padding:20px;font-size:12px;">모델 로딩 실패: ' + (error.message || error) + '<br>※ PC에서 파일을 직접 열었을 경우(CORS 에러) 발생할 수 있습니다. 로컬 서버(http://localhost:8000/)를 이용해주세요.</div>';
-      });
+      // ── 헬퍼: 메시 생성 ──────────────────────────────────────────
+      function mk(geo, mat, px, py, pz, rx, ry, rz) {
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(px || 0, py || 0, pz || 0);
+        if (rx !== undefined) m.rotation.x = rx;
+        if (ry !== undefined) m.rotation.y = ry;
+        if (rz !== undefined) m.rotation.z = rz;
+        m.castShadow = true; m.receiveShadow = true;
+        root.add(m); return m;
+      }
+
+      // ── 신발 (y ≈ 0) ──────────────────────────────────────────────
+      const shoeGeo = new THREE.BoxGeometry(0.13, 0.09, 0.24);
+      mk(shoeGeo, matShoe, -0.115, 0.045,  0.02); // 왼발
+      mk(shoeGeo, matShoe,  0.115, 0.045,  0.02); // 오른발
+      // 흰 밑창
+      const soleGeo = new THREE.BoxGeometry(0.14, 0.025, 0.25);
+      mk(soleGeo, matSole, -0.115, 0.008, 0.02);
+      mk(soleGeo, matSole,  0.115, 0.008, 0.02);
+
+      // ── 종아리 ──────────────────────────────────────────────────
+      const lowerLegGeo = new THREE.CylinderGeometry(0.062, 0.068, 0.38, 10);
+      mk(lowerLegGeo, matJeans, -0.115, 0.28, 0);
+      mk(lowerLegGeo, matJeans,  0.115, 0.28, 0);
+
+      // ── 허벅지 ──────────────────────────────────────────────────
+      const upperLegGeo = new THREE.CylinderGeometry(0.085, 0.075, 0.30, 10);
+      mk(upperLegGeo, matJeans, -0.107, 0.625, 0);
+      mk(upperLegGeo, matJeans,  0.107, 0.625, 0);
+
+      // ── 엉덩이/허리 ──────────────────────────────────────────────
+      const hipsGeo = new THREE.BoxGeometry(0.33, 0.19, 0.21);
+      mk(hipsGeo, matJeans, 0, 0.805, 0);
+
+      // ── 몸통 (후드티) ────────────────────────────────────────────
+      const torsoGeo = new THREE.BoxGeometry(0.42, 0.46, 0.23);
+      const torsoMesh = mk(torsoGeo, matHoodie, 0, 1.075, 0);
+      torsoMesh.name = 'torso';
+
+      // 어깨 폭 강조 (양쪽 라운드)
+      const shoulderGeo = new THREE.SphereGeometry(0.10, 8, 6);
+      mk(shoulderGeo, matHoodie, -0.215, 1.20, 0);
+      mk(shoulderGeo, matHoodie,  0.215, 1.20, 0);
+
+      // 후드 (목 뒤 볼륨감)
+      const hoodGeo = new THREE.SphereGeometry(0.135, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55);
+      mk(hoodGeo, matHoodie, 0, 1.315, -0.095);
+
+      // 캥거루 주머니 (전면)
+      const pocketGeo = new THREE.BoxGeometry(0.20, 0.10, 0.02);
+      mk(pocketGeo, new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.95 }), 0, 0.88, 0.117);
+
+      // ── 목 ───────────────────────────────────────────────────────
+      const neckGeo = new THREE.CylinderGeometry(0.052, 0.058, 0.10, 10);
+      mk(neckGeo, matSkin, 0, 1.355, 0);
+
+      // ── 머리 ─────────────────────────────────────────────────────
+      const headGeo = new THREE.SphereGeometry(0.178, 20, 14);
+      const headMesh = mk(headGeo, matSkin, 0, 1.558, 0);
+      headMesh.name = 'head';
+
+      // 눈
+      const eyeGeo = new THREE.SphereGeometry(0.026, 8, 6);
+      mk(eyeGeo, matEye, -0.065, 1.57,  0.168);
+      mk(eyeGeo, matEye,  0.065, 1.57,  0.168);
+      // 눈 하이라이트
+      const hlGeo = new THREE.SphereGeometry(0.009, 6, 4);
+      const matHL = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1 });
+      mk(hlGeo, matHL, -0.058, 1.575, 0.193);
+      mk(hlGeo, matHL,  0.072, 1.575, 0.193);
+
+      // 입 (작은 호)
+      const mouthGeo = new THREE.TorusGeometry(0.04, 0.008, 6, 10, Math.PI);
+      mk(mouthGeo, new THREE.MeshStandardMaterial({ color: 0xc06060 }), 0, 1.50, 0.16, 0, 0, Math.PI);
+
+      // 코
+      const noseGeo = new THREE.ConeGeometry(0.018, 0.04, 6);
+      mk(noseGeo, new THREE.MeshStandardMaterial({ color: 0xd4a090, roughness: 0.9 }), 0, 1.535, 0.175, Math.PI / 2, 0, 0);
+
+      // 귀
+      const earGeo = new THREE.SphereGeometry(0.04, 8, 6);
+      mk(earGeo, matSkin, -0.178, 1.545, 0);
+      mk(earGeo, matSkin,  0.178, 1.545, 0);
+
+      // 머리카락 (구 위에 얹히는 반구)
+      const hairGeo = new THREE.SphereGeometry(0.182, 20, 8, 0, Math.PI * 2, 0, Math.PI * 0.52);
+      mk(hairGeo, matHair, 0, 1.565, -0.01);
+      // 앞머리 약간
+      const bangGeo = new THREE.SphereGeometry(0.10, 8, 6, 0, Math.PI, 0, Math.PI * 0.45);
+      mk(bangGeo, matHair, 0, 1.71, 0.085, 0.5, 0, 0);
+
+      // ── 위팔 ─────────────────────────────────────────────────────
+      const upperArmGeo = new THREE.CylinderGeometry(0.068, 0.062, 0.32, 10);
+      mk(upperArmGeo, matHoodie, -0.275, 1.10, 0);
+      mk(upperArmGeo, matHoodie,  0.275, 1.10, 0);
+
+      // ── 아래팔 ────────────────────────────────────────────────────
+      const lowerArmGeo = new THREE.CylinderGeometry(0.058, 0.052, 0.28, 10);
+      mk(lowerArmGeo, matHoodie, -0.275, 0.80, 0);
+      mk(lowerArmGeo, matHoodie,  0.275, 0.80, 0);
+
+      // ── 손 ─────────────────────────────────────────────────────
+      const handGeo = new THREE.SphereGeometry(0.066, 10, 8);
+      mk(handGeo, matSkin, -0.275, 0.636, 0);
+      mk(handGeo, matSkin,  0.275, 0.636, 0);
+
+      // ── Three.js scene에 추가 ───────────────────────────────────
+      t3.characterRoot = root;
+      t3.scene.add(root);
+
+      // 본 위치 참조 (아이템 부착용)
+      t3.bonePts = {
+        headCY:   1.558,  // 머리 중심 y
+        headR:    0.178,  // 머리 반지름
+        torsoCY:  1.075,  // 몸통 중심 y
+        torsoH:   0.46,   // 몸통 높이
+        hipCY:    0.805,  // 허리 중심 y
+        shoeCY:   0.045   // 신발 중심 y
+      };
+
+      document.getElementById('avatar-3d-loading').style.display = 'none';
+      viewerReady = true;
+      refreshEquipped3D();
     }
 
-    // ── 3. 슬롯 Dispose (메모리 해제 핵심) ────────────────────
-    // 아이템 교체 시 이전 메시의 geometry + material을 명시적으로 dispose
+    // ── 3. 슬롯 Dispose ─────────────────────────────────────────────
     function disposeSlot3D(slot) {
       const prev = slot3D[slot];
       if (!prev) return;
-      prev.meshes.forEach(mesh => {
-        if (mesh.parent) mesh.parent.remove(mesh);
-        prev.geos.forEach(g => { try { g.dispose(); } catch (e) { } });
-        prev.mats.forEach(mat => {
-          if (mat.map) mat.map.dispose();
-          try { mat.dispose(); } catch (e) { }
-        });
+      prev.meshes.forEach(m => {
+        if (m.parent) m.parent.remove(m);
+        if (m.geometry) try { m.geometry.dispose(); } catch(e){}
+        if (m.material) {
+          if (Array.isArray(m.material)) m.material.forEach(mt => { try { mt.dispose(); } catch(e){} });
+          else try { m.material.dispose(); } catch(e){}
+        }
       });
+      if (prev.light && prev.light.parent) prev.light.parent.remove(prev.light);
       slot3D[slot] = null;
     }
 
-    // ── 4. 아이템 메시 생성 & 본에 attach ─────────────────────
+    // ── 4. 아이템 메시 생성 (순수 Three.js) ─────────────────────────
     function buildItemMeshes(slot, itemId) {
-      const geos = [], mats = [], meshes = [];
+      if (!t3.characterRoot || !viewerReady) return;
+      const meshes = [];
+      const grp = new THREE.Group();
+      const bp = t3.bonePts;
+      let pointLight = null;
 
-      const addMesh = (mesh) => {
-        meshes.push(mesh);
-        if (mesh.geometry) geos.push(mesh.geometry);
-        if (mesh.material) mats.push(mesh.material);
+      // 헬퍼
+      function add(geo, mat, px, py, pz, rx, ry, rz) {
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(px||0, py||0, pz||0);
+        if (rx !== undefined) m.rotation.x = rx;
+        if (ry !== undefined) m.rotation.y = ry;
+        if (rz !== undefined) m.rotation.z = rz;
+        m.castShadow = true;
+        grp.add(m); meshes.push(m); return m;
       }
 
-      if (slot === 'bottom') {
-        const h2 = t3.characterRoot || t3.scene;
-        function mkBottom(colorHex, emissiveHex, emissiveIntensity) {
-          const mat = new THREE.MeshLambertMaterial({ color: colorHex, emissive: emissiveHex || 0x000000, emissiveIntensity: emissiveIntensity || 0 });
-          const mesh = new THREE.Group();
-          mesh.position.set(0, 0.4, 0); // 캐릭터 하반신 높이 대략 (조정 필요)
-          
-          const geoHips = new THREE.BoxGeometry(0.32, 0.19, 0.17);
-          const mHips = new THREE.Mesh(geoHips, mat);
-          mesh.add(mHips);
-          addMesh(mHips);
+      // ─── 모자류 ───────────────────────────────────────────────────
+      if (slot === 'head') {
+        const headTopY = bp.headCY + bp.headR;   // ≈ 1.736
 
-          const geoL = new THREE.CylinderGeometry(0.08, 0.06, 0.4, 8);
-          const mL = new THREE.Mesh(geoL, mat);
-          mL.position.set(-0.1, -0.25, 0);
-          mesh.add(mL);
-          addMesh(mL);
-
-          const geoR = new THREE.CylinderGeometry(0.08, 0.06, 0.4, 8);
-          const mR = new THREE.Mesh(geoR, mat);
-          mR.position.set(0.1, -0.25, 0);
-          mesh.add(mR);
-          addMesh(mR);
-
-          h2.add(mesh);
-          meshes.push(mesh);
+        if (itemId === 'h1') {
+          // 스냅백: 챙(brim) + 둥근 크라운
+          const crownGeo = new THREE.CylinderGeometry(0.165, 0.195, 0.15, 16);
+          add(crownGeo, new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.85 }), 0, headTopY + 0.04, 0);
+          const brimGeo = new THREE.CylinderGeometry(0.22, 0.23, 0.018, 16, 1, false, Math.PI * 1.1, Math.PI * 0.8);
+          add(brimGeo, new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 }), 0, headTopY - 0.025, 0.04);
+          // 스냅백 버클
+          const buckleGeo = new THREE.BoxGeometry(0.06, 0.018, 0.01);
+          add(buckleGeo, new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.2 }), 0, headTopY - 0.02, -0.22);
         }
-
-        if (itemId === 'b1') { mkBottom(0x1d4ed8); } // 청바지
-        else if (itemId === 'b2') { mkBottom(0x374151); } // 트레이닝
-        else if (itemId === 'b3') { mkBottom(0x38bdf8); } // 반바지
-        else if (itemId === 'b4') { mkBottom(0x334155); } // 정장 바지
-        else if (itemId === 'b5') { mkBottom(0xfcd34d, 0x7a4f00, 0.1); } // 황금 바지
-        
-        slot3D[slot] = { meshes, geos, mats };
-        return;
-      }
-
-      const GLB_MAP = {
-        'h1': 'Cap.glb',
-        'h2': 'Fox Hat.glb',
-        'h3': 'Sombrero.glb',
-        'h4': 'Witch Hat.glb',
-        'h5': 'Cowboy Hat.glb',
-        't1': 'T Shirt.glb',
-        't2': 'Jacket.glb',
-        't3': 'T-shirt.glb',
-        't4': 'Jacket.glb',
-        't5': 'Jacket.glb',
-        's1': 'Sneakers.glb',
-        's2': 'Sandal.glb',
-        's3': 'Shoes.glb',
-        's4': 'Trainer.glb',
-        's5': 'Shoes.glb'
-      };
-
-      const filename = GLB_MAP[itemId];
-      if (!filename) return;
-
-      const currentSlotState = { meshes: [], geos: [], mats: [] };
-      slot3D[slot] = currentSlotState;
-
-      if (t3.gltfLoader) {
-        t3.gltfLoader.load(encodeURI('./assets/items/' + filename), (gltf) => {
-          if (slot3D[slot] !== currentSlotState) return;
-
-          const model = gltf.scene;
-          
-          if (slot === 'bottom') return; // 방어코드
-
-          // 전역 스케일과 위치 오프셋을 아이템에도 동일하게 적용하여 정확히 핏되게 맞춤
-          model.scale.set(t3.baseScale, t3.baseScale, t3.baseScale);
-          model.position.copy(t3.baseOffset);
-          
-          model.traverse((child) => {
-            if (child.isMesh) {
-              child.castShadow = true;
-              child.receiveShadow = true;
-              
-              // 특정 등급 아이템(t5, s5) 황금색 틴트 효과
-              if (itemId === 't5' || itemId === 's5') {
-                if (child.material) {
-                  child.material = child.material.clone();
-                  child.material.color.setHex(0xfcd34d);
-                  if (child.material.emissive) {
-                    child.material.emissive.setHex(0x5a3f00);
-                    child.material.emissiveIntensity = 0.2;
-                  }
-                }
-              }
-              
-              currentSlotState.meshes.push(child);
-              if (child.geometry) currentSlotState.geos.push(child.geometry);
-              if (child.material) currentSlotState.mats.push(child.material);
-            }
-          });
-          
-          currentSlotState.meshes.push(model);
-          if (t3.characterRoot) {
-            // characterRoot 자체에 추가하면 root의 scale/position을 또 받게 되므로 t3.scene에 추가하거나,
-            // characterRoot에 추가할거면 아이템 scale/position 조정을 리셋해야 함.
-            // 여기서는 model.position을 맞췄으므로 scene에 직접 추가하는 것이 안전함.
-            t3.scene.add(model);
-          } else {
-            t3.scene.add(model);
+        else if (itemId === 'h2') {
+          // 비니: 두꺼운 실린더 + 폼폼
+          const bodyGeo = new THREE.CylinderGeometry(0.175, 0.19, 0.22, 16);
+          add(bodyGeo, new THREE.MeshStandardMaterial({ color: 0xB91C1C, roughness: 0.95 }), 0, bp.headCY + 0.06, 0);
+          const cuffGeo = new THREE.CylinderGeometry(0.192, 0.195, 0.055, 16);
+          add(cuffGeo, new THREE.MeshStandardMaterial({ color: 0x991818, roughness: 0.95 }), 0, bp.headCY - 0.065, 0);
+          const pompomGeo = new THREE.SphereGeometry(0.058, 10, 8);
+          add(pompomGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.98 }), 0, headTopY + 0.235, 0);
+        }
+        else if (itemId === 'h3') {
+          // 볼캡: 챙 반만 + 작은 크라운
+          const crownGeo = new THREE.SphereGeometry(0.185, 16, 8, 0, Math.PI * 2, 0, Math.PI * 0.58);
+          add(crownGeo, new THREE.MeshStandardMaterial({ color: 0x0F4C81, roughness: 0.85 }), 0, bp.headCY + 0.015, 0);
+          const brimGeo = new THREE.CylinderGeometry(0.24, 0.245, 0.016, 16, 1, false, Math.PI * 1.2, Math.PI * 0.6);
+          add(brimGeo, new THREE.MeshStandardMaterial({ color: 0x0a3560, roughness: 0.82 }), 0, bp.headCY - 0.035, 0.055);
+          const logoGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.005, 8);
+          add(logoGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }), 0, headTopY + 0.005, 0.08, Math.PI / 2, 0, 0);
+        }
+        else if (itemId === 'h4') {
+          // 벙거지: 와이드 원형 챙 + 트렁케이티드 콘 크라운
+          const crownGeo = new THREE.CylinderGeometry(0.155, 0.21, 0.18, 16);
+          add(crownGeo, new THREE.MeshStandardMaterial({ color: 0x78716C, roughness: 0.92 }), 0, headTopY + 0.02, 0);
+          const brimGeo = new THREE.CylinderGeometry(0.32, 0.33, 0.022, 24);
+          add(brimGeo, new THREE.MeshStandardMaterial({ color: 0x6B6460, roughness: 0.93 }), 0, bp.headCY + 0.0, 0);
+        }
+        else if (itemId === 'h5') {
+          // 네온 왕관 (전설): 5개의 뾰족한 스파이크 + 링 + 에미시브
+          const ringGeo = new THREE.TorusGeometry(0.20, 0.025, 8, 24);
+          add(ringGeo, new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffaa00, emissiveIntensity: 1.5, roughness: 0.1, metalness: 0.9 }), 0, headTopY, 0, Math.PI / 2, 0, 0);
+          const spikeCount = 5;
+          for (let i = 0; i < spikeCount; i++) {
+            const angle = (i / spikeCount) * Math.PI * 2;
+            const spikeGeo = new THREE.ConeGeometry(0.025, 0.12, 6);
+            const spikeMat = new THREE.MeshStandardMaterial({ color: i % 2 === 0 ? 0xff00ff : 0x00ffff, emissive: i % 2 === 0 ? 0xff00aa : 0x00aaff, emissiveIntensity: 2, roughness: 0.1 });
+            add(spikeGeo, spikeMat, Math.cos(angle) * 0.19, headTopY + 0.085, Math.sin(angle) * 0.19);
           }
-        }, undefined, (e) => console.error(e));
+          // 빛나는 보석들
+          for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const gemGeo = new THREE.OctahedronGeometry(0.018);
+            const gemMat = new THREE.MeshStandardMaterial({ color: i % 3 === 0 ? 0xff00ff : i % 3 === 1 ? 0x00ffff : 0xffff00, emissive: 0xffffff, emissiveIntensity: 1.5, roughness: 0.0, metalness: 1.0 });
+            add(gemGeo, gemMat, Math.cos(angle) * 0.20, headTopY, Math.sin(angle) * 0.20);
+          }
+          pointLight = new THREE.PointLight(0xff00ff, 1.5, 1.5);
+          pointLight.position.set(0, headTopY + 0.1, 0);
+          grp.add(pointLight);
+        }
       }
+
+      // ─── 상의류 ───────────────────────────────────────────────────
+      else if (slot === 'top') {
+        // 기존 몸통을 대체하는 방식: 같은 크기의 mesh를 씌워 덮음
+        const tY = bp.torsoCY;
+        const tH = bp.torsoH;
+
+        if (itemId === 't1') {
+          // 오버핏 후드티: 넓고 두꺼운 몸통 + 소매 + 후드 볼록
+          const body = add(new THREE.BoxGeometry(0.46, tH + 0.05, 0.26), new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.92 }), 0, tY, 0);
+          add(new THREE.SphereGeometry(0.11, 8, 6), new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.92 }), -0.235, tY + 0.155, 0);
+          add(new THREE.SphereGeometry(0.11, 8, 6), new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.92 }),  0.235, tY + 0.155, 0);
+          add(new THREE.CylinderGeometry(0.075, 0.07, 0.35, 10), new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.92 }), -0.285, tY - 0.075, 0);
+          add(new THREE.CylinderGeometry(0.075, 0.07, 0.35, 10), new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.92 }),  0.285, tY - 0.075, 0);
+          add(new THREE.SphereGeometry(0.138, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.92 }), 0, tY + 0.37, -0.1);
+          // 주머니
+          add(new THREE.BoxGeometry(0.22, 0.11, 0.02), new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.95 }), 0, tY - 0.13, 0.134);
+        }
+        else if (itemId === 't2') {
+          // 맨투맨: 크루넥, 소매 약간 짧음, 밝은 회색
+          const mat = new THREE.MeshStandardMaterial({ color: 0xC0C0C0, roughness: 0.90 });
+          add(new THREE.BoxGeometry(0.40, tH, 0.23), mat, 0, tY, 0);
+          add(new THREE.SphereGeometry(0.10, 8, 6), mat, -0.215, tY + 0.12, 0);
+          add(new THREE.SphereGeometry(0.10, 8, 6), mat,  0.215, tY + 0.12, 0);
+          add(new THREE.CylinderGeometry(0.068, 0.062, 0.33, 10), mat, -0.278, tY - 0.065, 0);
+          add(new THREE.CylinderGeometry(0.068, 0.062, 0.33, 10), mat,  0.278, tY - 0.065, 0);
+          // 크루넥 칼라
+          add(new THREE.TorusGeometry(0.065, 0.020, 8, 16), new THREE.MeshStandardMaterial({ color: 0xA8A8A8, roughness: 0.88 }), 0, tY + tH / 2 - 0.01, 0, Math.PI / 2, 0, 0);
+        }
+        else if (itemId === 't3') {
+          // 체크 셔츠: 빨간 체크 패턴 (Canvas 텍스처로 표현)
+          const canvas2d = document.createElement('canvas');
+          canvas2d.width = 128; canvas2d.height = 128;
+          const ctx = canvas2d.getContext('2d');
+          const colors = ['#C0392B', '#E74C3C'];
+          const size = 16;
+          for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+              ctx.fillStyle = (row + col) % 2 === 0 ? colors[0] : colors[1];
+              ctx.fillRect(col * size, row * size, size, size);
+            }
+          }
+          // 가로 줄 흰색 선
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2;
+          for (let i = 0; i <= 8; i++) {
+            ctx.beginPath(); ctx.moveTo(i * size, 0); ctx.lineTo(i * size, 128); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, i * size); ctx.lineTo(128, i * size); ctx.stroke();
+          }
+          const tex = new THREE.CanvasTexture(canvas2d);
+          tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(3, 3);
+          const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.88 });
+          add(new THREE.BoxGeometry(0.40, tH, 0.23), mat, 0, tY, 0);
+          add(new THREE.SphereGeometry(0.10, 8, 6), mat, -0.215, tY + 0.12, 0);
+          add(new THREE.SphereGeometry(0.10, 8, 6), mat,  0.215, tY + 0.12, 0);
+          add(new THREE.CylinderGeometry(0.068, 0.062, 0.33, 10), mat, -0.278, tY - 0.065, 0);
+          add(new THREE.CylinderGeometry(0.068, 0.062, 0.33, 10), mat,  0.278, tY - 0.065, 0);
+          // 칼라
+          add(new THREE.BoxGeometry(0.10, 0.06, 0.02), new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.8 }), -0.04, tY + tH / 2 - 0.02, 0.12);
+          add(new THREE.BoxGeometry(0.10, 0.06, 0.02), new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.8 }),  0.04, tY + tH / 2 - 0.02, 0.12);
+        }
+        else if (itemId === 't4') {
+          // 가죽 자켓: 반사율 높은 검은 광택
+          const mat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.30, metalness: 0.60 });
+          add(new THREE.BoxGeometry(0.42, tH, 0.24), mat, 0, tY, 0);
+          add(new THREE.SphereGeometry(0.107, 8, 6), mat, -0.22, tY + 0.14, 0);
+          add(new THREE.SphereGeometry(0.107, 8, 6), mat,  0.22, tY + 0.14, 0);
+          add(new THREE.CylinderGeometry(0.072, 0.066, 0.34, 10), mat, -0.282, tY - 0.07, 0);
+          add(new THREE.CylinderGeometry(0.072, 0.066, 0.34, 10), mat,  0.282, tY - 0.07, 0);
+          // 지퍼
+          add(new THREE.BoxGeometry(0.014, tH * 0.8, 0.015), new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.95, roughness: 0.15 }), 0, tY, 0.126);
+          // 라펠
+          const lapelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.28, metalness: 0.5 });
+          add(new THREE.BoxGeometry(0.08, 0.22, 0.02), lapelMat, -0.08, tY + 0.16, 0.124, 0, 0, 0.2);
+          add(new THREE.BoxGeometry(0.08, 0.22, 0.02), lapelMat,  0.08, tY + 0.16, 0.124, 0, 0, -0.2);
+        }
+        else if (itemId === 't5') {
+          // 테크웨어 아노락 (영웅): 다크 네이비 + 형광 파란 포인트
+          const matBase = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.82, metalness: 0.15 });
+          const matAccent = new THREE.MeshStandardMaterial({ color: 0x06B6D4, emissive: 0x0284C7, emissiveIntensity: 0.6, roughness: 0.5, metalness: 0.3 });
+          add(new THREE.BoxGeometry(0.44, tH + 0.04, 0.25), matBase, 0, tY, 0);
+          add(new THREE.SphereGeometry(0.11, 8, 6), matBase, -0.228, tY + 0.15, 0);
+          add(new THREE.SphereGeometry(0.11, 8, 6), matBase,  0.228, tY + 0.15, 0);
+          add(new THREE.CylinderGeometry(0.073, 0.067, 0.34, 10), matBase, -0.285, tY - 0.07, 0);
+          add(new THREE.CylinderGeometry(0.073, 0.067, 0.34, 10), matBase,  0.285, tY - 0.07, 0);
+          // 형광 라인 디테일
+          add(new THREE.BoxGeometry(0.42, 0.014, 0.252), matAccent, 0, tY + 0.15, 0);
+          add(new THREE.BoxGeometry(0.42, 0.014, 0.252), matAccent, 0, tY - 0.1, 0);
+          add(new THREE.BoxGeometry(0.016, 0.34, 0.252), matAccent, -0.21, tY, 0);
+          add(new THREE.BoxGeometry(0.016, 0.34, 0.252), matAccent,  0.21, tY, 0);
+          // 후드
+          add(new THREE.SphereGeometry(0.14, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), matBase, 0, tY + 0.37, -0.105);
+          pointLight = new THREE.PointLight(0x06B6D4, 0.8, 1.2);
+          pointLight.position.set(0, tY + 0.2, 0.3);
+          grp.add(pointLight);
+        }
+      }
+
+      // ─── 하의류 ───────────────────────────────────────────────────
+      else if (slot === 'bottom') {
+        const hipY = bp.hipCY;
+
+        const makeLegs = (colHex, roughness, metalness, emissive, emissiveInt) => {
+          const mat = new THREE.MeshStandardMaterial({ color: colHex, roughness: roughness || 0.88, metalness: metalness || 0.0, emissive: emissive || 0x000000, emissiveIntensity: emissiveInt || 0 });
+          // 엉덩이/허리
+          add(new THREE.BoxGeometry(0.33, 0.21, 0.22), mat, 0, hipY, 0);
+          // 허벅지
+          add(new THREE.CylinderGeometry(0.086, 0.076, 0.32, 10), mat, -0.107, 0.625, 0);
+          add(new THREE.CylinderGeometry(0.086, 0.076, 0.32, 10), mat,  0.107, 0.625, 0);
+          // 종아리
+          add(new THREE.CylinderGeometry(0.063, 0.069, 0.40, 10), mat, -0.115, 0.275, 0);
+          add(new THREE.CylinderGeometry(0.063, 0.069, 0.40, 10), mat,  0.115, 0.275, 0);
+          return mat;
+        };
+
+        if (itemId === 'b1') {
+          // 인디고 청바지 - 거친 데님 질감
+          makeLegs(0x1D4ED8, 0.88);
+          // 솔기 라인 디테일
+          const seamMat = new THREE.MeshStandardMaterial({ color: 0x1848c0, roughness: 0.90 });
+          add(new THREE.BoxGeometry(0.008, 0.70, 0.005), seamMat, -0.085, 0.45, 0.065);
+          add(new THREE.BoxGeometry(0.008, 0.70, 0.005), seamMat,  0.085, 0.45, 0.065);
+          // 앞 포켓
+          add(new THREE.BoxGeometry(0.09, 0.07, 0.015), new THREE.MeshStandardMaterial({ color: 0x1640b0, roughness: 0.88 }), -0.11, hipY + 0.04, 0.112);
+          add(new THREE.BoxGeometry(0.09, 0.07, 0.015), new THREE.MeshStandardMaterial({ color: 0x1640b0, roughness: 0.88 }),  0.11, hipY + 0.04, 0.112);
+        }
+        else if (itemId === 'b2') {
+          // 블랙 슬랙스 - 깔끔, 광택 약간
+          makeLegs(0x1C1C1C, 0.60, 0.15);
+          // 프레스 라인
+          add(new THREE.BoxGeometry(0.006, 0.68, 0.004), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.55 }), -0.09, 0.44, 0.068);
+          add(new THREE.BoxGeometry(0.006, 0.68, 0.004), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.55 }),  0.09, 0.44, 0.068);
+        }
+        else if (itemId === 'b3') {
+          // 회색 트레이닝 팬츠
+          makeLegs(0x9CA3AF, 0.93);
+          // 허리 밴드
+          add(new THREE.BoxGeometry(0.34, 0.04, 0.23), new THREE.MeshStandardMaterial({ color: 0x6B7280, roughness: 0.92 }), 0, hipY + 0.125, 0);
+          // 줄 디테일
+          add(new THREE.BoxGeometry(0.008, 0.68, 0.22), new THREE.MeshStandardMaterial({ color: 0xD1D5DB, roughness: 0.92 }), -0.145, 0.44, 0);
+          add(new THREE.BoxGeometry(0.008, 0.68, 0.22), new THREE.MeshStandardMaterial({ color: 0xD1D5DB, roughness: 0.92 }),  0.145, 0.44, 0);
+        }
+        else if (itemId === 'b4') {
+          // 카고 바지 - 카키색 + 사이드 포켓
+          makeLegs(0x78613A, 0.91);
+          const pocketMat = new THREE.MeshStandardMaterial({ color: 0x6B5530, roughness: 0.92 });
+          // 좌우 카고 포켓
+          add(new THREE.BoxGeometry(0.08, 0.10, 0.016), pocketMat, -0.155, 0.46, 0.065);
+          add(new THREE.BoxGeometry(0.08, 0.10, 0.016), pocketMat,  0.155, 0.46, 0.065);
+          // 포켓 플랩
+          add(new THREE.BoxGeometry(0.082, 0.024, 0.012), pocketMat, -0.155, 0.515, 0.068);
+          add(new THREE.BoxGeometry(0.082, 0.024, 0.012), pocketMat,  0.155, 0.515, 0.068);
+        }
+        else if (itemId === 'b5') {
+          // 반바지 - 허벅지 절반만
+          const mat = new THREE.MeshStandardMaterial({ color: 0x1E40AF, roughness: 0.86 });
+          add(new THREE.BoxGeometry(0.33, 0.21, 0.22), mat, 0, hipY, 0);
+          // 짧은 허벅지
+          add(new THREE.CylinderGeometry(0.086, 0.078, 0.15, 10), mat, -0.107, 0.55, 0);
+          add(new THREE.CylinderGeometry(0.086, 0.078, 0.15, 10), mat,  0.107, 0.55, 0);
+          // 반바지 헴 라인
+          add(new THREE.TorusGeometry(0.09, 0.010, 6, 16), new THREE.MeshStandardMaterial({ color: 0x1a35a0, roughness: 0.88 }), -0.107, 0.47, 0, Math.PI / 2, 0, 0);
+          add(new THREE.TorusGeometry(0.09, 0.010, 6, 16), new THREE.MeshStandardMaterial({ color: 0x1a35a0, roughness: 0.88 }),  0.107, 0.47, 0, Math.PI / 2, 0, 0);
+        }
+      }
+
+      // ─── 신발류 ───────────────────────────────────────────────────
+      else if (slot === 'shoes') {
+        const shoeY = bp.shoeCY;
+
+        if (itemId === 's1') {
+          // 캔버스 스니커즈: 흰 바탕 + 컬러 사이드
+          const matUpper = new THREE.MeshStandardMaterial({ color: 0xF5F5F5, roughness: 0.82 });
+          const matSide  = new THREE.MeshStandardMaterial({ color: 0xE63946, roughness: 0.80 });
+          const matSole2 = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55 });
+          for (const sx of [-0.115, 0.115]) {
+            add(new THREE.BoxGeometry(0.135, 0.10, 0.26), matUpper, sx, shoeY + 0.005, 0.02);
+            add(new THREE.BoxGeometry(0.137, 0.02, 0.012), matSide, sx, shoeY + 0.04, 0.136);
+            add(new THREE.BoxGeometry(0.14, 0.028, 0.262), matSole2, sx, shoeY - 0.044, 0.02);
+            // 레이스
+            for (let l = 0; l < 3; l++) {
+              add(new THREE.BoxGeometry(0.07, 0.008, 0.006), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), sx, shoeY + 0.06 + l * 0.012, 0.08);
+            }
+          }
+        }
+        else if (itemId === 's2') {
+          // 러닝슈즈: 유선형, 두꺼운 미드솔
+          const matBody = new THREE.MeshStandardMaterial({ color: 0xFF6B35, roughness: 0.75, metalness: 0.05 });
+          const matMid  = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.60 });
+          const matBot  = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.65 });
+          for (const sx of [-0.115, 0.115]) {
+            add(new THREE.BoxGeometry(0.13, 0.09, 0.26), matBody, sx, shoeY + 0.01, 0.02);
+            // 후부 힐 컵
+            add(new THREE.BoxGeometry(0.12, 0.11, 0.06), new THREE.MeshStandardMaterial({ color: 0xCC5520, roughness: 0.72 }), sx, shoeY + 0.015, -0.10);
+            add(new THREE.BoxGeometry(0.135, 0.035, 0.265), matMid,  sx, shoeY - 0.038, 0.02);
+            add(new THREE.BoxGeometry(0.135, 0.018, 0.265), matBot,  sx, shoeY - 0.058, 0.02);
+          }
+        }
+        else if (itemId === 's3') {
+          // 워커 부츠: 발목까지 오는 부츠
+          const matLeather = new THREE.MeshStandardMaterial({ color: 0x3D1C02, roughness: 0.55, metalness: 0.15 });
+          const matLug     = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.70 });
+          for (const sx of [-0.115, 0.115]) {
+            // 상단 샤프트
+            add(new THREE.BoxGeometry(0.14, 0.22, 0.22), matLeather, sx, shoeY + 0.12, 0.0);
+            // 발코 부분
+            add(new THREE.BoxGeometry(0.135, 0.09, 0.26), matLeather, sx, shoeY + 0.005, 0.02);
+            // 러그 솔
+            add(new THREE.BoxGeometry(0.145, 0.032, 0.27), matLug, sx, shoeY - 0.050, 0.02);
+            // 아일렛 (6개 버클 포인트)
+            for (let e = 0; e < 4; e++) {
+              const eyelet = new THREE.MeshStandardMaterial({ color: 0xAA8855, metalness: 0.85, roughness: 0.2 });
+              add(new THREE.CylinderGeometry(0.008, 0.008, 0.005, 6), eyelet, sx > 0 ? sx - 0.04 : sx + 0.04, shoeY + 0.05 + e * 0.038, 0.11, Math.PI / 2, 0, 0);
+            }
+          }
+        }
+        else if (itemId === 's4') {
+          // 슬리퍼: 얇고 납작
+          const matFoam  = new THREE.MeshStandardMaterial({ color: 0xF4A261, roughness: 0.88 });
+          const matStrap = new THREE.MeshStandardMaterial({ color: 0xE76F51, roughness: 0.82 });
+          for (const sx of [-0.115, 0.115]) {
+            add(new THREE.BoxGeometry(0.14, 0.025, 0.28), matFoam, sx, shoeY - 0.025, 0.01);
+            // 앞 스트랩
+            add(new THREE.BoxGeometry(0.13, 0.042, 0.025), matStrap, sx, shoeY + 0.01, 0.095);
+            // 측면 스트랩
+            add(new THREE.BoxGeometry(0.018, 0.04, 0.16), matStrap, sx > 0 ? sx - 0.055 : sx + 0.055, shoeY + 0.008, 0.0);
+          }
+        }
+        else if (itemId === 's5') {
+          // 불꽃 스니커즈 (전설): 에미시브 불꽃
+          const matBase2  = new THREE.MeshStandardMaterial({ color: 0x0A0A0A, roughness: 0.30, metalness: 0.5 });
+          const matFlame1 = new THREE.MeshStandardMaterial({ color: 0xFF4500, emissive: 0xFF2200, emissiveIntensity: 2.0, roughness: 0.1 });
+          const matFlame2 = new THREE.MeshStandardMaterial({ color: 0xFFAA00, emissive: 0xFF8800, emissiveIntensity: 2.5, roughness: 0.1 });
+          for (const sx of [-0.115, 0.115]) {
+            add(new THREE.BoxGeometry(0.135, 0.10, 0.26), matBase2, sx, shoeY + 0.01, 0.02);
+            // 밑창 형광 라인
+            add(new THREE.BoxGeometry(0.135, 0.016, 0.262), new THREE.MeshStandardMaterial({ color: 0x00FFFF, emissive: 0x00CCCC, emissiveIntensity: 2, roughness: 0.1 }), sx, shoeY - 0.042, 0.02);
+            // 불꽃 스파이크들 (뒤꿈치)
+            for (let f = 0; f < 5; f++) {
+              const flameH = 0.06 + Math.random() * 0.07;
+              const flameX = (Math.random() - 0.5) * 0.08;
+              const mat3 = f % 2 === 0 ? matFlame1 : matFlame2;
+              add(new THREE.ConeGeometry(0.018, flameH, 5), mat3, sx + flameX, shoeY + 0.055 + flameH / 2, -0.11 + (Math.random() - 0.5) * 0.04);
+            }
+          }
+          pointLight = new THREE.PointLight(0xFF4400, 2.0, 1.5);
+          pointLight.position.set(0, shoeY + 0.1, -0.12);
+          grp.add(pointLight);
+        }
+      }
+
+      t3.scene.add(grp);
+      meshes.push(grp);
+      if (pointLight) {
+        // 애니메이션: 불꽃/네온 깜빡임
+        const origIntensity = pointLight.intensity;
+        const animId = setInterval(() => {
+          if (!pointLight.parent) { clearInterval(animId); return; }
+          pointLight.intensity = origIntensity * (0.8 + Math.random() * 0.4);
+        }, 80);
+      }
+      slot3D[slot] = { meshes, geos: [], mats: [], light: pointLight };
     }
 
-    // ── 5. 장착 아이템 3D 갱신 ────────────────────────────────
+    // ── 5. 장착 아이템 3D 갱신 ─────────────────────────────────────
     function refreshEquipped3D() {
       if (!viewerReady) return;
       const data = getRecords();
