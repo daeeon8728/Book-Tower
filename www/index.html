@@ -1290,7 +1290,27 @@
     }
 
     const PX_PER_METER = 100;
-    const RANKING_API = '/api/ranking';
+    const KV_URL = 'https://communal-foxhound-121640.upstash.io';
+    const KV_TOKEN = 'gQAAAAAAAdsoAAIgcDFmOTJmYzE4ZmZmZGU0OTk4OTliYzYzYzYyMzc4MmE1Yw';
+
+    async function kvCmd(cmd, ...args) {
+      try {
+        const res = await fetch(KV_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + KV_TOKEN,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify([cmd, ...args])
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error);
+        return json.result;
+      } catch (e) {
+        console.error('KV Error:', e);
+        return null;
+      }
+    }
 
     // DOM Cache
     const views = {
@@ -2576,27 +2596,12 @@
     // -------------------------------------------------------
     async function syncRanking(currentHeight) {
       let r = getRecords();
-      // 현재 높이가 없으면 0으로 처리
       let scoreToSend = typeof currentHeight === 'number'
         ? parseFloat(currentHeight.toFixed(1))
         : 0;
       try {
-        const res = await fetch(RANKING_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: r.userId,
-            username: r.userName,
-            score: scoreToSend,        // 최고 높이가 아닌 현재 높이
-            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
-          })
-        });
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          console.warn('랭킹 업데이트 실패:', err.error || res.status);
-        } else {
-          console.log(`랭킹 업데이트 성공: ${scoreToSend}m`);
-        }
+        await kvCmd('ZADD', 'leaderboard', scoreToSend, r.userId);
+        console.log(`랭킹 업데이트 성공: ${scoreToSend}m`);
       } catch (e) {
         console.log('랭킹 서버 오프라인:', e.message);
       }
@@ -2608,7 +2613,7 @@
     // 클라이언트가 랭킹 탭을 열고 있는 동안 5분마다 재조회합니다.
     // -------------------------------------------------------
     let rankingAutoRefreshTimer = null;
-    const RANKING_REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5분
+    const RANKING_REFRESH_INTERVAL_MS = 5 * 1000; // 5초
 
     function startRankingAutoRefresh() {
       stopRankingAutoRefresh();
@@ -2637,7 +2642,6 @@
       const container = document.getElementById('rank-list');
       container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">불러오는 중...</div>';
 
-      // 랭킹 탭 진입 시 현재 탑 높이를 자동으로 서버에 동기화 (내 닉네임이 항상 뜨도록)
       try {
         const localData = getRecords();
         let currentHeightM = 0;
@@ -2650,23 +2654,29 @@
           });
           currentHeightM = Math.max(0, maxPx / PX_PER_METER);
         }
-        // 점수가 없어도 닉네임 등록을 위해 0점으로라도 업로드
-        await fetch(RANKING_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: localData.userId,
-            username: localData.userName,
-            score: parseFloat(currentHeightM.toFixed(1)),
-            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
-          })
-        });
-      } catch (e) { /* 오프라인 무시 */ }
+        await kvCmd('ZADD', 'leaderboard', parseFloat(currentHeightM.toFixed(1)), localData.userId);
+      } catch (e) { }
 
       try {
-        let res = await fetch(RANKING_API);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        let data = await res.json();
+        let leaderboard = await kvCmd('ZRANGE', 'leaderboard', 0, 99, 'REV', 'WITHSCORES');
+        
+        let data = [];
+        if (leaderboard && leaderboard.length > 0) {
+          let formatted = [];
+          for (let i = 0; i < leaderboard.length; i += 2) {
+            formatted.push({
+              userId: leaderboard[i],
+              score: Number(leaderboard[i + 1])
+            });
+          }
+          let userKeys = formatted.map(f => `user:${f.userId}:name`);
+          let usernames = userKeys.length > 0 ? await kvCmd('MGET', ...userKeys) : [];
+          data = formatted.map((f, i) => ({
+            userId: f.userId,
+            score: f.score,
+            username: (usernames && usernames[i]) ? usernames[i] : f.userId
+          }));
+        }
 
         if (!data || data.length === 0) {
           container.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">아직 랭킹 데이터가 없습니다.<br><small style="font-size:12px;">게임 후 "오늘은 여기까지" 버튼을 누르면 등록됩니다.</small></div>';
@@ -2753,9 +2763,8 @@
       let data = getRecords();
 
       try {
-        let res = await fetch(`${RANKING_API}?check=${encodeURIComponent(name)}`);
-        let result = await res.json();
-        if (result.exists && result.ownerId !== data.userId) {
+        let existsId = await kvCmd('GET', `username:${name}:id`);
+        if (existsId && existsId !== data.userId) {
           alert('이미 존재하는 닉네임입니다. 다른 닉네임을 사용해주세요.');
           return;
         }
@@ -2768,17 +2777,12 @@
       document.getElementById('setting-nickname').value = name;
       document.getElementById('login-modal').classList.add('hidden');
 
-      // 닉네임 설정 후 즉시 서버 등록 (초기 등록용, 점수 없이)
+      // 닉네임 설정 후 즉시 서버 등록
       try {
-        await fetch(RANKING_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: data.userId,
-            username: name,
-            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
-          })
-        });
+        let currentName = await kvCmd('GET', `user:${data.userId}:name`);
+        if (currentName) await kvCmd('DEL', `username:${currentName}:id`);
+        await kvCmd('SET', `username:${name}:id`, data.userId);
+        await kvCmd('SET', `user:${data.userId}:name`, name);
       } catch (e) {}
 
       checkSensorFlow();
@@ -3077,26 +3081,20 @@
 
       try {
         // 1. 중복 체크
-        let res = await fetch(`${RANKING_API}?check=${encodeURIComponent(name)}`);
-        let result = await res.json();
-        if (result.exists && result.ownerId !== d.userId) {
+        let existsId = await kvCmd('GET', `username:${name}:id`);
+        if (existsId && existsId !== d.userId) {
           alert('이미 다른 사용자가 사용 중인 닉네임입니다. 다른 닉네임을 사용해주세요.');
           if (btn) btn.innerText = '변경';
           return;
         }
 
         // 2. 서버에 닉네임 업데이트 (점수 없이 이름만)
-        let updateRes = await fetch(RANKING_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: d.userId,
-            username: name,
-            digest: '5bf6b008a9ec05f6870c476d10b53211797aa000f95aae344ae60f9b422286da'
-          })
-        });
+        let currentName = await kvCmd('GET', `user:${d.userId}:name`);
+        if (currentName) await kvCmd('DEL', `username:${currentName}:id`);
+        let updateRes1 = await kvCmd('SET', `username:${name}:id`, d.userId);
+        let updateRes2 = await kvCmd('SET', `user:${d.userId}:name`, name);
 
-        if (!updateRes.ok) {
+        if (updateRes1 === null || updateRes2 === null) {
           throw new Error('서버 오류');
         }
 
@@ -3369,7 +3367,7 @@
     function buildCharacter() {
       t3.gltfLoader = new THREE.GLTFLoader();
       
-      t3.gltfLoader.load(encodeURI('assets/avatar/Character Base.glb'), (gltf) => {
+      t3.gltfLoader.load(encodeURI('./assets/avatar/Character Base.glb'), (gltf) => {
         const root = gltf.scene;
         // 정면을 보도록 회전
         root.rotation.y = Math.PI; 
@@ -3503,7 +3501,7 @@
       slot3D[slot] = currentSlotState;
 
       if (t3.gltfLoader) {
-        t3.gltfLoader.load(encodeURI('assets/items/' + filename), (gltf) => {
+        t3.gltfLoader.load(encodeURI('./assets/items/' + filename), (gltf) => {
           if (slot3D[slot] !== currentSlotState) return;
 
           const model = gltf.scene;
