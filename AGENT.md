@@ -11,16 +11,15 @@
 ## 2. 기술 스택 (Tech Stack)
 
 - **프론트엔드 (Frontend)**:
+
   - HTML5, CSS3 (Vanilla CSS)
   - JavaScript (Vanilla JS)
 - **물리 엔진 (Physics Engine)**:
+
   - `Matter.js` (2D 물리 엔진, 책 낙하 및 탑 붕괴 시뮬레이션)
 - **폰트 (Typography)**:
+
   - Pretendard (가독성 높은 모던 폰트)
-- **데이터 저장 (Storage)**:
-  - `localStorage` (사용자 설정, 공부 시간 통계, 도감 수집 정보 로컬 영구 저장)
-- **모바일/플랫폼 (Platform)**:
-  - Android APK 빌드 타겟 (Cordova / Capacitor 연동을 위한 모바일 최적화 및 안드로이드 센서 제어 고려)
 
 ---
 
@@ -45,9 +44,9 @@
 
 ---
 
-## 4. UI/UX 디자인 요구사항 (UI/UX Guidelines)
+## 4. UI/UX 디자인 요구사항
 
-- **디자인 철학 (Toss Style)**:
+- **디자인**:
   - 깔끔하고 직관적인 모바일 스타일의 인터페이스.
   - 여백의 미, 둥근 모서리, 그림자 활용.
   - **메인 컬러**: Toss Blue, 배경: Light Gray, 텍스트: Dark Gray.
