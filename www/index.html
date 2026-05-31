@@ -623,6 +623,7 @@
       height: 100%;
       display: block;
       touch-action: none;
+      pointer-events: none;
     }
 
     #avatar-3d-loading {
@@ -815,8 +816,8 @@
   <!-- View 3: Avatar & Collection -->
   <div id="diy-view" class="view-wrapper hidden" style="padding: 0; display: flex; flex-direction: column;">
     <!-- 3D Avatar Viewer -->
-    <div id="avatar-3d-wrap">
-      <canvas id="avatar-3d-canvas" style="width:100%; height:100%; display:block; touch-action:none;"></canvas>
+    <div id="avatar-3d-wrap" style="touch-action:none;">
+      <canvas id="avatar-3d-canvas" style="width:100%; height:100%; display:block; touch-action:none; pointer-events:none;"></canvas>
       <div id="avatar-3d-loading">
         <div style="font-size:28px;">✨</div>
         <div id="avatar-load-text">3D 아바타 로딩 중...</div>
@@ -2448,22 +2449,23 @@
       // Camera initial position to look perfectly at the character's front
       t3.camera.position.set(0, 1.0, 2.5);
 
-      t3.controls = new THREE.OrbitControls(t3.camera, canvas);
+      // OrbitControls는 canvas 대신 wrap div에서 이벤트를 받음 → canvas의 pointer-events:none과 충돌 없음
+      t3.controls = new THREE.OrbitControls(t3.camera, wrap);
       t3.controls.enableDamping = true;
       t3.controls.dampingFactor = 0.06;
-      t3.controls.screenSpacePanning = true;
+      t3.controls.screenSpacePanning = false;
       t3.controls.rotateSpeed = isMobileDevice ? 0.65 : 0.9;
-      
+
       // Zoom & Distance limits
       t3.controls.minDistance = 1.0;
-      t3.controls.maxDistance = 4.0;
-      
+      t3.controls.maxDistance = 4.5;
+
       // Polar angle limits (prevent going below ground or directly overhead)
-      t3.controls.minPolarAngle = Math.PI / 4;
-      t3.controls.maxPolarAngle = Math.PI / 2; // Math.PI / 2 restricts the camera to not go below ground
-      
-      // Target character's chest/neck height
-      t3.controls.target.set(0, 1.2, 0);
+      t3.controls.minPolarAngle = Math.PI * 0.15;
+      t3.controls.maxPolarAngle = Math.PI * 0.72;
+
+      // Target character's chest/neck height — updated after model loads
+      t3.controls.target.set(0, 1.0, 0);
       t3.controls.update();
 
       // ─── ResizeObserver ───────────────────────────────────────
@@ -2545,22 +2547,38 @@
     async function setupRPMAvatar(gltf) {
       const model = gltf.scene;
 
-      // 스케일 및 위치 자동 조정 (신규 모델에 맞춤)
-      const box = new THREE.Box3().setFromObject(model);
-      const size = new THREE.Vector3();
-      box.getSize(size);
-      
-      const scaleFactor = 1.6 / (size.y || 1.6);
+      // ── STEP 1: 모델 원본 스케일/위치를 건드리기 전에 먼저 씬에 추가해서
+      //   자식 노드의 로컬 transform이 정상적으로 유지되도록 한다.
+      t3.scene.add(model);
+      model.updateMatrixWorld(true);
+
+      // ── STEP 2: 모델 전체 바운딩 박스로 실제 크기 측정
+      const box0 = new THREE.Box3().setFromObject(model);
+      const size0 = new THREE.Vector3();
+      box0.getSize(size0);
+
+      // 키가 0이면 로드 실패로 간주
+      if (size0.y < 0.01) {
+        console.error('모델 바운딩 박스가 너무 작음 — 로드 실패 의심');
+        t3.scene.remove(model);
+        throw new Error('invalid model size');
+      }
+
+      // ── STEP 3: 목표 신장(1.7m)에 맞게 균일 스케일 적용
+      //   model.scale을 바꾸면 자식 transform은 그대로다.
+      const TARGET_HEIGHT = 1.7;
+      const scaleFactor = TARGET_HEIGHT / size0.y;
       model.scale.set(scaleFactor, scaleFactor, scaleFactor);
-      
-      box.setFromObject(model); // 스케일 반영 후 바운딩 박스 재계산
-      model.position.y = -box.min.y; // 발끝을 y=0 평면에 맞춤
+
+      // ── STEP 4: 스케일 반영 후 바운딩 박스 재계산 → 발끝을 y=0에 고정
+      model.updateMatrixWorld(true);
+      const box1 = new THREE.Box3().setFromObject(model);
+      model.position.y = -box1.min.y;  // 발이 바닥(y=0)에 닿게
       model.position.x = 0;
       model.position.z = 0;
-      
-      model.updateMatrixWorld(true); // 뼈대 좌표 추출을 위해 월드 매트릭스 갱신
+      model.updateMatrixWorld(true);
 
-      // PBR 재질 강화
+      // ── STEP 5: PBR 재질 강화 (그림자 + 환경맵)
       model.traverse(child => {
         if (child.isMesh) {
           child.castShadow = true;
@@ -2578,32 +2596,50 @@
       });
 
       t3.characterRoot = model;
-      t3.scene.add(model);
 
-      // 본 위치 추출
+      // ── STEP 6: 본 위치 추출 (월드 좌표, 스케일/위치 반영 후)
       const boneMap = {};
       model.traverse(child => {
-        if (child.isBone || child.isObject3D) {
-          boneMap[child.name] = child;
+        if (child.isBone || child.isSkinnedMesh || child.isObject3D) {
+          if (child.name) boneMap[child.name] = child;
         }
       });
       t3.boneMap = boneMap;
 
-      // 본 위치 계산 (월드 좌표)
-      const headBone = boneMap['Head'] || boneMap['head'] || Object.values(boneMap).find(b => b.name.includes('Head'));
-      const hipsBone = boneMap['Hips'] || boneMap['hips'] || Object.values(boneMap).find(b => b.name.includes('Hips'));
-      const spineBone = boneMap['Spine1'] || boneMap['Chest'] || boneMap['chest'] || Object.values(boneMap).find(b => b.name.includes('Spine1') || b.name.includes('Spine'));
-      const leftFootBone = boneMap['LeftFoot'] || boneMap['leftFoot'] || Object.values(boneMap).find(b => b.name.includes('LeftFoot') || b.name.includes('Foot'));
+      function getBoneY(candidates, fallback) {
+        for (const name of candidates) {
+          const b = boneMap[name];
+          if (b) { const v = new THREE.Vector3(); b.getWorldPosition(v); return v.y; }
+        }
+        // 이름 부분 검색
+        const found = Object.values(boneMap).find(b => candidates.some(c => b.name.toLowerCase().includes(c.toLowerCase())));
+        if (found) { const v = new THREE.Vector3(); found.getWorldPosition(v); return v.y; }
+        return fallback;
+      }
 
-      // RPM 기준 본 좌표 (월드공간)
+      // 실제 바운딩박스 기반 fallback 좌표
+      const box2 = new THREE.Box3().setFromObject(model);
+      const modelH = box2.max.y - box2.min.y;
+
+      const headY    = getBoneY(['Head','head','mixamorigHead'], box2.min.y + modelH * 0.92);
+      const spineY   = getBoneY(['Spine1','Chest','chest','Spine','spine','mixamorigSpine1'], box2.min.y + modelH * 0.65);
+      const hipsY    = getBoneY(['Hips','hips','mixamorigHips'], box2.min.y + modelH * 0.50);
+      const footY    = getBoneY(['LeftFoot','RightFoot','leftFoot','rightFoot','mixamorigLeftFoot'], box2.min.y + modelH * 0.04);
+
       t3.bonePts = {
-        headCY: headBone ? (() => { const v = new THREE.Vector3(); headBone.getWorldPosition(v); return v.y; })() : 1.65,
-        headR: 0.10,
-        torsoCY: spineBone ? (() => { const v = new THREE.Vector3(); spineBone.getWorldPosition(v); return v.y; })() : 1.25,
-        torsoH: 0.40,
-        hipCY: hipsBone ? (() => { const v = new THREE.Vector3(); hipsBone.getWorldPosition(v); return v.y; })() : 0.92,
-        shoeCY: leftFootBone ? (() => { const v = new THREE.Vector3(); leftFootBone.getWorldPosition(v); return v.y; })() : 0.06
+        headCY: headY,
+        headR:  modelH * 0.08,
+        torsoCY: spineY,
+        torsoH:  modelH * 0.28,
+        hipCY:   hipsY,
+        shoeCY:  footY
       };
+
+      // ── STEP 7: 카메라 타겟을 모델 중심(가슴 높이)으로 갱신
+      const centerY = (headY + hipsY) * 0.5;
+      t3.controls.target.set(0, centerY, 0);
+      t3.camera.position.set(0, centerY + 0.1, 2.8);
+      t3.controls.update();
 
       setLoadProgress(100);
       setLoadText('완료!');
@@ -2791,7 +2827,6 @@
           // 스티치 라인
           add(new THREE.TorusGeometry(0.185, 0.004, 4, 20, Math.PI*0.6), new THREE.MeshStandardMaterial({ color: 0x07285a, roughness: 0.9 }), 0, bp.headCY + 0.015, 0, 0, 0, 0);
         }
-        }
       }
 
       // ─── 상의류 ──────────────────────────────────────────────
@@ -2845,7 +2880,6 @@
             add(new THREE.CylinderGeometry(0.007, 0.007, 0.01, 8), new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.4, metalness: 0.5 }), 0, tY + tH/2 - 0.08 - bi*0.08, 0.117, Math.PI/2, 0, 0);
           }
         }
-        }
       }
 
       // ─── 하의류 ──────────────────────────────────────────────
@@ -2896,7 +2930,6 @@
           // 드로스트링
           add(new THREE.BoxGeometry(0.005, 0.042, 0.005), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), -0.04, hipY + 0.125, 0.12);
           add(new THREE.BoxGeometry(0.005, 0.042, 0.005), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }),  0.04, hipY + 0.125, 0.12);
-        }
         }
       }
 
@@ -2951,7 +2984,6 @@
             }
           }
         }
-        }
       }
 
       // ─── Scene에 추가 + 깜빡임 애니메이션 ────────────────────
@@ -3005,13 +3037,18 @@
       };
     })();
 
-    // ── equipItem 훅: 아이템 장착 시 3D 메시 동기화 ──
+    // ── equipItem 훅: 아이템 장착 시 3D 메시 즉시 동기화 ──
     (function () {
       const _origEI = window.equipItem;
       window.equipItem = function (category, itemId) {
         _origEI.apply(this, arguments);
-        // disposeSlot3D + buildItemMeshes는 refreshEquipped3D 내부에서 호출됨
-        // updateAvatarPreview → refreshEquipped3D 호출 체인으로 처리됨
+        // 3D 뷰어가 준비된 경우 해당 슬롯만 교체하여 즉시 반영
+        if (viewerReady) {
+          disposeSlot3D(category);
+          const data = getRecords();
+          const eq = data.equipped || {};
+          if (eq[category]) buildItemMeshes(category, eq[category]);
+        }
       };
     })();
   </script>
