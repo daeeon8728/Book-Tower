@@ -2445,15 +2445,25 @@
       t3.scene.add(floorLight);
 
       // ─── OrbitControls ────────────────────────────────────────
+      // Camera initial position to look perfectly at the character's front
+      t3.camera.position.set(0, 1.0, 2.5);
+
       t3.controls = new THREE.OrbitControls(t3.camera, canvas);
       t3.controls.enableDamping = true;
       t3.controls.dampingFactor = 0.06;
       t3.controls.screenSpacePanning = true;
       t3.controls.rotateSpeed = isMobileDevice ? 0.65 : 0.9;
+      
+      // Zoom & Distance limits
       t3.controls.minDistance = 1.0;
-      t3.controls.maxDistance = 6.0;
-      t3.controls.maxPolarAngle = Math.PI * 0.87;
-      t3.controls.target.set(0, 1.0, 0);
+      t3.controls.maxDistance = 4.0;
+      
+      // Polar angle limits (prevent going below ground or directly overhead)
+      t3.controls.minPolarAngle = Math.PI / 4;
+      t3.controls.maxPolarAngle = Math.PI / 2; // Math.PI / 2 restricts the camera to not go below ground
+      
+      // Target character's chest/neck height
+      t3.controls.target.set(0, 1.2, 0);
       t3.controls.update();
 
       // ─── ResizeObserver ───────────────────────────────────────
