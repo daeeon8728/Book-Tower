@@ -2535,10 +2535,9 @@
       }
 
       if (!success) {
-        console.log('RPM 로드 실패, Fallback 사용');
-        setLoadText('로컬 캐릭터 생성 중...');
-        setLoadProgress(50);
-        buildFallbackCharacter();
+        console.error('3D 모델 로드 실패');
+        setLoadText('모델 로드 실패');
+        setLoadProgress(100);
       }
     }
 
@@ -2546,9 +2545,20 @@
     async function setupRPMAvatar(gltf) {
       const model = gltf.scene;
 
-      // 스케일 및 위치 조정
-      model.scale.set(1, 1, 1);
-      model.position.set(0, 0, 0);
+      // 스케일 및 위치 자동 조정 (신규 모델에 맞춤)
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      
+      const scaleFactor = 1.6 / (size.y || 1.6);
+      model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      
+      box.setFromObject(model); // 스케일 반영 후 바운딩 박스 재계산
+      model.position.y = -box.min.y; // 발끝을 y=0 평면에 맞춤
+      model.position.x = 0;
+      model.position.z = 0;
+      
+      model.updateMatrixWorld(true); // 뼈대 좌표 추출을 위해 월드 매트릭스 갱신
 
       // PBR 재질 강화
       model.traverse(child => {
@@ -2606,122 +2616,7 @@
       refreshEquipped3D();
     }
 
-    /* ── 4. Fallback 캐릭터 (Three.js 기본 도형 PBR 강화) ─────── */
-    function buildFallbackCharacter() {
-      const root = new THREE.Group();
-
-      // PBR 재질 팔레트
-      const matSkin    = new THREE.MeshStandardMaterial({ color: 0xF0C4A0, roughness: 0.65, metalness: 0.0 });
-      const matHoodie  = new THREE.MeshStandardMaterial({ color: 0x374151, roughness: 0.88, metalness: 0.05 });
-      const matJeans   = new THREE.MeshStandardMaterial({ color: 0x1D4ED8, roughness: 0.82, metalness: 0.0 });
-      const matShoe    = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.55, metalness: 0.2 });
-      const matEye     = new THREE.MeshStandardMaterial({ color: 0x0a0a1e, roughness: 0.2, metalness: 0.0 });
-      const matHair    = new THREE.MeshStandardMaterial({ color: 0x1a0a00, roughness: 0.85 });
-      const matSole    = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, roughness: 0.5 });
-
-      function mk(geo, mat, px, py, pz, rx, ry, rz) {
-        const m = new THREE.Mesh(geo, mat);
-        m.position.set(px||0, py||0, pz||0);
-        if (rx !== undefined) m.rotation.x = rx;
-        if (ry !== undefined) m.rotation.y = ry;
-        if (rz !== undefined) m.rotation.z = rz;
-        m.castShadow = true; m.receiveShadow = true;
-        root.add(m); return m;
-      }
-
-      // 신발
-      const shoeGeo = new THREE.BoxGeometry(0.13, 0.09, 0.24);
-      mk(shoeGeo, matShoe, -0.115, 0.045, 0.02);
-      mk(shoeGeo, matShoe,  0.115, 0.045, 0.02);
-      const soleGeo = new THREE.BoxGeometry(0.14, 0.025, 0.25);
-      mk(soleGeo, matSole, -0.115, 0.008, 0.02);
-      mk(soleGeo, matSole,  0.115, 0.008, 0.02);
-
-      // 종아리
-      const lowerLegGeo = new THREE.CylinderGeometry(0.062, 0.068, 0.38, 12);
-      mk(lowerLegGeo, matJeans, -0.115, 0.28, 0);
-      mk(lowerLegGeo, matJeans,  0.115, 0.28, 0);
-
-      // 허벅지
-      const upperLegGeo = new THREE.CylinderGeometry(0.085, 0.075, 0.30, 12);
-      mk(upperLegGeo, matJeans, -0.107, 0.625, 0);
-      mk(upperLegGeo, matJeans,  0.107, 0.625, 0);
-
-      // 엉덩이
-      mk(new THREE.BoxGeometry(0.33, 0.19, 0.21), matJeans, 0, 0.805, 0);
-
-      // 몸통
-      const torsoMesh = mk(new THREE.BoxGeometry(0.42, 0.46, 0.23), matHoodie, 0, 1.075, 0);
-      torsoMesh.name = 'torso';
-
-      // 어깨
-      mk(new THREE.SphereGeometry(0.10, 10, 8), matHoodie, -0.215, 1.20, 0);
-      mk(new THREE.SphereGeometry(0.10, 10, 8), matHoodie,  0.215, 1.20, 0);
-
-      // 후드
-      mk(new THREE.SphereGeometry(0.135, 12, 10, 0, Math.PI*2, 0, Math.PI*0.55), matHoodie, 0, 1.315, -0.095);
-
-      // 캥거루 주머니
-      mk(new THREE.BoxGeometry(0.20, 0.10, 0.02), new THREE.MeshStandardMaterial({ color: 0x2d3748, roughness: 0.95 }), 0, 0.88, 0.117);
-
-      // 목
-      mk(new THREE.CylinderGeometry(0.052, 0.058, 0.10, 12), matSkin, 0, 1.355, 0);
-
-      // 머리
-      const headMesh = mk(new THREE.SphereGeometry(0.178, 24, 18), matSkin, 0, 1.558, 0);
-      headMesh.name = 'head';
-
-      // 눈
-      mk(new THREE.SphereGeometry(0.026, 10, 8), matEye, -0.065, 1.57, 0.168);
-      mk(new THREE.SphereGeometry(0.026, 10, 8), matEye,  0.065, 1.57, 0.168);
-
-      // 눈 하이라이트
-      const matHL = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1 });
-      mk(new THREE.SphereGeometry(0.009, 6, 4), matHL, -0.058, 1.575, 0.193);
-      mk(new THREE.SphereGeometry(0.009, 6, 4), matHL,  0.072, 1.575, 0.193);
-
-      // 입
-      mk(new THREE.TorusGeometry(0.04, 0.008, 6, 12, Math.PI), new THREE.MeshStandardMaterial({ color: 0xc06060 }), 0, 1.50, 0.16, 0, 0, Math.PI);
-
-      // 코
-      mk(new THREE.ConeGeometry(0.018, 0.04, 6), new THREE.MeshStandardMaterial({ color: 0xd4a090, roughness: 0.9 }), 0, 1.535, 0.175, Math.PI/2, 0, 0);
-
-      // 귀
-      mk(new THREE.SphereGeometry(0.04, 8, 6), matSkin, -0.178, 1.545, 0);
-      mk(new THREE.SphereGeometry(0.04, 8, 6), matSkin,  0.178, 1.545, 0);
-
-      // 머리카락
-      mk(new THREE.SphereGeometry(0.182, 22, 10, 0, Math.PI*2, 0, Math.PI*0.52), matHair, 0, 1.565, -0.01);
-      mk(new THREE.SphereGeometry(0.10, 10, 8, 0, Math.PI, 0, Math.PI*0.45), matHair, 0, 1.71, 0.085, 0.5, 0, 0);
-
-      // 위팔
-      const upperArmGeo = new THREE.CylinderGeometry(0.068, 0.062, 0.32, 12);
-      mk(upperArmGeo, matHoodie, -0.275, 1.10, 0);
-      mk(upperArmGeo, matHoodie,  0.275, 1.10, 0);
-
-      // 아래팔
-      const lowerArmGeo = new THREE.CylinderGeometry(0.058, 0.052, 0.28, 12);
-      mk(lowerArmGeo, matHoodie, -0.275, 0.80, 0);
-      mk(lowerArmGeo, matHoodie,  0.275, 0.80, 0);
-
-      // 손
-      mk(new THREE.SphereGeometry(0.066, 12, 10), matSkin, -0.275, 0.636, 0);
-      mk(new THREE.SphereGeometry(0.066, 12, 10), matSkin,  0.275, 0.636, 0);
-
-      t3.characterRoot = root;
-      t3.scene.add(root);
-
-      t3.bonePts = FALLBACK_BONE_PTS;
-
-      setLoadProgress(100);
-      setTimeout(() => {
-        const loading = document.getElementById('avatar-3d-loading');
-        if (loading) loading.style.display = 'none';
-      }, 400);
-
-      viewerReady = true;
-      refreshEquipped3D();
-    }
+    /* ── 4. Fallback 캐릭터 (제거됨) ─────── */
 
     /* ── 5. 슬롯 완전 Dispose (메모리 누수 0) ──────────────────── */
     function disposeSlot3D(slot) {
@@ -2896,36 +2791,6 @@
           // 스티치 라인
           add(new THREE.TorusGeometry(0.185, 0.004, 4, 20, Math.PI*0.6), new THREE.MeshStandardMaterial({ color: 0x07285a, roughness: 0.9 }), 0, bp.headCY + 0.015, 0, 0, 0, 0);
         }
-        else if (itemId === 'h4') {
-          // 벙거지 (버킷 햇, 와이드 브림)
-          const matHat = new THREE.MeshStandardMaterial({ color: 0x78716C, roughness: 0.94, metalness: 0.0 });
-          add(new THREE.CylinderGeometry(0.155, 0.21, 0.185, 20), matHat, 0, headTopY + 0.02, 0);
-          add(new THREE.CylinderGeometry(0.32, 0.335, 0.025, 32), new THREE.MeshStandardMaterial({ color: 0x6B6460, roughness: 0.95 }), 0, bp.headCY + 0.0, 0);
-          // 스트라이프 라인
-          add(new THREE.TorusGeometry(0.185, 0.006, 4, 24), new THREE.MeshStandardMaterial({ color: 0x555250, roughness: 0.96 }), 0, headTopY - 0.01, 0, Math.PI/2, 0, 0);
-        }
-        else if (itemId === 'h5') {
-          // 네온 왕관 (전설, 에미시브 강화)
-          const matRing = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xffaa00, emissiveIntensity: 2.0, roughness: 0.05, metalness: 1.0 });
-          add(new THREE.TorusGeometry(0.20, 0.028, 10, 28), matRing, 0, headTopY, 0, Math.PI/2, 0, 0);
-          // 5 스파이크
-          for (let i = 0; i < 5; i++) {
-            const angle = (i/5) * Math.PI * 2;
-            const c = i % 2 === 0 ? 0xff00ff : 0x00ffff;
-            const e = i % 2 === 0 ? 0xff00aa : 0x00aaff;
-            add(new THREE.ConeGeometry(0.028, 0.13, 6), new THREE.MeshStandardMaterial({ color: c, emissive: e, emissiveIntensity: 3.0, roughness: 0.05 }),
-              Math.cos(angle)*0.19, headTopY + 0.09, Math.sin(angle)*0.19);
-          }
-          // 보석
-          for (let i = 0; i < 10; i++) {
-            const angle = (i/10) * Math.PI * 2;
-            const c = i % 3 === 0 ? 0xff00ff : i % 3 === 1 ? 0x00ffff : 0xffff00;
-            add(new THREE.OctahedronGeometry(0.02), new THREE.MeshStandardMaterial({ color: c, emissive: 0xffffff, emissiveIntensity: 2.0, roughness: 0.0, metalness: 1.0 }),
-              Math.cos(angle)*0.20, headTopY, Math.sin(angle)*0.20);
-          }
-          pointLight = new THREE.PointLight(0xff00ff, 2.5, 2.0);
-          pointLight.position.set(0, headTopY + 0.15, 0);
-          grp.add(pointLight);
         }
       }
 
@@ -2980,51 +2845,6 @@
             add(new THREE.CylinderGeometry(0.007, 0.007, 0.01, 8), new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.4, metalness: 0.5 }), 0, tY + tH/2 - 0.08 - bi*0.08, 0.117, Math.PI/2, 0, 0);
           }
         }
-        else if (itemId === 't4') {
-          // 가죽 자켓 (PBR 고광택)
-          const leatherTex = makeLeatherTex('#111111');
-          leatherTex.wrapS = leatherTex.wrapT = THREE.RepeatWrapping;
-          leatherTex.repeat.set(2, 2);
-          const mat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.25, metalness: 0.55, map: leatherTex });
-          add(new THREE.BoxGeometry(0.42, tH, 0.24), mat, 0, tY, 0);
-          add(new THREE.SphereGeometry(0.107, 10, 8), mat, -0.22, tY + 0.14, 0);
-          add(new THREE.SphereGeometry(0.107, 10, 8), mat,  0.22, tY + 0.14, 0);
-          add(new THREE.CylinderGeometry(0.072, 0.066, 0.34, 12), mat, -0.282, tY - 0.07, 0);
-          add(new THREE.CylinderGeometry(0.072, 0.066, 0.34, 12), mat,  0.282, tY - 0.07, 0);
-          // 지퍼 (메탈릭)
-          const zipMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.98, roughness: 0.1 });
-          add(new THREE.BoxGeometry(0.014, tH * 0.85, 0.016), zipMat, 0, tY, 0.127);
-          // 지퍼 풀러
-          add(new THREE.BoxGeometry(0.02, 0.04, 0.014), zipMat, 0, tY + 0.15, 0.128);
-          // 라펠
-          const lapelMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.22, metalness: 0.5 });
-          add(new THREE.BoxGeometry(0.08, 0.24, 0.022), lapelMat, -0.08, tY + 0.17, 0.125, 0, 0, 0.22);
-          add(new THREE.BoxGeometry(0.08, 0.24, 0.022), lapelMat,  0.08, tY + 0.17, 0.125, 0, 0, -0.22);
-          // 포켓
-          add(new THREE.BoxGeometry(0.09, 0.065, 0.016), lapelMat, -0.15, tY - 0.12, 0.126);
-          add(new THREE.BoxGeometry(0.09, 0.065, 0.016), lapelMat,  0.15, tY - 0.12, 0.126);
-        }
-        else if (itemId === 't5') {
-          // 테크웨어 아노락 (에미시브 형광 포인트)
-          const matBase = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.80, metalness: 0.18 });
-          const matAccent = new THREE.MeshStandardMaterial({ color: 0x06B6D4, emissive: 0x0284C7, emissiveIntensity: 1.2, roughness: 0.4, metalness: 0.3 });
-          add(new THREE.BoxGeometry(0.44, tH + 0.04, 0.25), matBase, 0, tY, 0);
-          add(new THREE.SphereGeometry(0.11, 10, 8), matBase, -0.228, tY + 0.15, 0);
-          add(new THREE.SphereGeometry(0.11, 10, 8), matBase,  0.228, tY + 0.15, 0);
-          add(new THREE.CylinderGeometry(0.073, 0.067, 0.34, 12), matBase, -0.285, tY - 0.07, 0);
-          add(new THREE.CylinderGeometry(0.073, 0.067, 0.34, 12), matBase,  0.285, tY - 0.07, 0);
-          // 형광 라인
-          add(new THREE.BoxGeometry(0.44, 0.016, 0.255), matAccent, 0, tY + 0.155, 0);
-          add(new THREE.BoxGeometry(0.44, 0.016, 0.255), matAccent, 0, tY - 0.10, 0);
-          add(new THREE.BoxGeometry(0.018, tH+0.04, 0.255), matAccent, -0.215, tY, 0);
-          add(new THREE.BoxGeometry(0.018, tH+0.04, 0.255), matAccent,  0.215, tY, 0);
-          // 후드
-          add(new THREE.SphereGeometry(0.14, 12, 10, 0, Math.PI*2, 0, Math.PI*0.55), matBase, 0, tY + 0.37, -0.105);
-          // 지퍼 형광
-          add(new THREE.BoxGeometry(0.012, tH * 0.7, 0.016), matAccent, 0, tY + 0.05, 0.127);
-          pointLight = new THREE.PointLight(0x06B6D4, 1.2, 1.5);
-          pointLight.position.set(0, tY + 0.2, 0.3);
-          grp.add(pointLight);
         }
       }
 
@@ -3077,27 +2897,6 @@
           add(new THREE.BoxGeometry(0.005, 0.042, 0.005), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }), -0.04, hipY + 0.125, 0.12);
           add(new THREE.BoxGeometry(0.005, 0.042, 0.005), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 }),  0.04, hipY + 0.125, 0.12);
         }
-        else if (itemId === 'b4') {
-          // 카고 바지 (카키)
-          makeLegs(0x78613A, 0.91);
-          const pocketMat = new THREE.MeshStandardMaterial({ color: 0x6B5530, roughness: 0.92 });
-          add(new THREE.BoxGeometry(0.08, 0.10, 0.018), pocketMat, -0.155, 0.46, 0.065);
-          add(new THREE.BoxGeometry(0.08, 0.10, 0.018), pocketMat,  0.155, 0.46, 0.065);
-          add(new THREE.BoxGeometry(0.082, 0.026, 0.014), pocketMat, -0.155, 0.516, 0.068);
-          add(new THREE.BoxGeometry(0.082, 0.026, 0.014), pocketMat,  0.155, 0.516, 0.068);
-          // 버클
-          add(new THREE.BoxGeometry(0.02, 0.022, 0.008), new THREE.MeshStandardMaterial({ color: 0xAA8855, metalness: 0.85, roughness: 0.2 }), -0.155, 0.50, 0.072);
-          add(new THREE.BoxGeometry(0.02, 0.022, 0.008), new THREE.MeshStandardMaterial({ color: 0xAA8855, metalness: 0.85, roughness: 0.2 }),  0.155, 0.50, 0.072);
-        }
-        else if (itemId === 'b5') {
-          // 반바지
-          const mat = new THREE.MeshStandardMaterial({ color: 0x1E40AF, roughness: 0.86 });
-          add(new THREE.BoxGeometry(0.33, 0.21, 0.22), mat, 0, hipY, 0);
-          add(new THREE.CylinderGeometry(0.086, 0.078, 0.16, 12), mat, -0.107, 0.55, 0);
-          add(new THREE.CylinderGeometry(0.086, 0.078, 0.16, 12), mat,  0.107, 0.55, 0);
-          // 헴 라인
-          add(new THREE.TorusGeometry(0.09, 0.012, 6, 20), new THREE.MeshStandardMaterial({ color: 0x1a35a0, roughness: 0.88 }), -0.107, 0.47, 0, Math.PI/2, 0, 0);
-          add(new THREE.TorusGeometry(0.09, 0.012, 6, 20), new THREE.MeshStandardMaterial({ color: 0x1a35a0, roughness: 0.88 }),  0.107, 0.47, 0, Math.PI/2, 0, 0);
         }
       }
 
@@ -3152,36 +2951,6 @@
             }
           }
         }
-        else if (itemId === 's4') {
-          // 슬리퍼 (EVA 폼)
-          const matFoam  = new THREE.MeshStandardMaterial({ color: 0xF4A261, roughness: 0.88 });
-          const matStrap = new THREE.MeshStandardMaterial({ color: 0xE76F51, roughness: 0.80 });
-          for (const sx of [-0.115, 0.115]) {
-            add(new THREE.BoxGeometry(0.14, 0.028, 0.28), matFoam, sx, shoeY - 0.025, 0.01);
-            add(new THREE.BoxGeometry(0.13, 0.044, 0.026), matStrap, sx, shoeY + 0.01, 0.095);
-            add(new THREE.BoxGeometry(0.020, 0.042, 0.16), matStrap, sx > 0 ? sx - 0.055 : sx + 0.055, shoeY + 0.008, 0.0);
-          }
-        }
-        else if (itemId === 's5') {
-          // 불꽃 스니커즈 (전설, 에미시브 불꽃)
-          const matBase2  = new THREE.MeshStandardMaterial({ color: 0x0A0A0A, roughness: 0.28, metalness: 0.55 });
-          const matFlame1 = new THREE.MeshStandardMaterial({ color: 0xFF4500, emissive: 0xFF2200, emissiveIntensity: 2.5, roughness: 0.08 });
-          const matFlame2 = new THREE.MeshStandardMaterial({ color: 0xFFAA00, emissive: 0xFF8800, emissiveIntensity: 3.0, roughness: 0.08 });
-          for (const sx of [-0.115, 0.115]) {
-            add(new THREE.BoxGeometry(0.135, 0.10, 0.26), matBase2, sx, shoeY + 0.01, 0.02);
-            // 시안 형광 밑창
-            add(new THREE.BoxGeometry(0.135, 0.018, 0.262), new THREE.MeshStandardMaterial({ color: 0x00FFFF, emissive: 0x00CCCC, emissiveIntensity: 2.5, roughness: 0.08 }), sx, shoeY - 0.042, 0.02);
-            // 불꽃 콘 파티클
-            for (let f = 0; f < 6; f++) {
-              const flameH = 0.055 + Math.random() * 0.08;
-              const flameX = (Math.random() - 0.5) * 0.09;
-              const mat3 = f % 2 === 0 ? matFlame1 : matFlame2;
-              add(new THREE.ConeGeometry(0.016, flameH, 5), mat3, sx + flameX, shoeY + 0.05 + flameH/2, -0.11 + (Math.random()-0.5)*0.04);
-            }
-          }
-          pointLight = new THREE.PointLight(0xFF4400, 3.0, 2.0);
-          pointLight.position.set(0, shoeY + 0.12, -0.12);
-          grp.add(pointLight);
         }
       }
 
