@@ -11,132 +11,39 @@
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <!-- 
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  -->
 
   <style>
     :root {
-      color-scheme: light dark;
-      --toss-blue: #191F28;
-      --toss-blue-hover: #333D4B;
+      color-scheme: dark;
+      --toss-blue: #3B82F6;
+      --toss-blue-hover: #60A5FA;
       --btn-text: #FFFFFF;
-      --toss-bg-light: #F9FAFB;
-      --toss-card: #FFFFFF;
-      --toss-text-dark: #111111;
-      --toss-text-gray: #8B95A1;
-      --toss-border: #E5E8EB;
-
-      --bg-stage-0: #FFFFFF;
-      --bg-stage-1: #D6EBFF;
-      --bg-stage-2: #2C3E50;
-      --bg-stage-3: #1A1A1B;
+      --toss-bg-light: #0B0F19;
+      --toss-card: rgba(255, 255, 255, 0.05);
+      --toss-text-dark: #F9FAFB;
+      --toss-text-gray: #9CA3AF;
+      --toss-border: rgba(255, 255, 255, 0.1);
+      
+      --bg-stage-0: #0B0F19;
+      --bg-stage-1: #0F172A;
+      --bg-stage-2: #1E1B4B;
+      --bg-stage-3: #000000;
 
       --current-bg: var(--toss-bg-light);
       --nav-height: 72px;
       --nav-bottom: 20px;
       --safe-bottom: calc(var(--nav-height) + var(--nav-bottom) + 12px);
 
-      --nav-bg: rgba(255, 255, 255, 0.92);
-      --hud-bg: rgba(255, 255, 255, 0.9);
-      --hud-btn-bg: rgba(255, 255, 255, 0.8);
-      --timer-shadow: 0 4px 24px rgba(255, 255, 255, 0.8);
-    }
-
-    :root[data-theme="dark"] {
-      color-scheme: dark;
-      --toss-blue: #E5E8EB;
-      --toss-blue-hover: #D1D6DB;
-      --btn-text: #111111;
-      --toss-bg-light: #121212;
-      --toss-card: #1C1C1E;
-      --toss-text-dark: #F9FAFB;
-      --toss-text-gray: #8E8E93;
-      --toss-border: #2C2C2E;
-      --bg-stage-0: #121212;
-
-      --nav-bg: rgba(28, 28, 30, 0.92);
-      --hud-bg: rgba(28, 28, 30, 0.85);
-      --hud-btn-bg: rgba(44, 44, 46, 0.8);
+      --nav-bg: rgba(11, 15, 25, 0.85);
+      --hud-bg: rgba(11, 15, 25, 0.85);
+      --hud-btn-bg: rgba(255, 255, 255, 0.1);
       --timer-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root:not([data-theme="light"]):not([data-theme="light"]) {
-        color-scheme: dark;
-        --toss-bg-light: #121212;
-        --toss-card: #1E1E1E;
-        --toss-text-dark: #E5E8EB;
-        --toss-text-gray: #A0AAB5;
-        --toss-border: #333D4B;
-        --bg-stage-0: #121212;
-
-        --nav-bg: rgba(30, 30, 30, 0.85);
-        --hud-bg: rgba(30, 30, 30, 0.9);
-        --hud-btn-bg: rgba(45, 45, 45, 0.8);
-        --timer-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
-      }
-    }
-
-    :root[data-theme="light"],
-    :root[data-theme="light"] * {
-      color-scheme: light;
-    }
-    :root[data-theme="light"] {
-      --toss-bg-light: #FFFFFF !important;
-      --toss-card: #FFFFFF !important;
-      --toss-text-dark: #191F28 !important;
-      --toss-text-gray: #8B95A1 !important;
-      --toss-border: #E5E8EB !important;
-      --bg-stage-0: #FFFFFF !important;
-
-      --nav-bg: rgba(255, 255, 255, 0.85) !important;
-      --hud-bg: rgba(255, 255, 255, 0.9) !important;
-      --hud-btn-bg: rgba(255, 255, 255, 0.8) !important;
-      --timer-shadow: 0 4px 24px rgba(255, 255, 255, 0.8) !important;
-    }
-
-    [data-theme="light"] body,
-    [data-theme="light"] #home-view,
-    [data-theme="light"] #settings-view,
-    [data-theme="light"] #diy-view,
-    [data-theme="light"] #ranking-view {
-      background-color: #F9FAFB !important;
-      color: #111111 !important;
-    }
-    [data-theme="light"] .toss-card,
-    [data-theme="light"] .stat-card,
-    [data-theme="light"] .subject-item,
-    [data-theme="light"] .calendar-card,
-    [data-theme="light"] .rank-item {
-      background: #FFFFFF !important;
-      background-color: #FFFFFF !important;
-      color: #111111 !important;
-      border-color: #E5E8EB !important;
-    }
-    [data-theme="light"] .bottom-nav {
-      background: rgba(255, 255, 255, 0.85) !important;
-      border: 1px solid rgba(0,0,0,0.05) !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06) !important;
-    }
-    [data-theme="light"] .stat-label,
-    [data-theme="light"] .subject-time,
-    [data-theme="light"] .cal-day,
-    [data-theme="light"] .nav-item,
-    [data-theme="light"] .rank-score {
-      color: #8B95A1 !important;
-    }
-    [data-theme="light"] .stat-value,
-    [data-theme="light"] .subject-name,
-    [data-theme="light"] .rank-name,
-    [data-theme="light"] .dash-title,
-    [data-theme="light"] .modal-title,
-    [data-theme="light"] .form-label,
-    [data-theme="light"] .nav-item.active {
-      color: #111111 !important;
-    }
-    [data-theme="light"] .modal-overlay .toss-card {
-      background: #FFFFFF !important;
+      --glow-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     }
 
     * {
@@ -289,8 +196,10 @@
 
     .toss-card {
       background: var(--toss-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-radius: 24px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.02);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
       padding: 24px;
       width: 100%;
       max-width: 340px;
@@ -470,7 +379,7 @@
       gap: 3px;
     }
     .nav-item:active { transform: scale(0.93); }
-    .nav-item.active { color: var(--toss-blue); }
+    .nav-item.active { color: var(--toss-blue); text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
     .nav-icon { font-size: 22px; transition: transform 0.2s; }
     .nav-item.active .nav-icon { transform: scale(1.15); }
 
@@ -518,16 +427,18 @@
     .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 12px; }
     .stat-card {
       background: var(--toss-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-radius: 20px;
       padding: 20px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
       border: 1px solid var(--toss-border);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .stat-card:active { transform: scale(0.97); }
+    .stat-card:active { transform: scale(0.97); box-shadow: var(--glow-shadow); }
     .stat-label { font-size: 13px; color: var(--toss-text-gray); font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .stat-value { font-size: 24px; font-weight: 900; color: var(--toss-text-dark); letter-spacing: -0.5px; }
     .stat-value.blue { color: var(--toss-blue); }
@@ -543,10 +454,12 @@
 
     .calendar-card {
       background: var(--toss-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-radius: 20px;
       padding: 18px;
       width: 100%;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
       border: 1px solid var(--toss-border);
     }
     .cal-title { font-size: 15px; font-weight: 700; color: var(--toss-text-dark); margin-bottom: 14px; }
@@ -560,12 +473,14 @@
 
     .subject-item {
       background: var(--toss-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-radius: 16px;
       padding: 14px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
       border: 1px solid var(--toss-border);
     }
     .subject-info { display: flex; flex-direction: column; gap: 3px; }
@@ -603,19 +518,21 @@
 
     .rank-item {
       background: var(--toss-card);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border-radius: 16px;
       padding: 16px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
       border: 1px solid var(--toss-border);
     }
     .rank-left { display: flex; align-items: center; gap: 14px; }
-    .rank-num { font-size: 16px; font-weight: 900; color: var(--toss-text-gray); width: 24px; text-align: center; }
+    .rank-num { font-size: 16px; font-weight: 900; color: var(--toss-blue); width: 24px; text-align: center; }
     .rank-name { font-size: 15px; font-weight: 700; color: var(--toss-text-dark); }
     .rank-score { font-size: 14px; font-weight: 700; color: var(--toss-text-gray); }
-    .my-rank-item { background: var(--toss-blue); border-color: transparent; }
+    .my-rank-item { background: linear-gradient(135deg, #3B82F6, #8B5CF6); border-color: transparent; box-shadow: var(--glow-shadow); }
     .my-rank-item .rank-name, .my-rank-item .rank-score, .my-rank-item .rank-num { color: white !important; }
 
     .my-rank-sticky {
@@ -888,9 +805,8 @@
     </div>
   </div>
 
-  <!-- View 3: Avatar & Collection -->
+  <!-- View 3: Avatar & Collection (Disabled) 
   <div id="diy-view" class="view-wrapper hidden" style="padding: 0; display: flex; flex-direction: column;">
-    <!-- 3D Avatar Viewer -->
     <div id="avatar-3d-wrap" style="touch-action:none;">
       <canvas id="avatar-3d-canvas" style="width:100%; height:100%; display:block; touch-action:none; pointer-events:none;"></canvas>
       <div id="avatar-3d-loading">
@@ -902,8 +818,6 @@
       </div>
       <div class="avatar-badge">나의 3D 아바타</div>
     </div>
-
-    <!-- Bottom: Item Tabs -->
     <div style="flex: 1; background: var(--toss-bg-light); border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; display: flex; flex-direction: column; z-index: 10; box-shadow: 0 -4px 16px rgba(0,0,0,0.08); margin-top: -20px;">
       <div class="avatar-tab-bar">
         <div class="avatar-tab active" onclick="switchAvatarTab('head')" id="tab-head">머리<br><span style="font-size: 12px;" id="count-head">0/5</span></div>
@@ -914,6 +828,7 @@
       <div class="diy-grid" id="collection-grid" style="overflow-y: auto; padding-bottom: 80px;"></div>
     </div>
   </div>
+  -->
 
   <!-- View 4: Ranking -->
   <div id="ranking-view" class="view-wrapper hidden">
@@ -1132,8 +1047,8 @@
     <div class="nav-item active" onclick="switchTab('home')">
       <div class="nav-icon">🏠</div>홈
     </div>
-    <div class="nav-item" onclick="switchTab('diy')">
-      <div class="nav-icon">💎</div>캐릭터
+    <div class="nav-item" onclick="switchTab('timer')">
+      <div class="nav-icon">🗼</div>타워
     </div>
     <div class="nav-item" onclick="switchTab('stats')">
       <div class="nav-icon">📊</div>통계
