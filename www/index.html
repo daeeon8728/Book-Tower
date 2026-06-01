@@ -249,9 +249,14 @@
       width: 200vw;
       height: 100vh;
       z-index: 0;
-      background: 
-        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20" fill="rgba(255,255,255,0.7)"/></svg>') 0 10% / 150px 75px repeat-x,
-        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20" fill="rgba(255,255,255,0.35)"/></svg>') 50px 25% / 250px 125px repeat-x;
+      background-color: var(--toss-text-dark);
+      -webkit-mask: 
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20"/></svg>') 0 10% / 150px 75px repeat-x,
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20"/></svg>') 50px 25% / 250px 125px repeat-x;
+      mask: 
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20"/></svg>') 0 10% / 150px 75px repeat-x,
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20"/></svg>') 50px 25% / 250px 125px repeat-x;
+      opacity: 0.2;
       animation: moveClouds 60s linear infinite;
       pointer-events: none;
     }
