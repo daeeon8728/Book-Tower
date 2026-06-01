@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Book Tower</title>
   <meta name="description" content="공부 타이머와 3D 아바타 수집 게임. 집중하면 책탑이 쌓이고, 5분마다 희귀 의상 아이템이 드롭됩니다!">
+  <meta name="color-scheme" content="light dark">
 
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -1598,7 +1599,7 @@
       const h = window.innerHeight;
       render = Render.create({ element: container, engine: engine, options: { width: w, height: h, wireframes: false, background: 'transparent' } });
       const NAV_H = 72 + 20; // --nav-height 72px + --nav-bottom 20px
-      ground = Bodies.rectangle(w/2, h - NAV_H + 32, w*3, 100, { isStatic: true, friction: 1, frictionStatic: 10, restitution: 0, render: { fillStyle: 'transparent' } });
+      ground = Bodies.rectangle(w/2, h - NAV_H + 82, w*3, 100, { isStatic: true, friction: 1, frictionStatic: 10, restitution: 0, render: { fillStyle: 'transparent' } });
       Composite.add(engine.world, [ground]);
       Render.run(render);
       runnerObj = Runner.create();
@@ -1660,7 +1661,7 @@
       if (!render) return;
       const w = window.innerWidth, h = window.innerHeight;
       render.canvas.width = w; render.canvas.height = h;
-      Matter.Body.setPosition(ground, { x: w/2, y: h - NAV_H + 32 });
+      Matter.Body.setPosition(ground, { x: w/2, y: h - NAV_H + 82 });
     });
 
     const UNIV_SUBJECTS = ['화학I','화학II','물리I','물리II','미적분','이산수학','선형대수','영어1','영어2','영어고급','미디어와 사회','프로그래밍','자료구조','알고리즘','운영체제','네트워크','데이터베이스','인공지능','유기화학','물리화학','생화학','세포생물학','해부학','생리학','일반물리학','현대물리','전자기학','양자역학','거시경제학','미시경제학'];
