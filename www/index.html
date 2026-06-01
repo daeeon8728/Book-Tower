@@ -265,6 +265,19 @@
     .cloud-4 { top: 25%; width: 160px; height: 80px; animation-duration: 70s; animation-delay: -25s; }
     .cloud-5 { top: 35%; width: 120px; height: 60px; animation-duration: 50s; animation-delay: -5s; opacity: 0.3; }
 
+    #scenic-bgs { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; pointer-events: none; overflow: hidden; }
+    .scenic-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 2s ease; opacity: 0; }
+    #scenic-sky { background: linear-gradient(to bottom, #87CEFA, #E0F6FF); opacity: 1; }
+    #scenic-evening { background: linear-gradient(to bottom, #2C3E50, #E74C3C); }
+    #scenic-night { background: linear-gradient(to bottom, #0F2027, #203A43, #2C5364); }
+    #scenic-space { background: radial-gradient(circle at center, #1B2735 0%, #090A0F 100%); }
+    .mountains-bg {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 35vh;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><polygon points="0,100 25,10 50,100" fill="%238795A1"/><polygon points="35,100 65,35 100,100" fill="%236B7684"/><polygon points="-20,100 15,50 45,100" fill="%23B0B8C1"/></svg>') no-repeat bottom / 100% 100%;
+      transition: transform 0.2s ease-out;
+    }
+    .clouds-bg { transition: opacity 2s ease; }
+
     .toss-card {
       background: var(--toss-card);
       border-radius: 24px;
@@ -824,6 +837,13 @@
       <div class="start-icon">⏳</div>
       <div class="start-title">탑을 쌓아볼까요?</div>
       <button class="btn btn-primary" style="max-width: 200px;" onclick="openPomodoroConfig()">시작 설정하기</button>
+    </div>
+    <div id="scenic-bgs">
+      <div class="scenic-bg" id="scenic-sky"></div>
+      <div class="scenic-bg" id="scenic-evening"></div>
+      <div class="scenic-bg" id="scenic-night"></div>
+      <div class="scenic-bg" id="scenic-space"></div>
+      <div class="mountains-bg" id="mountains-bg"></div>
     </div>
     <div class="clouds-bg">
       <div class="cloud cloud-1"></div>
@@ -1694,6 +1714,25 @@
         else if (h >= 30) { mode = 'var(--bg-stage-3)'; activeIdx = 3; }
         bgs.forEach((bg, i) => bg.style.opacity = (i === activeIdx) ? '1' : '0');
         docBody.style.setProperty('--current-bg', mode);
+        
+        const sky = document.getElementById('scenic-sky');
+        const evening = document.getElementById('scenic-evening');
+        const night = document.getElementById('scenic-night');
+        const space = document.getElementById('scenic-space');
+        const mt = document.getElementById('mountains-bg');
+        if (sky && evening && night && space && mt) {
+          sky.style.opacity = activeIdx === 0 ? '1' : '0';
+          evening.style.opacity = activeIdx === 1 ? '1' : '0';
+          night.style.opacity = activeIdx === 2 ? '1' : '0';
+          space.style.opacity = activeIdx === 3 ? '1' : '0';
+          
+          let mY = Math.min(100, (h / 20) * 100);
+          mt.style.transform = `translateY(${mY}vh)`;
+          
+          const cBg = document.querySelector('.clouds-bg');
+          if (cBg) cBg.style.opacity = (h >= 15) ? '0' : '1';
+        }
+        
         const t = document.getElementById('time-display');
         if (h >= 15) t.classList.add('light'); else t.classList.remove('light');
         if (h >= 30) document.getElementById('particles').classList.add('show');
