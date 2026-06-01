@@ -530,6 +530,15 @@
     .stat-value.blue { color: var(--toss-blue); }
     .stat-row { display: flex; gap: 10px; width: 100%; }
 
+    /* ── Chart ── */
+    .chart-tabs { display: flex; gap: 4px; background: var(--toss-bg-light); padding: 4px; border-radius: 10px; }
+    .chart-tab { font-size: 12px; font-weight: 700; color: var(--toss-text-gray); padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .chart-tab.active { background: var(--toss-card); color: var(--toss-text-dark); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; gap: 6px; }
+    .chart-bar { width: 100%; max-width: 32px; background: var(--toss-blue); border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .chart-val { font-size: 11px; font-weight: 800; color: var(--toss-text-gray); }
+    .chart-label { font-size: 11px; font-weight: 600; color: var(--toss-text-gray); white-space: nowrap; margin-bottom: -10px; }
+
     .calendar-card {
       background: var(--toss-card);
       border-radius: 20px;
@@ -825,6 +834,19 @@
         <div class="stat-card" style="background: linear-gradient(135deg,#667eea,#764ba2); border:none;">
           <div class="stat-label" style="color:rgba(255,255,255,0.8);">최고 책탑 높이</div>
           <div class="stat-value" style="color:white;" id="dash-max-height">0.0m</div>
+        </div>
+      </div>
+      <div class="stat-card" style="margin-top: 8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+          <div style="font-size:15px; font-weight:800; color:var(--toss-text-dark);">공부 시간 추이</div>
+          <div class="chart-tabs">
+            <span class="chart-tab active" onclick="updateChart('daily')" id="tab-daily">일간</span>
+            <span class="chart-tab" onclick="updateChart('weekly')" id="tab-weekly">주간</span>
+            <span class="chart-tab" onclick="updateChart('monthly')" id="tab-monthly">월간</span>
+          </div>
+        </div>
+        <div id="chart-container" style="display:flex; align-items:flex-end; justify-content:space-between; height: 160px; padding-bottom:12px; border-bottom:1px solid var(--toss-border); gap:6px;">
+          <!-- 차트 렌더링 -->
         </div>
       </div>
     </div>
@@ -1337,8 +1359,84 @@
       });
       try { document.getElementById('stats-month').innerText = `${Math.floor(monthSecs / 60)}분`; } catch(e){}
       try { document.getElementById('stats-week').innerText = `${Math.floor(weekSecs / 60)}분`; } catch(e){}
+
+      updateChart('daily');
     }
 
+    function updateChart(mode = 'daily') {
+      const data = getRecords();
+      const now = getOffsetDate();
+      now.setHours(0,0,0,0);
+      
+      ['daily', 'weekly', 'monthly'].forEach(m => {
+        let el = document.getElementById('tab-' + m);
+        if (el) {
+          if (m === mode) el.classList.add('active');
+          else el.classList.remove('active');
+        }
+      });
+
+      let chartData = [];
+      let maxMins = 0;
+
+      if (mode === 'daily') {
+        for (let i = 6; i >= 0; i--) {
+          let d = new Date(now);
+          d.setDate(d.getDate() - i);
+          let key = d.toLocaleDateString('ko-KR');
+          let mins = Math.floor((data.daily[key]?.total || 0) / 60);
+          chartData.push({ label: (d.getMonth()+1)+'/'+d.getDate(), value: mins });
+          if (mins > maxMins) maxMins = mins;
+        }
+      } else if (mode === 'weekly') {
+        for (let i = 3; i >= 0; i--) {
+          let weekStart = new Date(now);
+          weekStart.setDate(weekStart.getDate() - (i * 7) - now.getDay());
+          let weekMins = 0;
+          for (let j = 0; j <= 6; j++) {
+            let d = new Date(weekStart);
+            d.setDate(d.getDate() + j);
+            let key = d.toLocaleDateString('ko-KR');
+            weekMins += Math.floor((data.daily[key]?.total || 0) / 60);
+          }
+          chartData.push({ label: (weekStart.getMonth()+1)+'/'+weekStart.getDate()+'~', value: weekMins });
+          if (weekMins > maxMins) maxMins = weekMins;
+        }
+      } else if (mode === 'monthly') {
+        for (let i = 5; i >= 0; i--) {
+          let m = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          let monthMins = 0;
+          Object.keys(data.daily).forEach(k => {
+            let d = new Date(k.replace(/\./g, '-').replace(/ /g, ''));
+            if (isNaN(d.getTime())) d = new Date(k);
+            if (!isNaN(d.getTime()) && d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth()) {
+              monthMins += Math.floor((data.daily[k].total || 0) / 60);
+            }
+          });
+          chartData.push({ label: (m.getMonth()+1)+'월', value: monthMins });
+          if (monthMins > maxMins) maxMins = monthMins;
+        }
+      }
+
+      const container = document.getElementById('chart-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (maxMins === 0) maxMins = 60; 
+      
+      chartData.forEach(item => {
+        let hPct = Math.max(4, (item.value / maxMins) * 100);
+        let valStr = item.value >= 60 ? (item.value/60).toFixed(1)+'h' : item.value+'m';
+        if (item.value === 0) valStr = '0';
+        container.innerHTML += `
+          <div class="chart-bar-wrapper">
+            <div class="chart-val">${valStr}</div>
+            <div class="chart-bar" style="height: ${hPct}%;"></div>
+            <div class="chart-label">${item.label}</div>
+          </div>
+        `;
+      });
+    }
 
     function renderSubjectList() {
       let data = getRecords();
