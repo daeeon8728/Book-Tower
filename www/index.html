@@ -515,21 +515,22 @@
     /* ── Ranking View ── */
     #ranking-view { background: var(--toss-bg-light); }
 
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; margin-bottom: 12px; }
     .stat-card {
       background: var(--toss-card);
       border-radius: 20px;
-      padding: 18px;
-      flex: 1;
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      gap: 8px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
       border: 1px solid var(--toss-border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .stat-label { font-size: 12px; color: var(--toss-text-gray); font-weight: 600; }
-    .stat-value { font-size: 22px; font-weight: 900; color: var(--toss-text-dark); letter-spacing: -0.5px; }
+    .stat-card:active { transform: scale(0.97); }
+    .stat-label { font-size: 13px; color: var(--toss-text-gray); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .stat-value { font-size: 24px; font-weight: 900; color: var(--toss-text-dark); letter-spacing: -0.5px; }
     .stat-value.blue { color: var(--toss-blue); }
-    .stat-row { display: flex; gap: 10px; width: 100%; }
 
     /* ── Chart ── */
     .chart-tabs { display: flex; gap: 4px; background: var(--toss-bg-light); padding: 4px; border-radius: 10px; }
@@ -811,35 +812,32 @@
       <div class="page-header">
         <span class="page-title">통계</span>
       </div>
-      <div class="stat-row">
+      <div class="stat-grid">
         <div class="stat-card">
-          <div class="stat-label">오늘 공부 시간</div>
+          <div class="stat-label">⏱️ 오늘</div>
           <div class="stat-value blue" id="stats-today">0분</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">주간 공부 시간</div>
+          <div class="stat-label">📅 이번 주</div>
           <div class="stat-value" id="stats-week">0분</div>
         </div>
-      </div>
-      <div class="stat-row">
         <div class="stat-card">
-          <div class="stat-label">총 누적 공부 시간</div>
-          <div class="stat-value" id="stats-total">0분</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">이번 달 공부 시간</div>
+          <div class="stat-label">🗓️ 이번 달</div>
           <div class="stat-value" id="stats-month">0분</div>
         </div>
-      </div>
-      <div class="stat-row">
-        <div class="stat-card" style="background: linear-gradient(135deg,#667eea,#764ba2); border:none;">
-          <div class="stat-label" style="color:rgba(255,255,255,0.8);">최고 책탑 높이</div>
-          <div class="stat-value" style="color:white;" id="dash-max-height">0.0m</div>
+        <div class="stat-card">
+          <div class="stat-label">📚 총 누적</div>
+          <div class="stat-value" id="stats-total">0분</div>
         </div>
+      </div>
+      
+      <div class="stat-card" style="background: linear-gradient(135deg,#667eea,#764ba2); border:none; margin-bottom: 12px;">
+        <div class="stat-label" style="color:rgba(255,255,255,0.85);">🏆 나의 최고 책탑 높이</div>
+        <div class="stat-value" style="color:white; font-size:28px;" id="dash-max-height">0.0m</div>
       </div>
       <div class="stat-card" style="margin-top: 8px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-          <div style="font-size:15px; font-weight:800; color:var(--toss-text-dark);">공부 시간 추이</div>
+          <div style="font-size:16px; font-weight:800; color:var(--toss-text-dark); display:flex; align-items:center; gap:6px;">📈 공부 시간 추이</div>
           <div class="chart-tabs">
             <span class="chart-tab active" onclick="updateChart('daily')" id="tab-daily">일간</span>
             <span class="chart-tab" onclick="updateChart('weekly')" id="tab-weekly">주간</span>
