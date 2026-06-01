@@ -32,9 +32,11 @@
       --bg-stage-3: #1A1A1B;
 
       --current-bg: var(--toss-bg-light);
-      --nav-height: 64px;
+      --nav-height: 72px;
+      --nav-bottom: 20px;
+      --safe-bottom: calc(var(--nav-height) + var(--nav-bottom) + 12px);
 
-      --nav-bg: rgba(255, 255, 255, 0.85);
+      --nav-bg: rgba(255, 255, 255, 0.92);
       --hud-bg: rgba(255, 255, 255, 0.9);
       --hud-btn-bg: rgba(255, 255, 255, 0.8);
       --timer-shadow: 0 4px 24px rgba(255, 255, 255, 0.8);
@@ -52,7 +54,7 @@
       --toss-border: #2C2C2E;
       --bg-stage-0: #121212;
 
-      --nav-bg: rgba(28, 28, 30, 0.75);
+      --nav-bg: rgba(28, 28, 30, 0.92);
       --hud-bg: rgba(28, 28, 30, 0.85);
       --hud-btn-bg: rgba(44, 44, 46, 0.8);
       --timer-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
@@ -220,22 +222,21 @@
 
     .hidden { display: none !important; }
 
+    /* ── View Wrapper ── */
     .view-wrapper {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       width: 100%;
-      height: calc(100vh - var(--nav-height));
-      display: flex;
-      flex-direction: column;
+      height: 100%;
       overflow-y: auto;
+      overflow-x: hidden;
       z-index: 10;
       pointer-events: auto;
+      -webkit-overflow-scrolling: touch;
     }
-
     .view-wrapper.hidden { display: none !important; }
-
-    #timer-view { overflow: hidden; position: relative; }
+    #timer-view { overflow: hidden; position: fixed; }
 
     #canvas-container {
       position: relative;
@@ -277,6 +278,13 @@
       transition: transform 0.2s ease-out;
     }
     .clouds-bg { transition: opacity 2s ease; }
+
+    .diy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+    }
 
     .toss-card {
       background: var(--toss-card);
@@ -423,25 +431,26 @@
       backdrop-filter: blur(8px);
     }
 
-    /* Bottom Navigation */
+    /* ── Bottom Navigation ── */
     .bottom-nav {
       position: fixed;
-      bottom: 24px; left: 50%;
+      bottom: var(--nav-bottom);
+      left: 50%;
       transform: translateX(-50%);
-      width: calc(100% - 48px);
-      max-width: 400px;
+      width: calc(100% - 32px);
+      max-width: 420px;
       height: var(--nav-height);
       background: var(--nav-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 32px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+      border: 1px solid var(--toss-border);
       display: flex;
       z-index: 90;
       justify-content: space-around;
       align-items: center;
-      padding: 0 8px;
+      padding: 0 4px;
     }
 
     .nav-item {
@@ -451,166 +460,135 @@
       align-items: center;
       justify-content: center;
       color: var(--toss-text-gray);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       cursor: pointer;
-      padding: 6px 0;
-      border-radius: 20px;
+      padding: 8px 0;
+      border-radius: 18px;
       transition: all 0.2s ease;
+      gap: 3px;
     }
-    .nav-item:active { transform: scale(0.95); }
-    .nav-item.active { color: var(--toss-text-dark); }
-    .nav-icon { font-size: 24px; margin-bottom: 2px; opacity: 0.4; transition: opacity 0.2s; }
-    .nav-item.active .nav-icon { opacity: 1; }
+    .nav-item:active { transform: scale(0.93); }
+    .nav-item.active { color: var(--toss-blue); }
+    .nav-icon { font-size: 22px; transition: transform 0.2s; }
+    .nav-item.active .nav-icon { transform: scale(1.15); }
 
-    /* Home View */
-    #home-view {
-      background: var(--toss-bg-light);
-      padding: 24px;
-      padding-top: 40px;
-      padding-bottom: 120px;
+    /* ── Page Container (centered content wrapper) ── */
+    .page-inner {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 20px;
+      padding-top: env(safe-area-inset-top, 0px);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-bottom: calc(var(--nav-height) + var(--nav-bottom) + 24px);
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+      display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-between;
+      padding-top: 56px;
+      padding-bottom: 4px;
+    }
+    .page-title {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--toss-text-dark);
+      letter-spacing: -0.5px;
     }
 
-    .dash-title { font-size: 24px; font-weight: 800; color: var(--toss-text-dark); width: 100%; max-width: 400px; }
+    /* ── Home View ── */
+    #home-view { background: var(--toss-bg-light); }
 
-    .stat-row { display: flex; gap: 12px; width: 100%; max-width: 400px; }
+    /* ── Stats View ── */
+    #stats-view { background: var(--toss-bg-light); }
+
+    /* ── Settings View ── */
+    #settings-view { background: var(--toss-bg-light); }
+    .settings-list { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+
+    /* ── Ranking View ── */
+    #ranking-view { background: var(--toss-bg-light); }
 
     .stat-card {
       background: var(--toss-card);
       border-radius: 20px;
-      padding: 20px;
+      padding: 18px;
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      gap: 6px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
       border: 1px solid var(--toss-border);
     }
-
-    .stat-label { font-size: 14px; color: var(--toss-text-gray); font-weight: 600; }
-    .stat-value { font-size: 24px; font-weight: 800; color: var(--toss-text-dark); }
+    .stat-label { font-size: 12px; color: var(--toss-text-gray); font-weight: 600; }
+    .stat-value { font-size: 22px; font-weight: 900; color: var(--toss-text-dark); letter-spacing: -0.5px; }
     .stat-value.blue { color: var(--toss-blue); }
-    .stat-large { width: 100%; max-width: 400px; }
+    .stat-row { display: flex; gap: 10px; width: 100%; }
 
     .calendar-card {
       background: var(--toss-card);
       border-radius: 20px;
-      padding: 20px;
+      padding: 18px;
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
       border: 1px solid var(--toss-border);
     }
-
-    .cal-title { font-size: 16px; font-weight: 700; color: var(--toss-text-dark); margin-bottom: 16px; }
+    .cal-title { font-size: 15px; font-weight: 700; color: var(--toss-text-dark); margin-bottom: 14px; }
 
     .subject-list {
       width: 100%;
-      max-width: 400px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin-top: 16px;
-      margin-bottom: 24px;
-      padding-bottom: 20px;
     }
 
     .subject-item {
       background: var(--toss-card);
       border-radius: 16px;
-      padding: 12px 16px;
+      padding: 14px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
       border: 1px solid var(--toss-border);
-      margin-bottom: 8px;
     }
-
-    .subject-info { display: flex; flex-direction: column; }
-    .subject-name { font-size: 16px; font-weight: 700; color: var(--toss-text-dark); }
-    .subject-time { font-size: 13px; font-weight: 600; color: var(--toss-text-gray); margin-top: 4px; }
+    .subject-info { display: flex; flex-direction: column; gap: 3px; }
+    .subject-name { font-size: 15px; font-weight: 700; color: var(--toss-text-dark); }
+    .subject-time { font-size: 12px; font-weight: 600; color: var(--toss-text-gray); }
 
     .btn-play {
       background: var(--toss-blue);
-      color: white;
-      width: 40px; height: 40px;
+      color: var(--btn-text);
+      width: 38px; height: 38px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 16px;
       border: none;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(49, 130, 246, 0.3);
+      flex-shrink: 0;
     }
-    .btn-play:active { transform: scale(0.95); }
-
+    .btn-play:active { transform: scale(0.93); }
     .subject-add-btn {
       background: transparent;
       color: var(--toss-blue);
       font-weight: 700;
-      border: 1px dashed var(--toss-blue);
-      border-radius: 12px;
-      padding: 12px;
+      border: 1.5px dashed var(--toss-border);
+      border-radius: 14px;
+      padding: 14px;
       text-align: center;
       cursor: pointer;
-      margin-top: 4px;
+      font-size: 14px;
     }
 
-    /* Settings View */
-    #settings-view {
-      background: var(--toss-bg-light);
-      padding: 24px;
-      padding-top: 40px;
-      align-items: center;
-      gap: 16px;
-    }
-    .settings-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
-
-    /* DIY View */
-    #diy-view {
-      background: var(--toss-bg-light);
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .diy-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      width: 100%;
-      max-width: 400px;
-    }
-
-    .diy-item {
-      background: var(--toss-card);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      border: 2px solid transparent;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-      transition: all 0.2s ease;
-    }
-    .diy-item:active { transform: scale(0.97); }
-    .diy-item.active { border-color: var(--toss-blue); background: #F0F6FF; }
-    .diy-icon { font-size: 40px; margin-bottom: 8px; }
-    .diy-name { font-size: 16px; font-weight: 700; color: var(--toss-text-dark); }
-
-    /* Ranking View */
-    #ranking-view {
-      background: var(--toss-bg-light);
-      padding: 24px;
-      padding-top: 40px;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .rank-list { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; }
+    /* ── Ranking View ── */
+    .rank-list { width: 100%; display: flex; flex-direction: column; gap: 10px; }
 
     .rank-item {
       background: var(--toss-card);
@@ -619,19 +597,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
       border: 1px solid var(--toss-border);
     }
-
-    .rank-left { display: flex; align-items: center; gap: 16px; }
-    .rank-num { font-size: 18px; font-weight: 800; color: var(--toss-blue); width: 24px; }
-    .rank-name { font-size: 16px; font-weight: 700; color: var(--toss-text-dark); }
-    .rank-score { font-size: 16px; font-weight: 700; color: var(--toss-text-gray); }
-
-    .my-rank-item { background: var(--toss-blue); border: 1px solid var(--toss-blue); }
-    .my-rank-item .rank-name,
-    .my-rank-item .rank-score,
-    .my-rank-item .rank-num { color: white !important; }
+    .rank-left { display: flex; align-items: center; gap: 14px; }
+    .rank-num { font-size: 16px; font-weight: 900; color: var(--toss-text-gray); width: 24px; text-align: center; }
+    .rank-name { font-size: 15px; font-weight: 700; color: var(--toss-text-dark); }
+    .rank-score { font-size: 14px; font-weight: 700; color: var(--toss-text-gray); }
+    .my-rank-item { background: var(--toss-blue); border-color: transparent; }
+    .my-rank-item .rank-name, .my-rank-item .rank-score, .my-rank-item .rank-num { color: white !important; }
 
     .my-rank-sticky {
       position: absolute;
@@ -788,61 +762,70 @@
     <div id="particles"></div>
   </div>
 
-  <!-- View 1: Home Dashboard -->
+  <!-- View 1: Home -->
   <div id="home-view" class="view-wrapper">
-    <!-- 책 높이 현황 배너 -->
-    <div id="home-height-banner" style="width:100%; max-width:400px; background: linear-gradient(135deg, var(--toss-blue), #6c63ff); border-radius: 20px; padding: 18px 22px; margin-bottom: 16px; color: white; box-shadow: 0 6px 24px rgba(99,102,241,0.25);">
-      <div style="font-size:13px; font-weight:600; opacity:0.85;">현재 나의 책탑 높이</div>
-      <div style="font-size:28px; font-weight:900; margin: 4px 0 6px;" id="home-height-msg">0.0m</div>
-      <div style="font-size:13px; font-weight:600; opacity:0.85;" id="home-height-desc">아직 탑이 없어요. 지금 공부를 시작해보세요! 📚</div>
-    </div>
-
-    <div class="calendar-card" style="margin-top: 0;">
-      <div class="cal-title" style="display:flex; justify-content:space-between; align-items:center;">
-        <span onclick="changeCalendarMonth(-1)" style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">◀</span>
-        <span id="cal-month-title">이번 달 기록 달력</span>
-        <span onclick="changeCalendarMonth(1)" style="cursor:pointer; padding:4px 8px; color:var(--toss-text-gray);">▶</span>
+    <div class="page-inner">
+      <div class="page-header">
+        <span class="page-title">홈</span>
       </div>
-      <div id="monthly-calendar" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; text-align:center;"></div>
-    </div>
 
-    <div style="width:100%; max-width:400px; margin-top: 24px; font-size: 18px; font-weight: 800; color: var(--toss-text-dark); text-align: left; position: relative;">
-      오늘의 집중 과목
-      <div id="subject-tooltip" style="position: absolute; right: 0; top: -10px; background: var(--toss-blue); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; animation: bounce 2s infinite; pointer-events: none;">
-        과목을 선택해서 시작!
-        <div style="position: absolute; bottom: -4px; right: 20px; width: 8px; height: 8px; background: var(--toss-blue); transform: rotate(45deg);"></div>
+      <!-- 책탑 높이 배너 -->
+      <div id="home-height-banner" style="background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 22px; padding: 20px 22px; color: white; box-shadow: 0 8px 32px rgba(102,126,234,0.3);">
+        <div style="font-size:12px; font-weight:700; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">나의 현재 책탑 높이</div>
+        <div style="font-size:32px; font-weight:900; margin: 6px 0 4px; letter-spacing:-1px;" id="home-height-msg">0.0m</div>
+        <div style="font-size:13px; font-weight:600; opacity:0.85;" id="home-height-desc">아직 탑이 없어요. 지금 공부를 시작해보세요! 📚</div>
       </div>
+
+      <!-- 달력 -->
+      <div class="calendar-card">
+        <div class="cal-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span onclick="changeCalendarMonth(-1)" style="cursor:pointer; padding:6px 10px; border-radius:10px; background:var(--toss-border); color:var(--toss-text-gray); font-size:12px;">◀</span>
+          <span id="cal-month-title" style="font-size:15px; font-weight:800;">이번 달 달력</span>
+          <span onclick="changeCalendarMonth(1)" style="cursor:pointer; padding:6px 10px; border-radius:10px; background:var(--toss-border); color:var(--toss-text-gray); font-size:12px;">▶</span>
+        </div>
+        <div id="monthly-calendar" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:5px; text-align:center;"></div>
+      </div>
+
+      <!-- 오늘의 집중 과목 -->
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-size:17px; font-weight:800; color:var(--toss-text-dark);">오늘의 집중 과목</div>
+        <div id="subject-tooltip" style="background: #667eea; color: white; padding: 5px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; animation: bounce 2s infinite;">과목을 선택해서 시작!</div>
+      </div>
+      <div class="subject-list" id="subject-list-container" style="margin-top:0;"></div>
     </div>
-    <div class="subject-list" id="subject-list-container"></div>
   </div>
 
   <!-- View 1-B: 통계 -->
   <div id="stats-view" class="view-wrapper hidden">
-    <div class="dash-title">통계</div>
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-label">오늘 공부 시간</div>
-        <div class="stat-value blue" id="stats-today">0분</div>
+    <div class="page-inner">
+      <div class="page-header">
+        <span class="page-title">통계</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">주간 공부 시간</div>
-        <div class="stat-value" id="stats-week">0분</div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">오늘 공부 시간</div>
+          <div class="stat-value blue" id="stats-today">0분</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">주간 공부 시간</div>
+          <div class="stat-value" id="stats-week">0분</div>
+        </div>
       </div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-card" style="flex:1;">
-        <div class="stat-label">총 누적 공부 시간</div>
-        <div class="stat-value" id="stats-total">0분</div>
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">총 누적 공부 시간</div>
+          <div class="stat-value" id="stats-total">0분</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">이번 달 공부 시간</div>
+          <div class="stat-value" id="stats-month">0분</div>
+        </div>
       </div>
-      <div class="stat-card" style="flex:1;">
-        <div class="stat-label">최고 책탑 높이</div>
-        <div class="stat-value blue" id="dash-max-height">0.0m</div>
-      </div>
-    </div>
-    <div class="stat-row" style="margin-top:8px;">
-      <div class="stat-card" style="flex:1;">
-        <div class="stat-label">이번 달 공부 시간</div>
-        <div class="stat-value" id="stats-month">0분</div>
+      <div class="stat-row">
+        <div class="stat-card" style="background: linear-gradient(135deg,#667eea,#764ba2); border:none;">
+          <div class="stat-label" style="color:rgba(255,255,255,0.8);">최고 책탑 높이</div>
+          <div class="stat-value" style="color:white;" id="dash-max-height">0.0m</div>
+        </div>
       </div>
     </div>
   </div>
@@ -913,30 +896,38 @@
 
   <!-- View 4: Ranking -->
   <div id="ranking-view" class="view-wrapper hidden">
-    <div class="dash-title">실시간 랭킹</div>
-    <div class="rank-list" id="rank-list" style="padding-bottom: 80px;">
-      <div style="text-align:center; padding: 20px; color: var(--toss-text-gray);">불러오는 중...</div>
+    <div class="page-inner">
+      <div class="page-header">
+        <span class="page-title">랭킹 🏆</span>
+      </div>
+      <div class="rank-list" id="rank-list">
+        <div style="text-align:center; padding: 40px 0; color: var(--toss-text-gray);">불러오는 중...</div>
+      </div>
     </div>
     <div id="sticky-my-rank" class="rank-item my-rank-item my-rank-sticky hidden"></div>
   </div>
 
   <!-- View 5: Settings -->
   <div id="settings-view" class="view-wrapper hidden">
-    <div class="dash-title">설정</div>
-    <div class="settings-list">
-      <div class="toss-card">
-        <div class="form-group">
-          <div class="form-label">닉네임</div>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="setting-nickname" class="form-input" style="flex:1; min-width: 0;">
-            <button class="btn btn-primary" style="width: max-content; flex-shrink: 0; white-space: nowrap; padding: 0 16px; border-radius: 12px; font-weight:700;" onclick="saveNicknameFromSetting()">변경</button>
+    <div class="page-inner">
+      <div class="page-header">
+        <span class="page-title">설정</span>
+      </div>
+      <div class="settings-list">
+        <div class="toss-card">
+          <div class="form-group">
+            <div class="form-label">닉네임</div>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="setting-nickname" class="form-input" style="flex:1; min-width: 0;">
+              <button class="btn btn-primary" style="width: max-content; flex-shrink: 0; white-space: nowrap; padding: 0 16px; border-radius: 12px; font-weight:700;" onclick="saveNicknameFromSetting()">변경</button>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="toss-card" style="padding: 20px;">
-        <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-theme" onclick="toggleTheme()">테마: 시스템 기본</button>
-        <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-vibrate" onclick="toggleVibration()">진동: 켜짐</button>
-        <button class="btn btn-secondary" style="color: #F04438;" onclick="resetData()">데이터 초기화</button>
+        <div class="toss-card" style="padding: 20px;">
+          <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-theme" onclick="toggleTheme()">테마: 시스템 기본</button>
+          <button class="btn btn-secondary" style="margin-bottom: 12px;" id="btn-vibrate" onclick="toggleVibration()">진동: 켜짐</button>
+          <button class="btn btn-secondary" style="color: #F04438;" onclick="resetData()">데이터 초기화</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1508,7 +1499,7 @@
       const w = window.innerWidth;
       const h = window.innerHeight;
       render = Render.create({ element: container, engine: engine, options: { width: w, height: h, wireframes: false, background: 'transparent' } });
-      const NAV_H = 64 + 24; // nav-height 64px + bottom 24px gap
+      const NAV_H = 72 + 20; // --nav-height 72px + --nav-bottom 20px
       ground = Bodies.rectangle(w/2, h - NAV_H + 32, w*3, 100, { isStatic: true, friction: 1, frictionStatic: 10, restitution: 0, render: { fillStyle: 'transparent' } });
       Composite.add(engine.world, [ground]);
       Render.run(render);
@@ -1566,7 +1557,7 @@
       restorePhysicsState();
     }
 
-    const NAV_H = 64 + 24; // nav-height 64px + bottom 24px gap
+    const NAV_H = 72 + 20; // --nav-height 72px + --nav-bottom 20px
     window.addEventListener('resize', () => {
       if (!render) return;
       const w = window.innerWidth, h = window.innerHeight;
