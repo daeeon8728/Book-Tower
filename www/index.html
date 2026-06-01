@@ -1848,9 +1848,9 @@
       if (!views.timer.classList.contains('hidden')) {
         let activeIdx = 0;
         let mode = 'var(--bg-stage-0)';
-        if (h >= 5 && h < 15) { mode = 'var(--bg-stage-1)'; activeIdx = 1; }
-        else if (h >= 15 && h < 30) { mode = 'var(--bg-stage-2)'; activeIdx = 2; }
-        else if (h >= 30) { mode = 'var(--bg-stage-3)'; activeIdx = 3; }
+        if (h >= 20 && h < 60) { mode = 'var(--bg-stage-1)'; activeIdx = 1; }
+        else if (h >= 60 && h < 120) { mode = 'var(--bg-stage-2)'; activeIdx = 2; }
+        else if (h >= 120) { mode = 'var(--bg-stage-3)'; activeIdx = 3; }
         bgs.forEach((bg, i) => bg.style.opacity = (i === activeIdx) ? '1' : '0');
         docBody.style.setProperty('--current-bg', mode);
         
@@ -1865,16 +1865,16 @@
           night.style.opacity = activeIdx === 2 ? '1' : '0';
           space.style.opacity = activeIdx === 3 ? '1' : '0';
           
-          let mY = Math.min(100, (h / 20) * 100);
+          let mY = Math.min(100, (h / 80) * 100);
           mt.style.transform = `translateY(${mY}vh)`;
           
           const cBg = document.querySelector('.clouds-bg');
-          if (cBg) cBg.style.opacity = (h >= 15) ? '0' : '1';
+          if (cBg) cBg.style.opacity = (h >= 60) ? '0' : '1';
         }
         
         const t = document.getElementById('time-display');
-        if (h >= 15) t.classList.add('light'); else t.classList.remove('light');
-        if (h >= 30) document.getElementById('particles').classList.add('show');
+        if (h >= 60) t.classList.add('light'); else t.classList.remove('light');
+        if (h >= 120) document.getElementById('particles').classList.add('show');
         else document.getElementById('particles').classList.remove('show');
       } else {
         docBody.style.setProperty('--current-bg', 'var(--bg-stage-0)');
