@@ -235,7 +235,31 @@
 
     .view-wrapper.hidden { display: none !important; }
 
-    #timer-view { overflow: hidden; }
+    #timer-view { overflow: hidden; position: relative; }
+
+    #canvas-container {
+      position: relative;
+      z-index: 1;
+    }
+
+    .clouds-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200vw;
+      height: 100vh;
+      z-index: 0;
+      background: 
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20" fill="rgba(255,255,255,0.7)"/></svg>') 0 10% / 150px 75px repeat-x,
+        url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg"><path d="M40 50 a 15 15 0 0 1 30 0 a 20 20 0 0 1 40 0 a 15 15 0 0 1 30 0 q 0 20 -50 20 q -50 0 -50 -20" fill="rgba(255,255,255,0.35)"/></svg>') 50px 25% / 250px 125px repeat-x;
+      animation: moveClouds 60s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes moveClouds {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50vw); }
+    }
 
     .toss-card {
       background: var(--toss-card);
@@ -797,6 +821,7 @@
       <div class="start-title">탑을 쌓아볼까요?</div>
       <button class="btn btn-primary" style="max-width: 200px;" onclick="openPomodoroConfig()">시작 설정하기</button>
     </div>
+    <div class="clouds-bg"></div>
     <div id="canvas-container"></div>
     <div class="top-hud hidden" id="top-hud">
       <div class="status-hud" id="status-hud">
@@ -2560,30 +2585,16 @@
       t3.scene.add(model);
       model.updateMatrixWorld(true);
 
-      // ── STEP 2: 모델 전체 바운딩 박스로 실제 크기 측정
-      const box0 = new THREE.Box3().setFromObject(model);
-      const size0 = new THREE.Vector3();
-      box0.getSize(size0);
-
-      // 키가 0이면 로드 실패로 간주
-      if (size0.y < 0.01) {
-        console.error('모델 바운딩 박스가 너무 작음 — 로드 실패 의심');
-        t3.scene.remove(model);
-        throw new Error('invalid model size');
-      }
-
-      // ── STEP 3: 목표 신장(1.7m)에 맞게 균일 스케일 적용
-      //   model.scale을 바꾸면 자식 transform은 그대로다.
+      // ── STEP 2-4: GLTF accessor 24 (body) 실측값으로 스케일/위치 결정
+      //   SkinnedMesh에서 Box3.setFromObject()는 본 변형을 무시해 부정확하므로
+      //   사전 측정된 accessor 바운딩박스를 직접 사용한다.
+      const GLTF_BODY_HEIGHT = 1.7073; // accessor 24: max.y(1.7097) - min.y(0.0024)
+      const GLTF_BODY_MIN_Y  = 0.0024; // accessor 24: min.y
       const TARGET_HEIGHT = 1.7;
-      const scaleFactor = TARGET_HEIGHT / size0.y;
-      model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      const scaleFactor = TARGET_HEIGHT / GLTF_BODY_HEIGHT; // ≈ 0.9957
 
-      // ── STEP 4: 스케일 반영 후 바운딩 박스 재계산 → 발끝을 y=0에 고정
-      model.updateMatrixWorld(true);
-      const box1 = new THREE.Box3().setFromObject(model);
-      model.position.y = -box1.min.y;  // 발이 바닥(y=0)에 닿게
-      model.position.x = 0;
-      model.position.z = 0;
+      model.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      model.position.set(0, -GLTF_BODY_MIN_Y * scaleFactor, 0); // 발끝 y=0 고정
       model.updateMatrixWorld(true);
 
       // ── STEP 5: PBR 재질 강화 (그림자 + 환경맵)
@@ -2614,59 +2625,48 @@
       });
       t3.boneMap = boneMap;
 
-      function getBoneY(candidates, fallback) {
-        for (const name of candidates) {
-          const b = boneMap[name];
-          if (b) { const v = new THREE.Vector3(); b.getWorldPosition(v); return v.y; }
-        }
-        const found = Object.values(boneMap).find(b => candidates.some(c => b.name.toLowerCase().includes(c.toLowerCase())));
-        if (found) { const v = new THREE.Vector3(); found.getWorldPosition(v); return v.y; }
-        return fallback;
+      // ── STEP 6: bonePts — GLTF accessor 실측 바운딩박스로 직접 계산
+      //   SkinnedMesh의 Box3/expandByObject는 본 변형 미반영으로 부정확.
+      //   accessor 측정값 → scaleFactor 적용 → 발 오프셋(GLTF_BODY_MIN_Y) 보정
+      //
+      //   accessor  0 (hair5):   min.y=1.0917, max.y=1.7367  → 머리/헤어
+      //   accessor  6 (slip):    min.y=0.0000, max.y=0.0625  → 발/신발
+      //   accessor 12 (shirt1):  min.y=0.5634, max.y=0.9267  → 상체 셔츠
+      //   accessor 18 (shorts1): min.y=0.2925, max.y=0.5937  → 하체 바지
+      //   accessor 24 (body):    min.y=0.0024, max.y=1.7097  → 전체 베이스
+      //   x 너비: hair5 ±0.327, shirt1 ±0.211, shorts1 ±0.172
+      //   z 깊이: hair5 ±0.363, shirt1 ±0.089, shorts1 ±0.069
+
+      function accY(localY) {
+        // local accessor Y → world Y (scaleFactor + 발끝 보정)
+        return (localY - GLTF_BODY_MIN_Y) * scaleFactor;
       }
 
-      // ── 메시 이름 기반 바운딩박스 (아이템 정밀 배치용)
-      function getMeshBB(keywords) {
-        const bb = new THREE.Box3();
-        let hit = false;
-        model.traverse(child => {
-          if (child.isMesh && keywords.some(kw => child.name.toLowerCase().includes(kw))) {
-            bb.expandByObject(child); hit = true;
-          }
-        });
-        return hit ? bb : null;
-      }
+      const headTopY = accY(1.7367);
+      const headBotY = accY(1.0917);
+      const headCY   = accY(1.4142);          // (1.0917+1.7367)/2
+      const headHW   = 0.327 * scaleFactor;
+      const headHD   = 0.363 * scaleFactor;
 
-      const box2   = new THREE.Box3().setFromObject(model);
-      const modelH = box2.max.y - box2.min.y;
+      const torsoMinY = accY(0.5634);
+      const torsoMaxY = accY(0.9267);
+      const torsoCY   = accY(0.7451);         // (0.5634+0.9267)/2
+      const torsoH    = (0.9267 - 0.5634) * scaleFactor;
+      const torsoHW   = 0.211 * scaleFactor;
+      const torsoHD   = 0.089 * scaleFactor;
 
-      const headY  = getBoneY(['Head_05','Head','head','mixamorigHead'], box2.min.y + modelH * 0.92);
-      const hipsY  = getBoneY(['Hips_01','Hips','hips','mixamorigHips'], box2.min.y + modelH * 0.50);
-      const footY  = getBoneY(['LeftFoot_046','RightFoot_050','LeftFoot','leftFoot','mixamorigLeftFoot'], box2.min.y + modelH * 0.04);
+      const legMinY = accY(0.2925);
+      const legMaxY = accY(0.5937);
+      const legCY   = accY(0.4431);           // (0.2925+0.5937)/2
+      const legH    = (0.5937 - 0.2925) * scaleFactor;
+      const legHW   = 0.172 * scaleFactor;
+      const legHD   = 0.069 * scaleFactor;
 
-      // 메시별 정밀 바운딩박스
-      const hairBB   = getMeshBB(['hair']);
-      const shirtBB  = getMeshBB(['shirt']);
-      const shortsBB = getMeshBB(['short']);
-      const slipBB   = getMeshBB(['slip']);
+      const hipCY  = accY(0.4431);
+      const shoeCY = accY(0.0313);            // (0+0.0625)/2
 
-      // ── 머리 치수
-      const headTopY = hairBB  ? hairBB.max.y  : box2.min.y + modelH * 0.985;
-      const headBotY = hairBB  ? hairBB.min.y  : box2.min.y + modelH * 0.62;
-      const headHW   = hairBB  ? (hairBB.max.x - hairBB.min.x) / 2 : modelH * 0.195;
-      const headHD   = hairBB  ? (hairBB.max.z - hairBB.min.z) / 2 : modelH * 0.215;
-
-      // ── 상의 치수
-      const torsoMinY = shirtBB ? shirtBB.min.y : box2.min.y + modelH * 0.325;
-      const torsoMaxY = shirtBB ? shirtBB.max.y : box2.min.y + modelH * 0.545;
-      const torsoHW   = shirtBB ? (shirtBB.max.x - shirtBB.min.x) / 2 : modelH * 0.123;
-      const torsoHD   = shirtBB ? (shirtBB.max.z - shirtBB.min.z) / 2 : modelH * 0.053;
-      const torsoH_   = torsoMaxY - torsoMinY;
-
-      // ── 하의 치수
-      const legMinY = shortsBB ? shortsBB.min.y : box2.min.y + modelH * 0.168;
-      const legMaxY = shortsBB ? shortsBB.max.y : box2.min.y + modelH * 0.347;
-      const legHW   = shortsBB ? (shortsBB.max.x - shortsBB.min.x) / 2 : modelH * 0.100;
-      const legHD   = shortsBB ? (shortsBB.max.z - shortsBB.min.z) / 2 : modelH * 0.041;
+      const headY  = headCY;
+      const hipsY  = hipCY;
 
       t3.bonePts = {
         headCY: headY,    headTopY, headBotY, headHW, headHD,
