@@ -11,6 +11,8 @@
   <link rel="stylesheet" as="style" crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <!-- 
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -762,6 +764,247 @@
       border-radius: 50%;
       margin: 0 auto 6px;
     }
+
+    /* Tower Tab */
+    #tower-view {
+      background:
+        radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.95), transparent 34%),
+        linear-gradient(180deg, #e8eef7 0%, #f8fafc 54%, #dde5ee 100%);
+      overflow: hidden;
+    }
+    :root[data-theme="dark"] #tower-view {
+      background:
+        radial-gradient(circle at 50% 12%, rgba(98, 124, 166, 0.28), transparent 32%),
+        linear-gradient(180deg, #101624 0%, #182033 56%, #0e1320 100%);
+    }
+    .tower-shell {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      isolation: isolate;
+    }
+    #tower-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    .tower-toolbar {
+      position: absolute;
+      top: max(20px, env(safe-area-inset-top));
+      left: clamp(14px, 4vw, 28px);
+      right: clamp(14px, 4vw, 28px);
+      z-index: 4;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .tower-timer-card {
+      pointer-events: auto;
+      width: min(360px, 100%);
+      padding: 14px 16px;
+      border-radius: 8px;
+      color: var(--toss-text-dark);
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.58);
+      box-shadow: 0 10px 34px rgba(15, 23, 42, 0.12);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    :root[data-theme="dark"] .tower-timer-card {
+      background: rgba(17, 24, 39, 0.78);
+      border-color: rgba(148, 163, 184, 0.22);
+    }
+    .tower-timer-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--toss-text-gray);
+      text-transform: uppercase;
+    }
+    .tower-global-time {
+      margin-top: 4px;
+      font-size: clamp(30px, 8vw, 54px);
+      line-height: 0.95;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: var(--toss-text-dark);
+    }
+    .tower-subject-time {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--toss-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      align-items: baseline;
+      color: var(--toss-text-gray);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .tower-subject-time strong {
+      color: var(--toss-text-dark);
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+    .tower-actions {
+      pointer-events: auto;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+    .tower-action-btn {
+      width: auto;
+      min-height: 42px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.32);
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--toss-text-dark);
+      font-size: 13px;
+      font-weight: 850;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      cursor: pointer;
+    }
+    :root[data-theme="dark"] .tower-action-btn {
+      background: rgba(17, 24, 39, 0.82);
+    }
+    .tower-details-layer {
+      position: absolute;
+      inset: 94px clamp(12px, 3vw, 28px) calc(var(--safe-bottom) + 6px);
+      z-index: 3;
+      pointer-events: none;
+    }
+    .tower-details-layer.hidden { display: none; }
+    .tower-ratio-chip {
+      position: absolute;
+      top: var(--top);
+      right: 0;
+      min-width: min(220px, 45vw);
+      max-width: min(260px, 52vw);
+      transform: translateY(-50%);
+      padding: 9px 11px 10px;
+      border-left: 5px solid var(--color);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--toss-text-dark);
+      border-top: 1px solid rgba(255,255,255,0.65);
+      border-right: 1px solid rgba(255,255,255,0.65);
+      border-bottom: 1px solid rgba(255,255,255,0.65);
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    :root[data-theme="dark"] .tower-ratio-chip {
+      background: rgba(15, 23, 42, 0.84);
+      border-top-color: rgba(148, 163, 184, 0.22);
+      border-right-color: rgba(148, 163, 184, 0.22);
+      border-bottom-color: rgba(148, 163, 184, 0.22);
+    }
+    .tower-ratio-chip::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: 100%;
+      width: clamp(22px, 9vw, 96px);
+      border-top: 1px solid var(--color);
+      opacity: 0.72;
+    }
+    .tower-ratio-name {
+      font-size: 13px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+    .tower-ratio-meta {
+      margin-top: 3px;
+      color: var(--toss-text-gray);
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .tower-insights {
+      position: absolute;
+      left: clamp(14px, 4vw, 28px);
+      right: clamp(14px, 4vw, 28px);
+      bottom: calc(var(--safe-bottom) + 12px);
+      z-index: 4;
+      display: flex;
+      gap: 8px;
+      pointer-events: none;
+      flex-wrap: wrap;
+    }
+    .tower-insight {
+      pointer-events: auto;
+      flex: 1 1 150px;
+      min-width: 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.84);
+      color: var(--toss-text-dark);
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.58);
+    }
+    :root[data-theme="dark"] .tower-insight {
+      background: rgba(15, 23, 42, 0.82);
+      border-color: rgba(148, 163, 184, 0.22);
+    }
+    .tower-insight span {
+      display: block;
+      color: var(--toss-text-gray);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .tower-insight strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 14px;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+    .timer-subject-hud {
+      pointer-events: auto;
+      background: var(--hud-bg);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--toss-text-dark);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+    @media (max-width: 700px) {
+      .tower-toolbar {
+        grid-template-columns: 1fr;
+      }
+      .tower-actions {
+        justify-content: flex-start;
+      }
+      .tower-details-layer {
+        top: 160px;
+      }
+      .tower-ratio-chip {
+        min-width: min(190px, 58vw);
+        max-width: min(220px, 62vw);
+      }
+      .tower-insights {
+        bottom: calc(var(--safe-bottom) + 8px);
+      }
+    }
+    @media (max-height: 620px) {
+      .tower-insights {
+        display: none;
+      }
+      .tower-details-layer {
+        bottom: calc(var(--safe-bottom) - 8px);
+      }
+    }
   </style>
 </head>
 
@@ -853,7 +1096,39 @@
     </div>
   </div>
 
-  <!-- View 2: Timer (Book Tower) -->
+  <!-- View 2: Tower -->
+  <div id="tower-view" class="view-wrapper hidden">
+    <div class="tower-shell">
+      <canvas id="tower-canvas"></canvas>
+      <div class="tower-toolbar">
+        <div class="tower-timer-card">
+          <div class="tower-timer-label">Total Accumulated Study Time</div>
+          <div class="tower-global-time" id="tower-global-time">00:00:00</div>
+          <div class="tower-subject-time">
+            <span id="tower-current-subject">Subject</span>
+            <strong id="tower-subject-time">00:00:00</strong>
+          </div>
+        </div>
+        <div class="tower-actions">
+          <button class="tower-action-btn" id="tower-camera-toggle" onclick="toggleTowerCameraMode()">확대</button>
+          <button class="tower-action-btn" id="tower-details-toggle" onclick="toggleTowerDetails()">자세히보기 v</button>
+        </div>
+      </div>
+      <div class="tower-details-layer hidden" id="tower-details-layer"></div>
+      <div class="tower-insights">
+        <div class="tower-insight">
+          <span>Most Studied</span>
+          <strong id="tower-most-studied">-</strong>
+        </div>
+        <div class="tower-insight">
+          <span>Least Studied</span>
+          <strong id="tower-least-studied">-</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View 3: Timer (Book Tower) -->
   <div id="timer-view" class="view-wrapper hidden">
     <div class="start-screen" id="start-screen">
       <div class="start-icon">⏳</div>
@@ -881,6 +1156,7 @@
         <span id="gyro-text">수평 유지 감지중</span>
       </div>
       <div class="giant-timer" id="time-display">30:00</div>
+      <div class="timer-subject-hud" id="timer-subject-display">Subject 00:00:00</div>
       <div class="tower-stats" id="height-display">0.0m (0개)</div>
       <div class="timer-controls">
         <button class="control-btn" id="btn-pause" onclick="togglePause()">일시정지</button>
@@ -1134,6 +1410,9 @@
     <div class="nav-item active" onclick="switchTab('home')">
       <div class="nav-icon">🏠</div>홈
     </div>
+    <div class="nav-item" onclick="switchTab('tower')">
+      <div class="nav-icon">▥</div>Tower
+    </div>
     <!-- <div class="nav-item" onclick="switchTab('diy')">
       <div class="nav-icon">💎</div>캐릭터
     </div> -->
@@ -1178,6 +1457,7 @@
 
     let calendarViewDate = getOffsetDate();
     let currentDetailDateStr = '';
+    let lastStudyPersistAt = 0;
 
     function changeCalendarMonth(delta) {
       calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
@@ -1206,6 +1486,7 @@
 
     const views = {
       home: document.getElementById('home-view'),
+      tower: document.getElementById('tower-view'),
       timer: document.getElementById('timer-view'),
       // diy: document.getElementById('diy-view'),
       stats: document.getElementById('stats-view'),
@@ -1228,6 +1509,9 @@
         data.userId = 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
         needsSave = true;
       }
+      if (!Array.isArray(data.studyEvents)) { data.studyEvents = []; needsSave = true; }
+      if (!data.subjectColors) { data.subjectColors = {}; needsSave = true; }
+      if (!data.studyUpdatedAt) { data.studyUpdatedAt = Date.now(); needsSave = true; }
       if (data.maxHeight === undefined) { data.maxHeight = 0; needsSave = true; }
       if (data.vibrate === undefined) { data.vibrate = true; needsSave = true; }
       if (data.dropInterval === undefined) { data.dropInterval = 60; needsSave = true; }
@@ -1270,20 +1554,144 @@
       return data;
     }
 
-    function saveStudyRecord() {
+    function saveStudyRecord(seconds = 1) {
       const dateStr = getTodayStr();
       let data = getRecords();
-      data.total += 1;
-      data.daily[dateStr].total += 1;
+      const safeSeconds = Math.max(1, Math.floor(seconds));
+      data.total = (data.total || 0) + safeSeconds;
+      data.daily[dateStr].total = (data.daily[dateStr].total || 0) + safeSeconds;
       if (data.daily[dateStr].subjects[state.currentSubject] === undefined) {
         data.daily[dateStr].subjects[state.currentSubject] = 0;
         if (!data.daily[dateStr].subjectList.includes(state.currentSubject)) {
           data.daily[dateStr].subjectList.push(state.currentSubject);
         }
       }
-      data.daily[dateStr].subjects[state.currentSubject] += 1;
+      data.daily[dateStr].subjects[state.currentSubject] += safeSeconds;
+      if (!Array.isArray(data.studyEvents)) data.studyEvents = [];
+      const lastEvent = data.studyEvents[data.studyEvents.length - 1];
+      if (lastEvent && lastEvent.subject === state.currentSubject && lastEvent.date === dateStr) {
+        lastEvent.seconds += safeSeconds;
+        lastEvent.endAt = Date.now();
+      } else {
+        data.studyEvents.push({
+          subject: state.currentSubject,
+          seconds: safeSeconds,
+          date: dateStr,
+          startedAt: Date.now() - safeSeconds * 1000,
+          endAt: Date.now()
+        });
+      }
+      if (data.studyEvents.length > 1200) data.studyEvents = data.studyEvents.slice(-1200);
+      data.studyUpdatedAt = Date.now();
       localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      persistStudyTotals(data);
+      renderDualTimers(data);
+      if (views.tower && !views.tower.classList.contains('hidden')) refreshTowerFromRecords();
       if (views.home && !views.home.classList.contains('hidden')) renderSubjectList();
+    }
+
+    function formatHMS(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds || 0));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function getSubjectTotals(data = getRecords()) {
+      const totals = {};
+      Object.values(data.daily || {}).forEach(day => {
+        Object.entries(day.subjects || {}).forEach(([subject, seconds]) => {
+          totals[subject] = (totals[subject] || 0) + (Number(seconds) || 0);
+        });
+      });
+      return totals;
+    }
+
+    function getSubjectTotalSeconds(subject, data = getRecords()) {
+      if (!subject) return 0;
+      return getSubjectTotals(data)[subject] || 0;
+    }
+
+    function getStudyTimeline(data = getRecords()) {
+      if (Array.isArray(data.studyEvents) && data.studyEvents.length > 0) {
+        return data.studyEvents
+          .filter(ev => ev && ev.subject && ev.seconds > 0)
+          .map((ev, index) => ({ ...ev, order: index }));
+      }
+      const timeline = [];
+      Object.keys(data.daily || {}).sort().forEach(date => {
+        const day = data.daily[date] || {};
+        (day.subjectList || Object.keys(day.subjects || {})).forEach(subject => {
+          const seconds = day.subjects?.[subject] || 0;
+          if (seconds > 0) timeline.push({ subject, seconds, date, order: timeline.length });
+        });
+      });
+      return timeline;
+    }
+
+    function getSubjectInsights(data = getRecords()) {
+      const entries = Object.entries(getSubjectTotals(data)).filter(([, seconds]) => seconds > 0);
+      if (!entries.length) return { most: null, least: null };
+      entries.sort((a, b) => b[1] - a[1]);
+      return { most: entries[0], least: entries[entries.length - 1] };
+    }
+
+    function renderDualTimers(data = getRecords()) {
+      const total = data.total || 0;
+      const subject = state.currentSubject || '-';
+      const subjectTotal = getSubjectTotalSeconds(subject, data);
+      const globalText = formatHMS(total);
+      const subjectText = `${subject} ${formatHMS(subjectTotal)}`;
+      const timeDisplay = document.getElementById('time-display');
+      const timerSubjectDisplay = document.getElementById('timer-subject-display');
+      const towerGlobalTime = document.getElementById('tower-global-time');
+      const towerCurrentSubject = document.getElementById('tower-current-subject');
+      const towerSubjectTime = document.getElementById('tower-subject-time');
+      if (timeDisplay) timeDisplay.innerText = globalText;
+      if (timerSubjectDisplay) timerSubjectDisplay.innerText = subjectText;
+      if (towerGlobalTime) towerGlobalTime.innerText = globalText;
+      if (towerCurrentSubject) towerCurrentSubject.innerText = subject;
+      if (towerSubjectTime) towerSubjectTime.innerText = formatHMS(subjectTotal);
+    }
+
+    function getStudyPayload(data) {
+      return {
+        total: data.total || 0,
+        daily: data.daily || {},
+        studyEvents: Array.isArray(data.studyEvents) ? data.studyEvents : [],
+        subjectColors: data.subjectColors || {},
+        studyUpdatedAt: data.studyUpdatedAt || Date.now()
+      };
+    }
+
+    async function hydrateStudyTotalsFromKV() {
+      const data = getRecords();
+      if (!data.userId) return data;
+      const remote = await kvCmd('GET', `study:${data.userId}:totals`);
+      if (!remote) return data;
+      let payload = remote;
+      if (typeof remote === 'string') {
+        try { payload = JSON.parse(remote); } catch(e) { return data; }
+      }
+      if (!payload || !payload.studyUpdatedAt || payload.studyUpdatedAt <= (data.studyUpdatedAt || 0)) return data;
+      data.total = payload.total || 0;
+      data.daily = payload.daily || {};
+      data.studyEvents = Array.isArray(payload.studyEvents) ? payload.studyEvents : [];
+      data.subjectColors = payload.subjectColors || data.subjectColors || {};
+      data.studyUpdatedAt = payload.studyUpdatedAt;
+      localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      renderDualTimers(data);
+      updateDashboard();
+      if (views.tower && !views.tower.classList.contains('hidden')) refreshTowerFromRecords();
+      return data;
+    }
+
+    function persistStudyTotals(data = getRecords(), force = false) {
+      const now = Date.now();
+      if (!force && now - lastStudyPersistAt < 30000) return;
+      lastStudyPersistAt = now;
+      kvCmd('SET', `study:${data.userId}:totals`, JSON.stringify(getStudyPayload(data)));
     }
 
     function updateDashboard() {
@@ -1523,19 +1931,28 @@
     }
 
     function deleteSubject(sj) {
-      if (!confirm(`"${sj}" 과목을 삭제할까요?\n(오늘 공부 기록은 유지됩니다)`)) return;
+      if (!confirm("정말로 삭제하시겠습니까? 삭제하면 관련 정보들이 다 영구 삭제 됩니다.")) return;
       let data = getRecords();
-      const todayStr = getTodayStr();
-      if (data.daily[todayStr] && data.daily[todayStr].subjectList) {
-        data.daily[todayStr].subjectList = data.daily[todayStr].subjectList.filter(s => s !== sj);
-      }
+      Object.values(data.daily || {}).forEach(day => {
+        if (day.subjectList) day.subjectList = day.subjectList.filter(s => s !== sj);
+        if (day.subjects && day.subjects[sj] !== undefined) delete day.subjects[sj];
+        day.total = Object.values(day.subjects || {}).reduce((sum, seconds) => sum + (Number(seconds) || 0), 0);
+      });
+      if (Array.isArray(data.studyEvents)) data.studyEvents = data.studyEvents.filter(ev => ev.subject !== sj);
       if (data.subjectColors && data.subjectColors[sj]) delete data.subjectColors[sj];
+      data.total = Object.values(data.daily || {}).reduce((sum, day) => sum + (Number(day.total) || 0), 0);
+      data.studyUpdatedAt = Date.now();
       localStorage.setItem('bookTowerv2', JSON.stringify(data));
+      persistStudyTotals(data, true);
+      if (state.currentSubject === sj) state.currentSubject = data.daily[getTodayStr()]?.subjectList?.[0] || '';
+      renderDualTimers(data);
       renderSubjectList();
+      if (views.tower && !views.tower.classList.contains('hidden')) refreshTowerFromRecords();
     }
 
     function startSubjectTimer(subj) {
       state.currentSubject = subj;
+      renderDualTimers();
       const tooltip = document.getElementById('subject-tooltip');
       if (tooltip) tooltip.style.display = 'none';
       if (state.mode !== 'idle') {
@@ -2007,7 +2424,7 @@
       clearInterval(state.timerInterval);
       state.timerInterval = null;
       state.timerInterval = setInterval(tick, 1000);
-      document.getElementById('time-display').innerText = formatTime(state.timeLeft);
+      renderDualTimers();
       if (state.books.length === 0) spawnObject();
       saveSessionState();
       if (window.AndroidPinning) window.AndroidPinning.startPinning();
@@ -2061,9 +2478,9 @@
       state.lastTickTime += delta * 1000;
       if (state.timerMode === 'normal') state.timeLeft += delta;
       else state.timeLeft -= delta;
-      document.getElementById('time-display').innerText = formatTime(state.timeLeft);
+      renderDualTimers();
       if (state.mode === 'study') {
-        saveStudyRecord(); saveSessionState();
+        saveStudyRecord(delta); saveSessionState();
         let elapsed = state.timerMode === 'normal' ? state.timeLeft : (state.studyGoalMins*60 - state.timeLeft);
         if (elapsed > 0 && elapsed % 300 === 0) {
           try { spawnGachaItem(); } catch(e){ console.error('spawnGachaItem error:', e); }
@@ -2122,10 +2539,294 @@
     }
 
     /* =======================================
-       6. Navigation
+       6. Tower Tab: 3D Study History
+    ======================================= */
+    const tower3D = {
+      ready: false,
+      detailsOpen: false,
+      cameraMode: 'full',
+      scene: null,
+      camera: null,
+      renderer: null,
+      controls: null,
+      group: null,
+      rafId: null,
+      desiredPosition: null,
+      desiredTarget: null,
+      bounds: { height: 1 },
+      subjectVolumes: [],
+      materialCache: new Map()
+    };
+
+    function makeTowerTexture(baseColor, type = 'cloth') {
+      const key = `${baseColor}:${type}`;
+      if (tower3D.materialCache.has(key)) return tower3D.materialCache.get(key);
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = baseColor;
+      ctx.fillRect(0, 0, 256, 256);
+      const grainCount = type === 'paper' ? 900 : 650;
+      for (let i = 0; i < grainCount; i++) {
+        const alpha = type === 'leather' ? Math.random() * 0.16 : Math.random() * 0.10;
+        ctx.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${alpha})` : `rgba(0,0,0,${alpha})`;
+        const size = type === 'paper' ? Math.random() * 1.8 + 0.4 : Math.random() * 2.6 + 0.5;
+        ctx.fillRect(Math.random() * 256, Math.random() * 256, size, size);
+      }
+      if (type === 'cloth') {
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        for (let x = 0; x < 256; x += 9) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke(); }
+        for (let y = 0; y < 256; y += 11) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke(); }
+      }
+      if (type === 'leather') {
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+        for (let i = 0; i < 38; i++) {
+          ctx.beginPath();
+          ctx.arc(Math.random() * 256, Math.random() * 256, Math.random() * 32 + 8, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.encoding = THREE.sRGBEncoding;
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(type === 'paper' ? 1.4 : 2.2, type === 'paper' ? 1.1 : 2.2);
+      tower3D.materialCache.set(key, texture);
+      return texture;
+    }
+
+    function getSubjectColor(subject, data) {
+      const saved = data.subjectColors?.[subject];
+      if (saved) return saved;
+      let hash = 0;
+      for (let i = 0; i < subject.length; i++) hash = subject.charCodeAt(i) + ((hash << 5) - hash);
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue}, 52%, 42%)`;
+    }
+
+    function createBookMesh(segment, data, index, y) {
+      const color = getSubjectColor(segment.subject, data);
+      const materialType = index % 3 === 0 ? 'leather' : index % 3 === 1 ? 'cloth' : 'paper';
+      const height = Math.max(0.07, Math.min(0.22, 0.07 + (segment.seconds / 300) * 0.045));
+      const width = 1.12 + ((index * 37) % 19) / 100;
+      const depth = 0.72 + ((index * 29) % 15) / 100;
+      const coverMat = new THREE.MeshStandardMaterial({
+        map: makeTowerTexture(color, materialType),
+        roughness: materialType === 'leather' ? 0.62 : 0.88,
+        metalness: 0.02
+      });
+      const pageMat = new THREE.MeshStandardMaterial({
+        map: makeTowerTexture('#efe6d2', 'paper'),
+        roughness: 0.94,
+        metalness: 0
+      });
+      const spineMat = new THREE.MeshStandardMaterial({
+        map: makeTowerTexture(color, materialType),
+        roughness: 0.9,
+        metalness: 0.01
+      });
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, depth, 3, 1, 3),
+        [pageMat, spineMat, coverMat, coverMat, spineMat, pageMat]
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      const offsetX = Math.sin(index * 1.73) * 0.12;
+      const offsetZ = Math.cos(index * 1.37) * 0.08;
+      mesh.position.set(offsetX, y + height / 2, offsetZ);
+      mesh.rotation.y = Math.sin(index * 0.91) * 0.16;
+      mesh.rotation.z = Math.sin(index * 0.47) * 0.035;
+      mesh.userData = { ...segment, height, yStart: y, yEnd: y + height, color };
+      return mesh;
+    }
+
+    function buildTowerSegments(timeline) {
+      const segments = [];
+      timeline.forEach(event => {
+        const chunkCount = Math.max(1, Math.ceil(event.seconds / 300));
+        for (let i = 0; i < chunkCount; i++) {
+          const seconds = i === chunkCount - 1 ? event.seconds - (chunkCount - 1) * 300 : 300;
+          if (seconds > 0) segments.push({ ...event, seconds });
+        }
+      });
+      return segments.slice(-180);
+    }
+
+    function computeSubjectVolumes(meshes) {
+      const bySubject = new Map();
+      meshes.forEach(mesh => {
+        const { subject, seconds, yStart, yEnd, color } = mesh.userData;
+        const item = bySubject.get(subject) || { subject, seconds: 0, volume: 0, weightedY: 0, color };
+        const volume = yEnd - yStart;
+        item.seconds += seconds;
+        item.volume += volume;
+        item.weightedY += ((yStart + yEnd) / 2) * volume;
+        bySubject.set(subject, item);
+      });
+      return Array.from(bySubject.values()).map(item => ({
+        ...item,
+        centerY: item.volume > 0 ? item.weightedY / item.volume : 0
+      })).sort((a, b) => b.seconds - a.seconds);
+    }
+
+    function initTowerScene() {
+      if (tower3D.ready || typeof THREE === 'undefined') return;
+      const canvas = document.getElementById('tower-canvas');
+      if (!canvas) return;
+      tower3D.scene = new THREE.Scene();
+      tower3D.scene.fog = new THREE.FogExp2(0xdbe5f0, 0.045);
+      tower3D.camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.05, 120);
+      tower3D.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      tower3D.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      tower3D.renderer.setSize(window.innerWidth, window.innerHeight);
+      tower3D.renderer.shadowMap.enabled = true;
+      tower3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      tower3D.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      tower3D.renderer.outputEncoding = THREE.sRGBEncoding;
+
+      const keyLight = new THREE.DirectionalLight(0xfff1dc, 1.7);
+      keyLight.position.set(4, 8, 6);
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.set(2048, 2048);
+      tower3D.scene.add(keyLight);
+      const fillLight = new THREE.DirectionalLight(0x9cc8ff, 0.6);
+      fillLight.position.set(-4, 5, -3);
+      tower3D.scene.add(fillLight);
+      tower3D.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+
+      const floor = new THREE.Mesh(
+        new THREE.CircleGeometry(4, 96),
+        new THREE.MeshStandardMaterial({ color: 0xd9e2ec, roughness: 0.86, metalness: 0 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      tower3D.scene.add(floor);
+
+      tower3D.group = new THREE.Group();
+      tower3D.scene.add(tower3D.group);
+      tower3D.controls = new THREE.OrbitControls(tower3D.camera, canvas);
+      tower3D.controls.enableDamping = true;
+      tower3D.controls.dampingFactor = 0.08;
+      tower3D.controls.enablePan = false;
+      tower3D.controls.minDistance = 2.2;
+      tower3D.controls.maxDistance = 28;
+      tower3D.ready = true;
+      window.addEventListener('resize', resizeTowerScene);
+      animateTowerScene();
+    }
+
+    function resizeTowerScene() {
+      if (!tower3D.ready) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      tower3D.camera.aspect = w / h;
+      tower3D.camera.updateProjectionMatrix();
+      tower3D.renderer.setSize(w, h);
+      setTowerCameraMode(tower3D.cameraMode, true);
+      renderTowerDetails();
+    }
+
+    function setTowerCameraMode(mode, immediate = false) {
+      if (!tower3D.ready) return;
+      tower3D.cameraMode = mode;
+      const height = Math.max(0.8, tower3D.bounds.height);
+      const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+      if (mode === 'top') {
+        const topY = Math.max(0.55, height - 0.12);
+        const distance = aspect < 0.75 ? 3.4 : 2.8;
+        tower3D.desiredTarget = new THREE.Vector3(0, topY, 0);
+        tower3D.desiredPosition = new THREE.Vector3(distance * 0.62, topY + 0.95, distance);
+      } else {
+        const distance = Math.max(4, Math.min(24, height * (aspect < 0.75 ? 2.25 : 1.55) + 3.2));
+        tower3D.desiredTarget = new THREE.Vector3(0, height / 2, 0);
+        tower3D.desiredPosition = new THREE.Vector3(distance * 0.58, height / 2 + distance * 0.28, distance);
+      }
+      const btn = document.getElementById('tower-camera-toggle');
+      if (btn) btn.innerText = mode === 'top' ? '축소' : '확대';
+      if (immediate) {
+        tower3D.camera.position.copy(tower3D.desiredPosition);
+        tower3D.controls.target.copy(tower3D.desiredTarget);
+        tower3D.controls.update();
+      }
+    }
+
+    function toggleTowerCameraMode() {
+      setTowerCameraMode(tower3D.cameraMode === 'top' ? 'full' : 'top');
+    }
+
+    function toggleTowerDetails() {
+      tower3D.detailsOpen = !tower3D.detailsOpen;
+      const layer = document.getElementById('tower-details-layer');
+      const btn = document.getElementById('tower-details-toggle');
+      if (layer) layer.classList.toggle('hidden', !tower3D.detailsOpen);
+      if (btn) btn.innerText = tower3D.detailsOpen ? '자세히보기 ^' : '자세히보기 v';
+      renderTowerDetails();
+    }
+
+    function renderTowerDetails() {
+      const layer = document.getElementById('tower-details-layer');
+      if (!layer || !tower3D.detailsOpen) return;
+      const height = Math.max(0.1, tower3D.bounds.height);
+      const totalSeconds = tower3D.subjectVolumes.reduce((sum, item) => sum + item.seconds, 0) || 1;
+      layer.innerHTML = tower3D.subjectVolumes.map(item => {
+        const topPct = Math.max(4, Math.min(96, 100 - (item.centerY / height) * 100));
+        const ratio = Math.round((item.seconds / totalSeconds) * 100);
+        return `
+          <div class="tower-ratio-chip" style="--top:${topPct}%; --color:${item.color};">
+            <div class="tower-ratio-name">${item.subject}</div>
+            <div class="tower-ratio-meta">${ratio}% · ${formatHMS(item.seconds)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function refreshTowerFromRecords() {
+      initTowerScene();
+      if (!tower3D.ready) return;
+      const data = getRecords();
+      renderDualTimers(data);
+      while (tower3D.group.children.length) {
+        const child = tower3D.group.children.pop();
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) child.material.forEach(mat => mat.dispose());
+        else child.material?.dispose();
+      }
+
+      const segments = buildTowerSegments(getStudyTimeline(data));
+      let y = 0;
+      const meshes = segments.map((segment, index) => {
+        const mesh = createBookMesh(segment, data, index, y);
+        y += mesh.userData.height + 0.008;
+        tower3D.group.add(mesh);
+        return mesh;
+      });
+      tower3D.bounds.height = Math.max(0.8, y);
+      tower3D.subjectVolumes = computeSubjectVolumes(meshes);
+      const insights = getSubjectInsights(data);
+      const most = document.getElementById('tower-most-studied');
+      const least = document.getElementById('tower-least-studied');
+      if (most) most.innerText = insights.most ? `${insights.most[0]} · ${formatHMS(insights.most[1])}` : '-';
+      if (least) least.innerText = insights.least ? `${insights.least[0]} · ${formatHMS(insights.least[1])}` : '-';
+      setTowerCameraMode(tower3D.cameraMode, true);
+      renderTowerDetails();
+    }
+
+    function animateTowerScene() {
+      if (!tower3D.ready) return;
+      tower3D.rafId = requestAnimationFrame(animateTowerScene);
+      if (tower3D.desiredPosition && tower3D.desiredTarget) {
+        tower3D.camera.position.lerp(tower3D.desiredPosition, 0.075);
+        tower3D.controls.target.lerp(tower3D.desiredTarget, 0.075);
+      }
+      tower3D.group.rotation.y += 0.0012;
+      tower3D.controls.update();
+      tower3D.renderer.render(tower3D.scene, tower3D.camera);
+    }
+
+    /* =======================================
+       7. Navigation
     ======================================= */
     function switchTab(tabId) {
-      if ((state.mode === 'study' || state.mode === 'rest') && !state.isPaused && tabId !== 'timer') {
+      if ((state.mode === 'study' || state.mode === 'rest') && !state.isPaused && tabId !== 'timer' && tabId !== 'tower') {
         alert("타이머 진행 중입니다. 일시정지 후 이동할 수 있습니다.");
         return;
       }
@@ -2139,8 +2840,13 @@
           views.home.classList.remove('hidden'); allNavs[0].classList.add('active');
           updateDashboard(); updateTheme(0);
           break;
+        case 'tower':
+          views.tower.classList.remove('hidden'); allNavs[1].classList.add('active');
+          refreshTowerFromRecords(); updateTheme(0);
+          break;
         case 'timer':
           views.timer.classList.remove('hidden');
+          renderDualTimers();
           calculateHeight();
           break;
         case 'diy':
@@ -2438,7 +3144,7 @@
             state.difficulty = s.difficulty || 'easy'; state.mode = s.mode;
             state.isPaused = true; state.pomoRemainingRepeats = s.pomoRemainingRepeats || 0;
             if (s.currentSubject) state.currentSubject = s.currentSubject;
-            document.getElementById('time-display').innerText = formatTime(state.timeLeft);
+            renderDualTimers();
             document.getElementById('start-screen').classList.add('hidden');
             document.getElementById('top-hud').classList.remove('hidden');
             document.getElementById('btn-pause').innerText = '다시 시작';
@@ -2473,6 +3179,8 @@
       if (localStorage.getItem('sensorGranted') !== 'true') document.getElementById('sensor-modal').classList.remove('hidden');
       else if (data.userName === '나') document.getElementById('login-modal').classList.remove('hidden');
       else checkSensorFlow();
+      renderDualTimers(data);
+      hydrateStudyTotalsFromKV();
       state.currentShape = 'book';
       updateDashboard();
       window.addEventListener('beforeunload', savePhysicsState);
