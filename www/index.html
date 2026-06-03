@@ -1102,14 +1102,15 @@
       <canvas id="tower-canvas"></canvas>
       <div class="tower-toolbar">
         <div class="tower-timer-card">
-          <div class="tower-timer-label">Total Accumulated Study Time</div>
+          <div class="tower-timer-label">전체 누적 학습 시간</div>
           <div class="tower-global-time" id="tower-global-time">00:00:00</div>
           <div class="tower-subject-time">
             <span id="tower-current-subject">Subject</span>
             <strong id="tower-subject-time">00:00:00</strong>
           </div>
         </div>
-        <div class="tower-actions">
+      <div class="tower-actions">
+          <button class="tower-action-btn" id="tower-sort-btn" onclick="sortTowerBySubject()">정렬하기</button>
           <button class="tower-action-btn" id="tower-camera-toggle" onclick="toggleTowerCameraMode()">확대</button>
           <button class="tower-action-btn" id="tower-details-toggle" onclick="toggleTowerDetails()">자세히보기 v</button>
         </div>
@@ -1117,13 +1118,26 @@
       <div class="tower-details-layer hidden" id="tower-details-layer"></div>
       <div class="tower-insights">
         <div class="tower-insight">
-          <span>Most Studied</span>
+          <span>가장 많이 공부한 과목</span>
           <strong id="tower-most-studied">-</strong>
         </div>
         <div class="tower-insight">
-          <span>Least Studied</span>
+          <span>가장 적게 공부한 과목</span>
           <strong id="tower-least-studied">-</strong>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay hidden" id="delete-confirm-modal">
+    <div class="toss-card">
+      <div class="modal-icon">⚠️</div>
+      <div class="modal-title">과목 삭제</div>
+      <div class="modal-desc">정말로 삭제하시겠습니까? 삭제하면 관련 정보들이 다 영구 삭제 됩니다.</div>
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button class="btn btn-secondary" onclick="closeDeleteConfirmModal()">취소</button>
+        <button class="btn btn-primary" style="background:#F04438;" onclick="confirmDeleteSubject()">삭제</button>
       </div>
     </div>
   </div>
@@ -1411,7 +1425,7 @@
       <div class="nav-icon">🏠</div>홈
     </div>
     <div class="nav-item" onclick="switchTab('tower')">
-      <div class="nav-icon">▥</div>Tower
+      <div class="nav-icon">▥</div>3D Tower
     </div>
     <!-- <div class="nav-item" onclick="switchTab('diy')">
       <div class="nav-icon">💎</div>캐릭터
@@ -1613,6 +1627,12 @@
       return getSubjectTotals(data)[subject] || 0;
     }
 
+    function getDailySubjectSeconds(subject, data = getRecords()) {
+      if (!subject) return 0;
+      const todayStr = getTodayStr();
+      return (data.daily[todayStr]?.subjects?.[subject]) || 0;
+    }
+
     function getStudyTimeline(data = getRecords()) {
       if (Array.isArray(data.studyEvents) && data.studyEvents.length > 0) {
         return data.studyEvents
@@ -1640,19 +1660,20 @@
     function renderDualTimers(data = getRecords()) {
       const total = data.total || 0;
       const subject = state.currentSubject || '-';
-      const subjectTotal = getSubjectTotalSeconds(subject, data);
+      const dailySubjectSecs = getDailySubjectSeconds(subject, data);
+      const cumulativeSubjectSecs = getSubjectTotalSeconds(subject, data);
       const globalText = formatHMS(total);
-      const subjectText = `${subject} ${formatHMS(subjectTotal)}`;
+      const dailySubjectText = `${subject} (오늘) ${formatHMS(dailySubjectSecs)}`;
       const timeDisplay = document.getElementById('time-display');
       const timerSubjectDisplay = document.getElementById('timer-subject-display');
       const towerGlobalTime = document.getElementById('tower-global-time');
       const towerCurrentSubject = document.getElementById('tower-current-subject');
       const towerSubjectTime = document.getElementById('tower-subject-time');
       if (timeDisplay) timeDisplay.innerText = globalText;
-      if (timerSubjectDisplay) timerSubjectDisplay.innerText = subjectText;
+      if (timerSubjectDisplay) timerSubjectDisplay.innerText = dailySubjectText;
       if (towerGlobalTime) towerGlobalTime.innerText = globalText;
       if (towerCurrentSubject) towerCurrentSubject.innerText = subject;
-      if (towerSubjectTime) towerSubjectTime.innerText = formatHMS(subjectTotal);
+      if (towerSubjectTime) towerSubjectTime.innerText = formatHMS(cumulativeSubjectSecs);
     }
 
     function getStudyPayload(data) {
@@ -1930,8 +1951,21 @@
       closeAddSubjectModal();
     }
 
+    let pendingDeleteSubject = null;
+
     function deleteSubject(sj) {
-      if (!confirm("정말로 삭제하시겠습니까? 삭제하면 관련 정보들이 다 영구 삭제 됩니다.")) return;
+      pendingDeleteSubject = sj;
+      document.getElementById('delete-confirm-modal').classList.remove('hidden');
+    }
+
+    function closeDeleteConfirmModal() {
+      pendingDeleteSubject = null;
+      document.getElementById('delete-confirm-modal').classList.add('hidden');
+    }
+
+    function confirmDeleteSubject() {
+      const sj = pendingDeleteSubject;
+      if (!sj) { closeDeleteConfirmModal(); return; }
       let data = getRecords();
       Object.values(data.daily || {}).forEach(day => {
         if (day.subjectList) day.subjectList = day.subjectList.filter(s => s !== sj);
@@ -1948,6 +1982,7 @@
       renderDualTimers(data);
       renderSubjectList();
       if (views.tower && !views.tower.classList.contains('hidden')) refreshTowerFromRecords();
+      closeDeleteConfirmModal();
     }
 
     function startSubjectTimer(subj) {
@@ -2562,35 +2597,70 @@
       const key = `${baseColor}:${type}`;
       if (tower3D.materialCache.has(key)) return tower3D.materialCache.get(key);
       const canvas = document.createElement('canvas');
-      canvas.width = 256;
-      canvas.height = 256;
+      canvas.width = 512;
+      canvas.height = 512;
       const ctx = canvas.getContext('2d');
       ctx.fillStyle = baseColor;
-      ctx.fillRect(0, 0, 256, 256);
-      const grainCount = type === 'paper' ? 900 : 650;
+      ctx.fillRect(0, 0, 512, 512);
+      // Subtle color variation base
+      const grad = ctx.createLinearGradient(0, 0, 512, 512);
+      grad.addColorStop(0, 'rgba(255,255,255,0.03)');
+      grad.addColorStop(0.5, 'rgba(0,0,0,0.02)');
+      grad.addColorStop(1, 'rgba(255,255,255,0.04)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 512, 512);
+      // Fine grain noise
+      const grainCount = type === 'paper' ? 2200 : type === 'leather' ? 1800 : 1600;
       for (let i = 0; i < grainCount; i++) {
-        const alpha = type === 'leather' ? Math.random() * 0.16 : Math.random() * 0.10;
+        const alpha = type === 'leather' ? Math.random() * 0.14 : Math.random() * 0.09;
         ctx.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${alpha})` : `rgba(0,0,0,${alpha})`;
-        const size = type === 'paper' ? Math.random() * 1.8 + 0.4 : Math.random() * 2.6 + 0.5;
-        ctx.fillRect(Math.random() * 256, Math.random() * 256, size, size);
+        const size = type === 'paper' ? Math.random() * 1.6 + 0.3 : Math.random() * 2.4 + 0.4;
+        ctx.fillRect(Math.random() * 512, Math.random() * 512, size, size);
       }
       if (type === 'cloth') {
-        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-        for (let x = 0; x < 256; x += 9) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke(); }
-        for (let y = 0; y < 256; y += 11) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke(); }
+        // Woven fabric pattern with cross-hatching
+        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+        ctx.lineWidth = 0.5;
+        for (let x = 0; x < 512; x += 7) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke(); }
+        for (let y = 0; y < 512; y += 9) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke(); }
+        // Secondary cross-thread
+        ctx.strokeStyle = 'rgba(0,0,0,0.04)';
+        for (let x = 3; x < 512; x += 14) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke(); }
       }
       if (type === 'leather') {
-        ctx.strokeStyle = 'rgba(0,0,0,0.18)';
-        for (let i = 0; i < 38; i++) {
+        // Organic wrinkle circles
+        ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+        ctx.lineWidth = 0.6;
+        for (let i = 0; i < 70; i++) {
           ctx.beginPath();
-          ctx.arc(Math.random() * 256, Math.random() * 256, Math.random() * 32 + 8, 0, Math.PI * 2);
+          ctx.arc(Math.random() * 512, Math.random() * 512, Math.random() * 28 + 6, 0, Math.PI * 2);
           ctx.stroke();
         }
+        // Fine scratch marks
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 0.4;
+        for (let i = 0; i < 25; i++) {
+          const sx = Math.random() * 512, sy = Math.random() * 512;
+          ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + (Math.random() - 0.5) * 60, sy + (Math.random() - 0.5) * 20); ctx.stroke();
+        }
+      }
+      if (type === 'paper') {
+        // Horizontal fiber lines
+        ctx.strokeStyle = 'rgba(180,160,130,0.06)';
+        ctx.lineWidth = 0.3;
+        for (let y = 0; y < 512; y += 3 + Math.random() * 4) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+        }
+      }
+      // Spine gold foil detail strip (for covers)
+      if (type !== 'paper') {
+        ctx.fillStyle = 'rgba(218,165,32,0.08)';
+        ctx.fillRect(0, 240, 512, 32);
       }
       const texture = new THREE.CanvasTexture(canvas);
       texture.encoding = THREE.sRGBEncoding;
       texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-      texture.repeat.set(type === 'paper' ? 1.4 : 2.2, type === 'paper' ? 1.1 : 2.2);
+      texture.repeat.set(type === 'paper' ? 1.2 : 1.8, type === 'paper' ? 1.0 : 1.8);
       tower3D.materialCache.set(key, texture);
       return texture;
     }
@@ -2763,6 +2833,19 @@
       renderTowerDetails();
     }
 
+    function getContrastColor(bgColor) {
+      const temp = document.createElement('div');
+      temp.style.color = bgColor;
+      document.body.appendChild(temp);
+      const computed = getComputedStyle(temp).color;
+      document.body.removeChild(temp);
+      const match = computed.match(/\d+/g);
+      if (!match || match.length < 3) return '#ffffff';
+      const [r, g, b] = match.map(Number);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.55 ? '#111111' : '#ffffff';
+    }
+
     function renderTowerDetails() {
       const layer = document.getElementById('tower-details-layer');
       if (!layer || !tower3D.detailsOpen) return;
@@ -2771,10 +2854,11 @@
       layer.innerHTML = tower3D.subjectVolumes.map(item => {
         const topPct = Math.max(4, Math.min(96, 100 - (item.centerY / height) * 100));
         const ratio = Math.round((item.seconds / totalSeconds) * 100);
+        const textColor = getContrastColor(item.color);
         return `
-          <div class="tower-ratio-chip" style="--top:${topPct}%; --color:${item.color};">
-            <div class="tower-ratio-name">${item.subject}</div>
-            <div class="tower-ratio-meta">${ratio}% · ${formatHMS(item.seconds)}</div>
+          <div class="tower-ratio-chip" style="--top:${topPct}%; --color:${item.color}; background:${item.color}; border-left-color:${item.color};">
+            <div class="tower-ratio-name" style="color:${textColor};">${item.subject}</div>
+            <div class="tower-ratio-meta" style="color:${textColor}; opacity:0.85;">${ratio}% · ${formatHMS(item.seconds)}</div>
           </div>`;
       }).join('');
     }
@@ -2782,6 +2866,16 @@
     function refreshTowerFromRecords() {
       initTowerScene();
       if (!tower3D.ready) return;
+      // Clean up sorted overlays if any
+      disposeSortedOverlays();
+      const btn = document.getElementById('tower-sort-btn');
+      if (btn) btn.innerText = '정렬하기';
+      // Clean up slime event listeners
+      const canvas = document.getElementById('tower-canvas');
+      if (canvas) {
+        if (canvas._slimeMouseHandler) { canvas.removeEventListener('click', canvas._slimeMouseHandler); canvas._slimeMouseHandler = null; }
+        if (canvas._slimeTouchHandler) { canvas.removeEventListener('touchstart', canvas._slimeTouchHandler); canvas._slimeTouchHandler = null; }
+      }
       const data = getRecords();
       renderDualTimers(data);
       while (tower3D.group.children.length) {
@@ -2819,8 +2913,353 @@
       }
       tower3D.group.rotation.y += 0.0012;
       tower3D.controls.update();
+      // Update slime shader
+      if (tower3D.slimeMesh && tower3D.slimeMesh.material.uniforms) {
+        const uniforms = tower3D.slimeMesh.material.uniforms;
+        uniforms.uTime.value += 0.016;
+        uniforms.uTouchStrength.value *= 0.97; // decay
+      }
+      // Update subject labels over 3D
+      if (tower3D.sorted && tower3D.sortedSections) {
+        updateSortedLabels();
+      }
       tower3D.renderer.render(tower3D.scene, tower3D.camera);
     }
+
+    /* =======================================
+       6b. Sort by Subject + Slime Shader
+    ======================================= */
+
+    // GLSL Slime Vertex Shader
+    const SLIME_VERTEX_SHADER = `
+      uniform float uTime;
+      uniform vec2 uTouch;
+      uniform float uTouchStrength;
+      varying vec2 vUv;
+      varying float vWave;
+
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+
+        // Organic undulation
+        float wave = sin(pos.x * 5.0 + uTime * 1.8) * 0.06
+                   + cos(pos.z * 4.0 + uTime * 1.3) * 0.05
+                   + sin((pos.x + pos.z) * 3.0 + uTime * 2.2) * 0.04;
+
+        // Touch ripple
+        float dist = distance(pos.xz, uTouch);
+        float ripple = sin(dist * 14.0 - uTime * 10.0) * exp(-dist * 2.5) * uTouchStrength;
+
+        pos.y += wave + ripple;
+        vWave = wave + ripple;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `;
+
+    // GLSL Slime Fragment Shader
+    const SLIME_FRAGMENT_SHADER = `
+      uniform float uTime;
+      uniform vec3 uColor1;
+      uniform vec3 uColor2;
+      uniform float uOpacity;
+      varying vec2 vUv;
+      varying float vWave;
+
+      // Simple noise function
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+      }
+
+      float noise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        float a = hash(i);
+        float b = hash(i + vec2(1.0, 0.0));
+        float c = hash(i + vec2(0.0, 1.0));
+        float d = hash(i + vec2(1.0, 1.0));
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      }
+
+      void main() {
+        // Organic color mix
+        float n = noise(vUv * 6.0 + uTime * 0.4);
+        float n2 = noise(vUv * 12.0 - uTime * 0.3);
+        vec3 color = mix(uColor1, uColor2, n * 0.7 + 0.15);
+
+        // Specular highlight from wave
+        float specular = pow(max(0.0, vWave * 4.0 + 0.5), 3.0) * 0.35;
+        color += vec3(specular);
+
+        // Subsurface glow
+        float glow = smoothstep(0.3, 0.7, n2) * 0.15;
+        color += glow * uColor1;
+
+        // Edge darkening (viscous depth)
+        float edge = smoothstep(0.0, 0.15, vUv.x) * smoothstep(0.0, 0.15, 1.0 - vUv.x)
+                   * smoothstep(0.0, 0.15, vUv.y) * smoothstep(0.0, 0.15, 1.0 - vUv.y);
+        color *= 0.7 + edge * 0.3;
+
+        gl_FragColor = vec4(color, uOpacity * (0.78 + n * 0.22));
+      }
+    `;
+
+    tower3D.sorted = false;
+    tower3D.sortedSections = null;
+    tower3D.slimeMesh = null;
+    tower3D.slimeClockStart = 0;
+
+    function disposeSortedOverlays() {
+      // Remove slime mesh
+      if (tower3D.slimeMesh) {
+        tower3D.slimeMesh.geometry?.dispose();
+        tower3D.slimeMesh.material?.dispose();
+        if (tower3D.slimeMesh.parent) tower3D.slimeMesh.parent.remove(tower3D.slimeMesh);
+        tower3D.slimeMesh = null;
+      }
+      // Remove label overlays
+      const existing = document.getElementById('tower-sorted-labels');
+      if (existing) existing.remove();
+      tower3D.sorted = false;
+      tower3D.sortedSections = null;
+    }
+
+    function sortTowerBySubject() {
+      if (!tower3D.ready) return;
+      const data = getRecords();
+      const totals = getSubjectTotals(data);
+      const entries = Object.entries(totals).filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]);
+      if (!entries.length) return;
+
+      // If already sorted, toggle off
+      if (tower3D.sorted) {
+        disposeSortedOverlays();
+        refreshTowerFromRecords();
+        const btn = document.getElementById('tower-sort-btn');
+        if (btn) btn.innerText = '정렬하기';
+        return;
+      }
+
+      // Clear existing tower meshes
+      while (tower3D.group.children.length) {
+        const child = tower3D.group.children.pop();
+        child.geometry?.dispose();
+        if (Array.isArray(child.material)) child.material.forEach(mat => mat.dispose());
+        else child.material?.dispose();
+      }
+      tower3D.materialCache.clear();
+
+      const totalSeconds = entries.reduce((sum, [, s]) => sum + s, 0);
+      const TOWER_TOTAL_HEIGHT = Math.max(2.5, Math.min(12, totalSeconds / 1800));
+      const TOWER_WIDTH = 1.4;
+      const TOWER_DEPTH = 0.85;
+
+      let y = 0;
+      const sections = [];
+
+      entries.forEach(([subject, seconds], idx) => {
+        const ratio = seconds / totalSeconds;
+        const sectionHeight = Math.max(0.15, ratio * TOWER_TOTAL_HEIGHT);
+        const color = getSubjectColor(subject, data);
+
+        // Create solid section block
+        const blockGeo = new THREE.BoxGeometry(TOWER_WIDTH, sectionHeight, TOWER_DEPTH, 4, 2, 4);
+        const coverTex = makeTowerTexture(color, idx % 3 === 0 ? 'leather' : idx % 3 === 1 ? 'cloth' : 'paper');
+        const pageTex = makeTowerTexture('#efe6d2', 'paper');
+
+        const coverMat = new THREE.MeshStandardMaterial({
+          map: coverTex, roughness: 0.72, metalness: 0.03
+        });
+        const pageMat = new THREE.MeshStandardMaterial({
+          map: pageTex, roughness: 0.92, metalness: 0
+        });
+
+        // Box has 6 faces: +x, -x, +y, -y, +z, -z
+        const block = new THREE.Mesh(blockGeo, [
+          pageMat, coverMat, coverMat, coverMat, coverMat, pageMat
+        ]);
+        block.position.set(0, y + sectionHeight / 2, 0);
+        block.castShadow = true;
+        block.receiveShadow = true;
+
+        // Add subtle book-spine lines
+        const lineCount = Math.max(1, Math.floor(sectionHeight / 0.08));
+        for (let li = 0; li < lineCount; li++) {
+          const lineY = y + (li + 0.5) * (sectionHeight / lineCount);
+          const lineGeo = new THREE.BoxGeometry(TOWER_WIDTH + 0.01, 0.005, TOWER_DEPTH + 0.01);
+          const lineMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 });
+          const lineMesh = new THREE.Mesh(lineGeo, lineMat);
+          lineMesh.position.set(0, lineY, 0);
+          tower3D.group.add(lineMesh);
+        }
+
+        tower3D.group.add(block);
+
+        sections.push({
+          subject,
+          seconds,
+          ratio,
+          color,
+          yStart: y,
+          yEnd: y + sectionHeight,
+          yCenter: y + sectionHeight / 2
+        });
+
+        y += sectionHeight + 0.012;
+      });
+
+      tower3D.bounds.height = Math.max(0.8, y);
+      tower3D.sortedSections = sections;
+      tower3D.sorted = true;
+
+      // Create slime overlay on top
+      createSlimeOverlay(y, TOWER_WIDTH, TOWER_DEPTH, entries, data);
+
+      // Create HTML label overlay container
+      createSortedLabelsContainer();
+
+      // Update camera
+      setTowerCameraMode('full', true);
+
+      // Update button
+      const btn = document.getElementById('tower-sort-btn');
+      if (btn) btn.innerText = '원래대로';
+    }
+
+    function createSlimeOverlay(topY, width, depth, entries, data) {
+      // Determine dominant colors for the slime
+      const topSubject = entries[0];
+      const color1Str = getSubjectColor(topSubject[0], data);
+      const color2Str = entries.length > 1 ? getSubjectColor(entries[1][0], data) : color1Str;
+
+      // Parse colors to THREE.Color
+      const c1 = new THREE.Color(color1Str);
+      const c2 = new THREE.Color(color2Str);
+
+      // High-res plane for vertex displacement
+      const slimeGeo = new THREE.PlaneGeometry(width * 1.3, depth * 1.3, 64, 64);
+      const slimeMat = new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: { value: 0.0 },
+          uTouch: { value: new THREE.Vector2(0, 0) },
+          uTouchStrength: { value: 0.0 },
+          uColor1: { value: new THREE.Vector3(c1.r, c1.g, c1.b) },
+          uColor2: { value: new THREE.Vector3(c2.r, c2.g, c2.b) },
+          uOpacity: { value: 0.82 }
+        },
+        vertexShader: SLIME_VERTEX_SHADER,
+        fragmentShader: SLIME_FRAGMENT_SHADER,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      });
+
+      const slimeMesh = new THREE.Mesh(slimeGeo, slimeMat);
+      slimeMesh.rotation.x = -Math.PI / 2;
+      slimeMesh.position.set(0, topY + 0.06, 0);
+      slimeMesh.renderOrder = 999;
+
+      tower3D.group.add(slimeMesh);
+      tower3D.slimeMesh = slimeMesh;
+      tower3D.slimeClockStart = performance.now();
+
+      // Touch/click interaction for wobble
+      const canvas = document.getElementById('tower-canvas');
+      if (canvas) {
+        const handleSlimeInteraction = (clientX, clientY) => {
+          if (!tower3D.slimeMesh) return;
+          // Raycasting to find hit point on slime
+          const rect = canvas.getBoundingClientRect();
+          const mouse = new THREE.Vector2(
+            ((clientX - rect.left) / rect.width) * 2 - 1,
+            -((clientY - rect.top) / rect.height) * 2 + 1
+          );
+          const raycaster = new THREE.Raycaster();
+          raycaster.setFromCamera(mouse, tower3D.camera);
+          const intersects = raycaster.intersectObject(tower3D.slimeMesh);
+          if (intersects.length > 0) {
+            const pt = intersects[0].point;
+            tower3D.slimeMesh.material.uniforms.uTouch.value.set(pt.x, pt.z);
+            tower3D.slimeMesh.material.uniforms.uTouchStrength.value = 1.2;
+          }
+        };
+
+        canvas._slimeMouseHandler = (e) => handleSlimeInteraction(e.clientX, e.clientY);
+        canvas._slimeTouchHandler = (e) => {
+          if (e.touches.length > 0) handleSlimeInteraction(e.touches[0].clientX, e.touches[0].clientY);
+        };
+        canvas.addEventListener('click', canvas._slimeMouseHandler);
+        canvas.addEventListener('touchstart', canvas._slimeTouchHandler, { passive: true });
+      }
+    }
+
+    function createSortedLabelsContainer() {
+      let container = document.getElementById('tower-sorted-labels');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'tower-sorted-labels';
+        container.style.cssText = `
+          position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden;
+        `;
+        const towerShell = document.querySelector('.tower-shell');
+        if (towerShell) towerShell.appendChild(container);
+      }
+    }
+
+    function updateSortedLabels() {
+      if (!tower3D.sorted || !tower3D.sortedSections || !tower3D.camera) return;
+      const container = document.getElementById('tower-sorted-labels');
+      if (!container) return;
+
+      const canvas = document.getElementById('tower-canvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+
+      let html = '';
+      tower3D.sortedSections.forEach(section => {
+        // Project 3D center to screen
+        const worldPos = new THREE.Vector3(0, section.yCenter, 0);
+        // Apply group rotation
+        worldPos.applyMatrix4(tower3D.group.matrixWorld);
+        const projected = worldPos.clone().project(tower3D.camera);
+
+        const screenX = (projected.x * 0.5 + 0.5) * rect.width;
+        const screenY = (-projected.y * 0.5 + 0.5) * rect.height;
+
+        // Only show if in front of camera
+        if (projected.z > 1) return;
+
+        const textColor = getContrastColor(section.color);
+        const pct = Math.round(section.ratio * 100);
+        const timeStr = formatHMS(section.seconds);
+
+        html += `<div style="
+          position:absolute;
+          left:${screenX}px; top:${screenY}px;
+          transform:translate(-50%,-50%);
+          background:${section.color};
+          color:${textColor};
+          padding:4px 10px;
+          border-radius:8px;
+          font-size:12px;
+          font-weight:800;
+          white-space:nowrap;
+          box-shadow:0 2px 8px rgba(0,0,0,0.2);
+          border:1px solid rgba(255,255,255,0.2);
+          pointer-events:none;
+          opacity:0.92;
+          backdrop-filter:blur(4px);
+        ">
+          <div style="font-size:13px;">${section.subject}</div>
+          <div style="font-size:11px;opacity:0.85;">${timeStr} · ${pct}%</div>
+        </div>`;
+      });
+
+      container.innerHTML = html;
+    }
+
 
     /* =======================================
        7. Navigation
