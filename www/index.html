@@ -1482,6 +1482,21 @@
     function getRecords() {
       let data = JSON.parse(localStorage.getItem('bookTowerv2'));
       let needsSave = false;
+      if (data) {
+        if (data.subjectColors && data.subjectColors['ads']) { delete data.subjectColors['ads']; needsSave = true; }
+        Object.values(data.daily || {}).forEach(day => {
+          if (day.subjects && day.subjects['ads']) { delete day.subjects['ads']; needsSave = true; }
+          if (day.subjectList) {
+             const idx = day.subjectList.indexOf('ads');
+             if (idx !== -1) { day.subjectList.splice(idx, 1); needsSave = true; }
+          }
+        });
+        if (data.studyEvents) {
+          const oldLen = data.studyEvents.length;
+          data.studyEvents = data.studyEvents.filter(e => e.subject !== 'ads');
+          if (data.studyEvents.length !== oldLen) needsSave = true;
+        }
+      }
       if (!data) {
         data = { total: 0, daily: {}, userName: '나', maxHeight: 0, vibrate: true, dropInterval: 60 };
         needsSave = true;
@@ -3112,7 +3127,7 @@
         mesh.position.set(X_OFFSET, y + sectionHeight / 2, 0);
         mesh.renderOrder = 900 + idx;
 
-        tower3D.group.add(mesh);
+        tower3D.scene.add(mesh);
         tower3D.jellyPanels.push(mesh);
 
         sections.push({
@@ -3183,7 +3198,6 @@
       let html = '';
       tower3D._jellySections.forEach(section => {
         const worldPos = new THREE.Vector3(1.6 + 0.5, section.yCenter, 0);
-        worldPos.applyMatrix4(tower3D.group.matrixWorld);
         const projected = worldPos.clone().project(tower3D.camera);
         if (projected.z > 1) return;
 
