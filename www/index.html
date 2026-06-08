@@ -2359,15 +2359,10 @@
       try {
         const list = JSON.parse(data);
         list.forEach(item => {
+          if (item.type !== 'book') return; // 아이템 블럭 복원 제외
           let textureSVG = '', texUrl = '';
-          if (item.type === 'book') {
-            textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${item.w}" height="${item.h}"><rect width="${item.w}" height="${item.h}" rx="2" fill="#e2e8f0"/><rect x="0" y="2" width="${item.w-4}" height="${item.h-4}" fill="#ffffff"/><rect x="4" y="0" width="${item.w-4}" height="${item.h}" rx="2" fill="${item.color}"/></svg>`;
-          } else {
-            let c = getShapeSettings(item.type);
-            if (c && c.textureURL) texUrl = c.textureURL;
-            else if (c) textureSVG = c.textureSVG;
-          }
-          if (!texUrl) texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
+          textureSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${item.w}" height="${item.h}"><rect width="${item.w}" height="${item.h}" rx="2" fill="#e2e8f0"/><rect x="0" y="2" width="${item.w-4}" height="${item.h-4}" fill="#ffffff"/><rect x="4" y="0" width="${item.w-4}" height="${item.h}" rx="2" fill="${item.color}"/></svg>`;
+          texUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(textureSVG);
           const margin = 2;
           const b = Bodies.rectangle(item.x, item.y, item.w+margin, item.h+margin, {
             angle: item.angle, restitution: 0.01, friction: 0.9, density: 0.2, slop: 0.05,
