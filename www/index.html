@@ -1081,7 +1081,7 @@
             <strong id="tower-subject-time">00:00:00</strong>
           </div>
         </div>
-        <button id="tower-stats-toggle" class="btn btn-secondary" style="margin-top:12px; width:100%; font-weight:800; background:var(--toss-blue); color:white; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:14px; border-radius:14px;" onclick="toggleTowerStats()">통계보기 📊</button>
+        <button id="tower-stats-toggle" class="btn btn-secondary" style="margin-top:12px; width: max-content; padding: 10px 20px; font-weight:700; font-size:14px; background:var(--toss-blue); color:white; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.15); border-radius:12px;" onclick="toggleTowerStats()">통계보기 📊</button>
       </div>
       <div class="tower-insights">
         <div class="tower-insight">
@@ -2841,7 +2841,6 @@
       tower3D.camera.updateProjectionMatrix();
       tower3D.renderer.setSize(w, h);
       setTowerCameraMode(tower3D.cameraMode, true);
-      renderTowerDetails();
     }
 
     function setTowerCameraMode(mode, immediate = false) {
