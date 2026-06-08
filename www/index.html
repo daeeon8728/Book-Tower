@@ -1081,8 +1081,8 @@
             <strong id="tower-subject-time">00:00:00</strong>
           </div>
         </div>
+        <button id="tower-stats-toggle" class="btn btn-secondary" style="margin-top:12px; width:100%; font-weight:800; background:var(--toss-blue); color:white; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.15); padding:14px; border-radius:14px;" onclick="toggleTowerStats()">통계보기 📊</button>
       </div>
-      <div class="tower-details-layer hidden" id="tower-details-layer"></div>
       <div class="tower-insights">
         <div class="tower-insight">
           <span>가장 많이 공부한 과목</span>
@@ -2854,6 +2854,10 @@
         const distance = aspect < 0.75 ? 3.4 : 2.8;
         tower3D.desiredTarget = new THREE.Vector3(0, topY, 0);
         tower3D.desiredPosition = new THREE.Vector3(distance * 0.62, topY + 0.95, distance);
+      } else if (mode === 'stats') {
+        const distance = Math.max(5, Math.min(26, height * (aspect < 0.75 ? 2.5 : 1.7) + 3.5));
+        tower3D.desiredTarget = new THREE.Vector3(0.8, height / 2, 0);
+        tower3D.desiredPosition = new THREE.Vector3(0.8 + distance * 0.35, height / 2 + distance * 0.15, distance);
       } else {
         const distance = Math.max(4, Math.min(24, height * (aspect < 0.75 ? 2.25 : 1.55) + 3.2));
         tower3D.desiredTarget = new THREE.Vector3(0, height / 2, 0);
@@ -2872,23 +2876,21 @@
       setTowerCameraMode(tower3D.cameraMode === 'top' ? 'full' : 'top');
     }
 
-    function toggleTowerDetails() {
-      tower3D.detailsOpen = !tower3D.detailsOpen;
-      const layer = document.getElementById('tower-details-layer');
-      const btn = document.getElementById('tower-details-toggle');
-      if (layer) layer.classList.toggle('hidden', !tower3D.detailsOpen);
-      if (btn) btn.innerText = tower3D.detailsOpen ? '자세히보기 ^' : '자세히보기 v';
-
-      if (tower3D.detailsOpen) {
-        // Zoom out to show full tower
-        setTowerCameraMode('full', false);
-        // Create slime ratio overlays on the book stack
-        createSlimeRatioOverlays();
-      } else {
-        // Remove slime overlays
-        disposeSlimeRatioOverlays();
+    function toggleTowerStats() {
+      tower3D.statsOpen = !tower3D.statsOpen;
+      const btn = document.getElementById('tower-stats-toggle');
+      if (btn) {
+        btn.innerText = tower3D.statsOpen ? '통계 닫기 ✖' : '통계보기 📊';
+        btn.style.background = tower3D.statsOpen ? 'var(--toss-text-gray)' : 'var(--toss-blue)';
       }
-      renderTowerDetails();
+      
+      if (tower3D.statsOpen) {
+        setTowerCameraMode('stats', false);
+        createJellyBarGraph();
+      } else {
+        setTowerCameraMode('full', false);
+        disposeJellyBarGraph();
+      }
     }
 
     function getContrastColor(bgColor) {
@@ -2904,39 +2906,17 @@
       return luminance > 0.55 ? '#111111' : '#ffffff';
     }
 
-    function renderTowerDetails() {
-      const layer = document.getElementById('tower-details-layer');
-      if (!layer || !tower3D.detailsOpen) return;
-      const height = Math.max(0.1, tower3D.bounds.height);
-      const totalSeconds = tower3D.subjectVolumes.reduce((sum, item) => sum + item.seconds, 0) || 1;
-      layer.innerHTML = tower3D.subjectVolumes.map(item => {
-        const topPct = Math.max(4, Math.min(96, 100 - (item.centerY / height) * 100));
-        const ratio = Math.round((item.seconds / totalSeconds) * 100);
-        const textColor = getContrastColor(item.color);
-        return `
-          <div class="tower-ratio-chip" style="--top:${topPct}%; --color:${item.color}; background:${item.color}; border-left-color:${item.color};">
-            <div class="tower-ratio-name" style="color:${textColor};">${item.subject}</div>
-            <div class="tower-ratio-meta" style="color:${textColor}; opacity:0.85;">${ratio}% · ${formatHMS(item.seconds)}</div>
-          </div>`;
-      }).join('');
-    }
-
     function refreshTowerFromRecords() {
       initTowerScene();
       if (!tower3D.ready) return;
-      // Clean up slime overlays if any
-      if (typeof disposeSlimeRatioOverlays === 'function') disposeSlimeRatioOverlays();
-      tower3D.detailsOpen = false;
-      const detailsBtn = document.getElementById('tower-details-toggle');
-      if (detailsBtn) detailsBtn.innerText = '자세히보기 v';
-      const layer = document.getElementById('tower-details-layer');
-      if (layer) layer.classList.add('hidden');
-      // Clean up slime event listeners
-      const canvas = document.getElementById('tower-canvas');
-      if (canvas) {
-        if (canvas._slimeClickHandler) { canvas.removeEventListener('click', canvas._slimeClickHandler); canvas._slimeClickHandler = null; }
-        if (canvas._slimeTouchHandler) { canvas.removeEventListener('touchstart', canvas._slimeTouchHandler); canvas._slimeTouchHandler = null; }
+      if (typeof disposeJellyBarGraph === 'function') disposeJellyBarGraph();
+      tower3D.statsOpen = false;
+      const statsBtn = document.getElementById('tower-stats-toggle');
+      if (statsBtn) {
+        statsBtn.innerText = '통계보기 📊';
+        statsBtn.style.background = 'var(--toss-blue)';
       }
+      
       const data = getRecords();
       renderDualTimers(data);
       while (tower3D.group.children.length) {
@@ -2969,7 +2949,6 @@
         }
       }
       setTowerCameraMode(tower3D.cameraMode, true);
-      renderTowerDetails();
     }
 
     function animateTowerScene() {
@@ -2979,11 +2958,12 @@
         tower3D.camera.position.lerp(tower3D.desiredPosition, 0.075);
         tower3D.controls.target.lerp(tower3D.desiredTarget, 0.075);
       }
-      tower3D.group.rotation.y += 0.0012;
+      if (!tower3D.statsOpen) {
+        tower3D.group.rotation.y += 0.0012;
+      }
       tower3D.controls.update();
-      // Update slime ratio overlays (panels + labels)
-      if (tower3D.slimePanels && tower3D.slimePanels.length > 0) {
-        updateSlimeOverlays();
+      if (tower3D.jellyPanels && tower3D.jellyPanels.length > 0) {
+        updateJellyBarGraph();
       }
       tower3D.renderer.render(tower3D.scene, tower3D.camera);
     }
@@ -3066,29 +3046,29 @@
       }
     `;
 
-    tower3D.slimePanels = [];
-    tower3D._slimeSections = null;
+    tower3D.jellyPanels = [];
+    tower3D._jellySections = null;
 
-    function disposeSlimeRatioOverlays() {
-      tower3D.slimePanels.forEach(panel => {
+    function disposeJellyBarGraph() {
+      tower3D.jellyPanels.forEach(panel => {
         panel.geometry?.dispose();
         panel.material?.dispose();
         if (panel.parent) panel.parent.remove(panel);
       });
-      tower3D.slimePanels = [];
-      tower3D._slimeSections = null;
-      const existing = document.getElementById('tower-slime-labels');
+      tower3D.jellyPanels = [];
+      tower3D._jellySections = null;
+      const existing = document.getElementById('tower-jelly-labels');
       if (existing) existing.remove();
       const canvas = document.getElementById('tower-canvas');
       if (canvas) {
-        if (canvas._slimeClickHandler) { canvas.removeEventListener('click', canvas._slimeClickHandler); canvas._slimeClickHandler = null; }
-        if (canvas._slimeTouchHandler) { canvas.removeEventListener('touchstart', canvas._slimeTouchHandler); canvas._slimeTouchHandler = null; }
+        if (canvas._jellyClickHandler) { canvas.removeEventListener('click', canvas._jellyClickHandler); canvas._jellyClickHandler = null; }
+        if (canvas._jellyTouchHandler) { canvas.removeEventListener('touchstart', canvas._jellyTouchHandler); canvas._jellyTouchHandler = null; }
       }
     }
 
-    function createSlimeRatioOverlays() {
+    function createJellyBarGraph() {
       if (!tower3D.ready) return;
-      disposeSlimeRatioOverlays();
+      disposeJellyBarGraph();
 
       const data = getRecords();
       const totals = getSubjectTotals(data);
@@ -3096,22 +3076,23 @@
       if (!entries.length) return;
 
       const totalSeconds = entries.reduce((sum, [, s]) => sum + s, 0);
-      const towerHeight = tower3D.bounds.height;
-      const PANEL_WIDTH = 1.3;
-      const PANEL_Z_OFFSET = 0.48;
+      const towerHeight = Math.max(0.8, tower3D.bounds.height);
+      const BAR_WIDTH = 0.8;
+      const BAR_DEPTH = 0.8;
+      const X_OFFSET = 1.6;
 
       let y = 0;
       const sections = [];
 
       entries.forEach(([subject, seconds], idx) => {
         const ratio = seconds / totalSeconds;
-        const sectionHeight = Math.max(0.08, ratio * towerHeight);
+        const sectionHeight = Math.max(0.06, ratio * towerHeight);
         const colorStr = getSubjectColor(subject, data);
         const c = new THREE.Color(colorStr);
         const c2 = c.clone();
         c2.offsetHSL(0.05, -0.1, 0.08);
 
-        const geo = new THREE.PlaneGeometry(PANEL_WIDTH, sectionHeight, 32, Math.max(4, Math.floor(sectionHeight * 20)));
+        const geo = new THREE.BoxGeometry(BAR_WIDTH, sectionHeight, BAR_DEPTH, 16, Math.max(2, Math.floor(sectionHeight * 10)), 16);
         const mat = new THREE.ShaderMaterial({
           uniforms: {
             uTime: { value: Math.random() * 100 },
@@ -3124,16 +3105,16 @@
           vertexShader: SLIME_VERTEX_SHADER,
           fragmentShader: SLIME_FRAGMENT_SHADER,
           transparent: true,
-          side: THREE.DoubleSide,
+          side: THREE.FrontSide,
           depthWrite: false
         });
 
         const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(0, y + sectionHeight / 2, PANEL_Z_OFFSET);
+        mesh.position.set(X_OFFSET, y + sectionHeight / 2, 0);
         mesh.renderOrder = 900 + idx;
 
         tower3D.group.add(mesh);
-        tower3D.slimePanels.push(mesh);
+        tower3D.jellyPanels.push(mesh);
 
         sections.push({
           subject, seconds, ratio, color: colorStr,
@@ -3143,13 +3124,13 @@
         y += sectionHeight;
       });
 
-      tower3D._slimeSections = sections;
+      tower3D._jellySections = sections;
 
       // Create labels container
-      let container = document.getElementById('tower-slime-labels');
+      let container = document.getElementById('tower-jelly-labels');
       if (!container) {
         container = document.createElement('div');
-        container.id = 'tower-slime-labels';
+        container.id = 'tower-jelly-labels';
         container.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;';
         const towerShell = document.querySelector('.tower-shell');
         if (towerShell) towerShell.appendChild(container);
@@ -3159,7 +3140,7 @@
       const canvas = document.getElementById('tower-canvas');
       if (canvas) {
         const handleInteraction = (clientX, clientY) => {
-          if (!tower3D.slimePanels.length) return;
+          if (!tower3D.jellyPanels.length) return;
           const rect = canvas.getBoundingClientRect();
           const mouse = new THREE.Vector2(
             ((clientX - rect.left) / rect.width) * 2 - 1,
@@ -3167,42 +3148,42 @@
           );
           const raycaster = new THREE.Raycaster();
           raycaster.setFromCamera(mouse, tower3D.camera);
-          const intersects = raycaster.intersectObjects(tower3D.slimePanels);
+          const intersects = raycaster.intersectObjects(tower3D.jellyPanels);
           if (intersects.length > 0) {
             const pt = intersects[0].point;
-            tower3D.slimePanels.forEach(panel => {
+            tower3D.jellyPanels.forEach(panel => {
               panel.material.uniforms.uTouch.value.set(pt.x, pt.y);
               panel.material.uniforms.uTouchStrength.value = 1.5;
             });
           }
         };
-        canvas._slimeClickHandler = (e) => handleInteraction(e.clientX, e.clientY);
-        canvas._slimeTouchHandler = (e) => {
+        canvas._jellyClickHandler = (e) => handleInteraction(e.clientX, e.clientY);
+        canvas._jellyTouchHandler = (e) => {
           if (e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
         };
-        canvas.addEventListener('click', canvas._slimeClickHandler);
-        canvas.addEventListener('touchstart', canvas._slimeTouchHandler, { passive: true });
+        canvas.addEventListener('click', canvas._jellyClickHandler);
+        canvas.addEventListener('touchstart', canvas._jellyTouchHandler, { passive: true });
       }
     }
 
-    function updateSlimeOverlays() {
-      tower3D.slimePanels.forEach(panel => {
+    function updateJellyBarGraph() {
+      tower3D.jellyPanels.forEach(panel => {
         if (panel.material?.uniforms) {
           panel.material.uniforms.uTime.value += 0.016;
           panel.material.uniforms.uTouchStrength.value *= 0.96;
         }
       });
 
-      if (!tower3D._slimeSections || !tower3D.camera) return;
-      const container = document.getElementById('tower-slime-labels');
+      if (!tower3D._jellySections || !tower3D.camera) return;
+      const container = document.getElementById('tower-jelly-labels');
       if (!container) return;
       const canvas = document.getElementById('tower-canvas');
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
 
       let html = '';
-      tower3D._slimeSections.forEach(section => {
-        const worldPos = new THREE.Vector3(0, section.yCenter, 0.48);
+      tower3D._jellySections.forEach(section => {
+        const worldPos = new THREE.Vector3(1.6 + 0.5, section.yCenter, 0);
         worldPos.applyMatrix4(tower3D.group.matrixWorld);
         const projected = worldPos.clone().project(tower3D.camera);
         if (projected.z > 1) return;
@@ -3214,15 +3195,17 @@
 
         html += `<div style="
           position:absolute;left:${screenX}px;top:${screenY}px;
-          transform:translate(-50%,-50%);
+          transform:translate(0%,-50%);
+          background:${section.color};
           color:${textColor};
-          padding:3px 8px;border-radius:6px;
-          font-size:11px;font-weight:800;
+          padding:5px 10px;border-radius:12px;
+          font-size:12px;font-weight:800;
           white-space:nowrap;pointer-events:none;
-          text-shadow:0 1px 3px rgba(0,0,0,0.5);
+          box-shadow:0 4px 12px rgba(0,0,0,0.15);
+          display:flex; flex-direction:column; gap:2px;
         ">
-          <div style="font-size:12px;">${section.subject}</div>
-          <div style="font-size:10px;opacity:0.9;">${formatHMS(section.seconds)} · ${pct}%</div>
+          <div>${section.subject} <span style="opacity:0.85; font-size:10px; margin-left:4px;">${pct}%</span></div>
+          <div style="font-size:11px;opacity:0.9;">${formatHMS(section.seconds)}</div>
         </div>`;
       });
       container.innerHTML = html;
