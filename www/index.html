@@ -977,60 +977,6 @@
         bottom: calc(var(--safe-bottom) - 8px);
       }
     }
-
-    /* ── Home Overlap Scroll UI ── */
-    #home-view {
-      overflow: hidden !important;
-      overscroll-behavior: none;
-    }
-    #home-overlap-root {
-      position: relative;
-      width: 100%;
-      height: 100%;
-    }
-    #home-card-a {
-      position: relative;
-      z-index: 1;
-      padding: 0 20px;
-      padding-top: env(safe-area-inset-top, 0px);
-      background: var(--toss-bg-light);
-      transition: opacity 0.12s ease;
-    }
-    #home-card-b {
-      position: relative;
-      z-index: 2;
-      background: var(--toss-card);
-      border-radius: 28px 28px 0 0;
-      box-shadow: 0 -12px 48px rgba(0,0,0,0.12), 0 -2px 8px rgba(0,0,0,0.05);
-      padding: 14px 20px;
-      padding-bottom: calc(var(--nav-height) + var(--nav-bottom) + 40px);
-      will-change: transform;
-      transform: translate3d(0, 0, 0);
-      overflow-y: hidden;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      overscroll-behavior-y: contain;
-      min-height: 100vh;
-    }
-    #home-card-b.is-scrollable {
-      overflow-y: auto;
-    }
-    #home-card-b-handle {
-      width: 40px;
-      height: 5px;
-      background: var(--toss-border);
-      border-radius: 4px;
-      margin: 0 auto 18px;
-      flex-shrink: 0;
-      cursor: grab;
-      transition: background 0.2s;
-    }
-    #home-card-b-handle:active { background: var(--toss-text-gray); }
-    #home-card-b-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
   </style>
 </head>
 
@@ -1046,43 +992,34 @@
 
   <!-- View 1: Home -->
   <div id="home-view" class="view-wrapper">
-    <div id="home-overlap-root">
-
-      <!-- Card A: 헤더 + 책탑 높이 배너 -->
-      <div id="home-card-a">
-        <div class="page-header">
-          <span class="page-title">홈</span>
-        </div>
-        <div id="home-height-banner" style="background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 22px; padding: 20px 22px; color: white; box-shadow: 0 8px 32px rgba(102,126,234,0.3); margin-bottom: 20px;">
-          <div style="font-size:12px; font-weight:700; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">나의 현재 책탑 높이</div>
-          <div style="font-size:32px; font-weight:900; margin: 6px 0 4px; letter-spacing:-1px;" id="home-height-msg">0.0m</div>
-          <div style="font-size:13px; font-weight:600; opacity:0.85;" id="home-height-desc">아직 탑이 없어요. 지금 공부를 시작해보세요! 📚</div>
-        </div>
+    <div class="page-inner">
+      <div class="page-header">
+        <span class="page-title">홈</span>
       </div>
 
-      <!-- Card B: 달력 + 과목 리스트 (위로 슬라이드) -->
-      <div id="home-card-b">
-        <div id="home-card-b-handle"></div>
-        <div id="home-card-b-inner">
-          <!-- 달력 -->
-          <div class="calendar-card">
-            <div class="cal-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-              <span onclick="changeCalendarMonth(-1)" style="cursor:pointer; padding:6px 10px; border-radius:10px; background:var(--toss-border); color:var(--toss-text-gray); font-size:12px;">◀</span>
-              <span id="cal-month-title" style="font-size:15px; font-weight:800;">이번 달 달력</span>
-              <span onclick="changeCalendarMonth(1)" style="cursor:pointer; padding:6px 10px; border-radius:10px; background:var(--toss-border); color:var(--toss-text-gray); font-size:12px;">▶</span>
-            </div>
-            <div id="monthly-calendar" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:5px; text-align:center;"></div>
-          </div>
-
-          <!-- 오늘의 집중 과목 -->
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <div style="font-size:17px; font-weight:800; color:var(--toss-text-dark);">오늘의 집중 과목</div>
-            <div id="subject-tooltip" style="background: #667eea; color: white; padding: 5px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; animation: bounce 2s infinite;">과목을 선택해서 시작!</div>
-          </div>
-          <div class="subject-list" id="subject-list-container" style="margin-top:0;"></div>
-        </div>
+      <!-- 책탑 높이 배너 -->
+      <div id="home-height-banner" style="background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 22px; padding: 20px 22px; color: white; box-shadow: 0 8px 32px rgba(102,126,234,0.3);">
+        <div style="font-size:12px; font-weight:700; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">나의 현재 책탑 높이</div>
+        <div style="font-size:32px; font-weight:900; margin: 6px 0 4px; letter-spacing:-1px;" id="home-height-msg">0.0m</div>
+        <div style="font-size:13px; font-weight:600; opacity:0.85;" id="home-height-desc">아직 탑이 없어요. 지금 공부를 시작해보세요! 📚</div>
       </div>
 
+      <!-- 달력 -->
+      <div class="calendar-card">
+        <div class="cal-title" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <span onclick="changeCalendarMonth(-1)" style="cursor:pointer; padding:6px 10px; border-radius:10px; background:var(--toss-border); color:var(--toss-text-gray); font-size:12px;">◀</span>
+          <span id="cal-month-title" style="font-size:15px; font-weight:800;">이번 달 달력</span>
+          <span onclick="changeCalendarMonth(1)" style="cursor:pointer; padding:6px 10px; border-radius:10px; background:var(--toss-border); color:var(--toss-text-gray); font-size:12px;">▶</span>
+        </div>
+        <div id="monthly-calendar" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:5px; text-align:center;"></div>
+      </div>
+
+      <!-- 오늘의 집중 과목 -->
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div style="font-size:17px; font-weight:800; color:var(--toss-text-dark);">오늘의 집중 과목</div>
+        <div id="subject-tooltip" style="background: #667eea; color: white; padding: 5px 12px; border-radius: 12px; font-size: 12px; font-weight: 700; animation: bounce 2s infinite;">과목을 선택해서 시작!</div>
+      </div>
+      <div class="subject-list" id="subject-list-container" style="margin-top:0;"></div>
     </div>
   </div>
 
@@ -3304,7 +3241,6 @@
         case 'home':
           views.home.classList.remove('hidden'); allNavs[0].classList.add('active');
           updateDashboard(); updateTheme(0);
-          if (window._homeOverlapReset) window._homeOverlapReset();
           break;
         case 'tower':
           views.tower.classList.remove('hidden'); allNavs[1].classList.add('active');
@@ -3574,121 +3510,6 @@
       if (localStorage.getItem('sensorGranted') === 'true') window.addEventListener('deviceorientation', handleOrientation, true);
     }
 
-    /* =================================================
-       Home Overlap Scroll Controller
-       스크롤 위치에 따라 Card B가 위로 슬라이딩하는 로직
-    ================================================= */
-    function initHomeOverlapScroll() {
-      const homeView = document.getElementById('home-view');
-      const cardA    = document.getElementById('home-card-a');
-      const cardB    = document.getElementById('home-card-b');
-      if (!homeView || !cardA || !cardB) return;
-
-      let progress   = 0;   // 0 = 오버랩 상태, 1 = 커버 완료
-      let targetProg = 0;
-      let rafId      = null;
-      let isDragging = false;
-      let lastTouchY = 0;
-      let velocity   = 0;   // px/ms
-      let lastTime   = 0;
-      let travel     = 0;   // Card B가 이동할 총 px
-
-      function setup() {
-        const cardAH  = cardA.offsetHeight;
-        const overlap = Math.max(40, Math.floor(cardAH * 0.52)); // 52% overlap
-        cardB.style.marginTop = `-${overlap}px`;
-        travel = overlap;
-        // Reset to initial state when called
-        progress = targetProg = 0;
-        applyTransform(0);
-      }
-
-      function applyTransform(p) {
-        const ty = -(p * travel);
-        // GPU-accelerated transform for 60fps
-        cardB.style.transform = `translate3d(0, ${ty}px, 0)`;
-        // Card A fades gently as Card B rises
-        cardA.style.opacity = String(Math.max(0.55, 1 - p * 0.45));
-        // 완전히 올라온 경우 내부 스크롤 활성화
-        if (p >= 0.97) {
-          cardB.classList.add('is-scrollable');
-        } else {
-          cardB.classList.remove('is-scrollable');
-          if (cardB.scrollTop > 0) cardB.scrollTop = 0;
-        }
-      }
-
-      function animTick() {
-        const diff = targetProg - progress;
-        if (Math.abs(diff) < 0.004) {
-          progress = targetProg;
-          applyTransform(progress);
-          rafId = null;
-          return;
-        }
-        // EC elastic lerp 소프트 상륙 (0.14 가중치 = 60fps에서 스프링 쫀득)
-        progress += diff * 0.14;
-        applyTransform(progress);
-        rafId = requestAnimationFrame(animTick);
-      }
-
-      function setTarget(t, snap) {
-        targetProg = Math.max(0, Math.min(1, t));
-        if (snap) targetProg = targetProg > 0.45 ? 1 : 0;
-        if (!rafId) rafId = requestAnimationFrame(animTick);
-      }
-
-      setup();
-      window.addEventListener('resize', setup, { passive: true });
-
-      /* --- Touch handling ----------------------------------------- */
-      homeView.addEventListener('touchstart', (e) => {
-        // 스크롤 중인 카드 B의 안쪽 스크롤은 방해하지 않음
-        if (cardB.classList.contains('is-scrollable') && cardB.scrollTop > 2) return;
-        isDragging = true;
-        lastTouchY = e.touches[0].clientY;
-        lastTime   = Date.now();
-        velocity   = 0;
-        if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-        progress = targetProg; // sync to current
-      }, { passive: true });
-
-      homeView.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        const now = Date.now();
-        const y   = e.touches[0].clientY;
-        const dy  = lastTouchY - y; // +양 = 위로 스와이프
-        // 모바일 바운스 오버스크롤 제한
-        if (now - lastTime > 0) velocity = dy / (now - lastTime);
-        lastTime   = now;
-        lastTouchY = y;
-        if (travel <= 0) return;
-        progress = Math.max(0, Math.min(1, progress + dy / travel));
-        targetProg = progress;
-        applyTransform(progress);
-      }, { passive: true });
-
-      homeView.addEventListener('touchend', () => {
-        if (!isDragging) return;
-        isDragging = false;
-        // 속도(velocity) 반영하여 스냅: 위로 빠르면 올라가는 쪽으로
-        setTarget(targetProg + velocity * 0.22, true);
-      }, { passive: true });
-
-      /* --- Wheel (desktop) ---------------------------------------- */
-      homeView.addEventListener('wheel', (e) => {
-        // 카드가 정도 위로 올라온 상태에서 내부 스크롤 듯 스크롤 허용
-        if (cardB.classList.contains('is-scrollable') && e.deltaY > 0) return;
-        if (cardB.classList.contains('is-scrollable') && cardB.scrollTop > 2 && e.deltaY < 0) return;
-        e.preventDefault();
-        if (travel <= 0) return;
-        setTarget(targetProg + (e.deltaY / travel) * 0.9);
-      }, { passive: false });
-
-      // 다른 탭에서 홈으로 돌아올 때 reset 노출
-      window._homeOverlapReset = () => { setup(); };
-    }
-
     function closeTutorial() { localStorage.setItem('tutorialSeen','true'); document.getElementById('tutorial-modal').classList.add('hidden'); }
 
     function initTheme() {
@@ -3764,7 +3585,6 @@
       hydrateStudyTotalsFromKV();
       state.currentShape = 'book';
       updateDashboard();
-      initHomeOverlapScroll();
       window.addEventListener('beforeunload', savePhysicsState);
     });
 
