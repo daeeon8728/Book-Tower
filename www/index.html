@@ -798,8 +798,7 @@
       left: clamp(14px, 4vw, 28px);
       right: clamp(14px, 4vw, 28px);
       z-index: 4;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      display: flex;
       align-items: start;
       gap: 12px;
       pointer-events: none;
@@ -851,31 +850,7 @@
       font-size: 18px;
       font-variant-numeric: tabular-nums;
     }
-    .tower-actions {
-      pointer-events: auto;
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-    .tower-action-btn {
-      width: auto;
-      min-height: 42px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.32);
-      background: rgba(255, 255, 255, 0.86);
-      color: var(--toss-text-dark);
-      font-size: 13px;
-      font-weight: 850;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      cursor: pointer;
-    }
-    :root[data-theme="dark"] .tower-action-btn {
-      background: rgba(17, 24, 39, 0.82);
-    }
+
     .tower-details-layer {
       position: absolute;
       inset: 94px clamp(12px, 3vw, 28px) calc(var(--safe-bottom) + 6px);
@@ -981,10 +956,7 @@
     }
     @media (max-width: 700px) {
       .tower-toolbar {
-        grid-template-columns: 1fr;
-      }
-      .tower-actions {
-        justify-content: flex-start;
+        flex-direction: column;
       }
       .tower-details-layer {
         top: 160px;
@@ -1108,11 +1080,6 @@
             <span id="tower-current-subject">Subject</span>
             <strong id="tower-subject-time">00:00:00</strong>
           </div>
-        </div>
-      <div class="tower-actions">
-          <button class="tower-action-btn" id="tower-sort-btn" onclick="sortTowerBySubject()">정렬하기</button>
-          <button class="tower-action-btn" id="tower-camera-toggle" onclick="toggleTowerCameraMode()">확대</button>
-          <button class="tower-action-btn" id="tower-details-toggle" onclick="toggleTowerDetails()">자세히보기 v</button>
         </div>
       </div>
       <div class="tower-details-layer hidden" id="tower-details-layer"></div>
@@ -1651,8 +1618,18 @@
     }
 
     function getSubjectInsights(data = getRecords()) {
-      const entries = Object.entries(getSubjectTotals(data)).filter(([, seconds]) => seconds > 0);
-      if (!entries.length) return { most: null, least: null };
+      const subjects = data.subjects || [];
+      const totals = getSubjectTotals(data);
+      // Filter to only real user-created subjects
+      const entries = Object.entries(totals)
+        .filter(([name, seconds]) => seconds > 0 && subjects.includes(name));
+      if (!entries.length) {
+        // Fallback: use all entries if subjects list doesn't match
+        const fallback = Object.entries(totals).filter(([, seconds]) => seconds > 0);
+        if (!fallback.length) return { most: null, least: null };
+        fallback.sort((a, b) => b[1] - a[1]);
+        return { most: fallback[0], least: fallback[fallback.length - 1] };
+      }
       entries.sort((a, b) => b[1] - a[1]);
       return { most: entries[0], least: entries[entries.length - 1] };
     }
@@ -2671,7 +2648,7 @@
       let hash = 0;
       for (let i = 0; i < subject.length; i++) hash = subject.charCodeAt(i) + ((hash << 5) - hash);
       const hue = Math.abs(hash) % 360;
-      return `hsl(${hue}, 52%, 42%)`;
+      return `hsl(${hue}, 68%, 48%)`;
     }
 
     function createBookMesh(segment, data, index, y) {
@@ -2682,25 +2659,32 @@
       const depth = 0.72 + ((index * 29) % 15) / 100;
       const coverMat = new THREE.MeshStandardMaterial({
         map: makeTowerTexture(color, materialType),
-        roughness: materialType === 'leather' ? 0.62 : 0.88,
-        metalness: 0.02
+        roughness: materialType === 'leather' ? 0.45 : 0.65,
+        metalness: 0.08,
+        emissive: new THREE.Color(color),
+        emissiveIntensity: 0.08
       });
       const pageMat = new THREE.MeshStandardMaterial({
-        map: makeTowerTexture('#efe6d2', 'paper'),
-        roughness: 0.94,
+        map: makeTowerTexture('#f5edd8', 'paper'),
+        roughness: 0.85,
         metalness: 0
       });
       const spineMat = new THREE.MeshStandardMaterial({
         map: makeTowerTexture(color, materialType),
-        roughness: 0.9,
-        metalness: 0.01
+        roughness: 0.55,
+        metalness: 0.06,
+        emissive: new THREE.Color(color),
+        emissiveIntensity: 0.06
       });
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(width, height, depth, 3, 1, 3),
-        [pageMat, spineMat, coverMat, coverMat, spineMat, pageMat]
-      );
+      const bookGeo = new THREE.BoxGeometry(width, height, depth, 3, 1, 3);
+      const mesh = new THREE.Mesh(bookGeo, [pageMat, spineMat, coverMat, coverMat, spineMat, pageMat]);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
+      // Add edge outline for visibility
+      const edgeGeo = new THREE.EdgesGeometry(bookGeo, 15);
+      const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000, opacity: 0.18, transparent: true });
+      const edgeLine = new THREE.LineSegments(edgeGeo, edgeMat);
+      mesh.add(edgeLine);
       const offsetX = Math.sin(index * 1.73) * 0.12;
       const offsetZ = Math.cos(index * 1.37) * 0.08;
       mesh.position.set(offsetX, y + height / 2, offsetZ);
@@ -2712,14 +2696,15 @@
 
     function buildTowerSegments(timeline) {
       const segments = [];
+      const SECONDS_PER_BOOK = 600; // 1 book = 10 minutes
       timeline.forEach(event => {
-        const chunkCount = Math.max(1, Math.ceil(event.seconds / 300));
+        const chunkCount = Math.max(1, Math.ceil(event.seconds / SECONDS_PER_BOOK));
         for (let i = 0; i < chunkCount; i++) {
-          const seconds = i === chunkCount - 1 ? event.seconds - (chunkCount - 1) * 300 : 300;
+          const seconds = i === chunkCount - 1 ? event.seconds - (chunkCount - 1) * SECONDS_PER_BOOK : SECONDS_PER_BOOK;
           if (seconds > 0) segments.push({ ...event, seconds });
         }
       });
-      return segments.slice(-180);
+      return segments.slice(-120);
     }
 
     function computeSubjectVolumes(meshes) {
@@ -2736,7 +2721,7 @@
       return Array.from(bySubject.values()).map(item => ({
         ...item,
         centerY: item.volume > 0 ? item.weightedY / item.volume : 0
-      })).sort((a, b) => b.seconds - a.seconds);
+      })).sort((a, b) => a.centerY - b.centerY);
     }
 
     function initTowerScene() {
@@ -2744,7 +2729,7 @@
       const canvas = document.getElementById('tower-canvas');
       if (!canvas) return;
       tower3D.scene = new THREE.Scene();
-      tower3D.scene.fog = new THREE.FogExp2(0xdbe5f0, 0.045);
+      tower3D.scene.fog = new THREE.FogExp2(0xdbe5f0, 0.018);
       tower3D.camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.05, 120);
       tower3D.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
       tower3D.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -2752,17 +2737,21 @@
       tower3D.renderer.shadowMap.enabled = true;
       tower3D.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       tower3D.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      tower3D.renderer.toneMappingExposure = 1.3;
       tower3D.renderer.outputEncoding = THREE.sRGBEncoding;
 
-      const keyLight = new THREE.DirectionalLight(0xfff1dc, 1.7);
+      const keyLight = new THREE.DirectionalLight(0xfff5e6, 2.2);
       keyLight.position.set(4, 8, 6);
       keyLight.castShadow = true;
       keyLight.shadow.mapSize.set(2048, 2048);
       tower3D.scene.add(keyLight);
-      const fillLight = new THREE.DirectionalLight(0x9cc8ff, 0.6);
+      const fillLight = new THREE.DirectionalLight(0xb8d8ff, 1.0);
       fillLight.position.set(-4, 5, -3);
       tower3D.scene.add(fillLight);
-      tower3D.scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+      const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      rimLight.position.set(0, 3, -6);
+      tower3D.scene.add(rimLight);
+      tower3D.scene.add(new THREE.AmbientLight(0xffffff, 0.75));
 
       const floor = new THREE.Mesh(
         new THREE.CircleGeometry(4, 96),
@@ -2830,6 +2819,16 @@
       const btn = document.getElementById('tower-details-toggle');
       if (layer) layer.classList.toggle('hidden', !tower3D.detailsOpen);
       if (btn) btn.innerText = tower3D.detailsOpen ? '자세히보기 ^' : '자세히보기 v';
+
+      if (tower3D.detailsOpen) {
+        // Zoom out to show full tower
+        setTowerCameraMode('full', false);
+        // Create slime ratio overlays on the book stack
+        createSlimeRatioOverlays();
+      } else {
+        // Remove slime overlays
+        disposeSlimeRatioOverlays();
+      }
       renderTowerDetails();
     }
 
@@ -2866,14 +2865,17 @@
     function refreshTowerFromRecords() {
       initTowerScene();
       if (!tower3D.ready) return;
-      // Clean up sorted overlays if any
-      disposeSortedOverlays();
-      const btn = document.getElementById('tower-sort-btn');
-      if (btn) btn.innerText = '정렬하기';
+      // Clean up slime overlays if any
+      if (typeof disposeSlimeRatioOverlays === 'function') disposeSlimeRatioOverlays();
+      tower3D.detailsOpen = false;
+      const detailsBtn = document.getElementById('tower-details-toggle');
+      if (detailsBtn) detailsBtn.innerText = '자세히보기 v';
+      const layer = document.getElementById('tower-details-layer');
+      if (layer) layer.classList.add('hidden');
       // Clean up slime event listeners
       const canvas = document.getElementById('tower-canvas');
       if (canvas) {
-        if (canvas._slimeMouseHandler) { canvas.removeEventListener('click', canvas._slimeMouseHandler); canvas._slimeMouseHandler = null; }
+        if (canvas._slimeClickHandler) { canvas.removeEventListener('click', canvas._slimeClickHandler); canvas._slimeClickHandler = null; }
         if (canvas._slimeTouchHandler) { canvas.removeEventListener('touchstart', canvas._slimeTouchHandler); canvas._slimeTouchHandler = null; }
       }
       const data = getRecords();
@@ -2899,7 +2901,14 @@
       const most = document.getElementById('tower-most-studied');
       const least = document.getElementById('tower-least-studied');
       if (most) most.innerText = insights.most ? `${insights.most[0]} · ${formatHMS(insights.most[1])}` : '-';
-      if (least) least.innerText = insights.least ? `${insights.least[0]} · ${formatHMS(insights.least[1])}` : '-';
+      if (least) {
+        if (insights.least) {
+          const leastName = insights.least[0];
+          least.innerText = `${leastName} · ${formatHMS(insights.least[1])}`;
+        } else {
+          least.innerText = '-';
+        }
+      }
       setTowerCameraMode(tower3D.cameraMode, true);
       renderTowerDetails();
     }
@@ -2913,21 +2922,15 @@
       }
       tower3D.group.rotation.y += 0.0012;
       tower3D.controls.update();
-      // Update slime shader
-      if (tower3D.slimeMesh && tower3D.slimeMesh.material.uniforms) {
-        const uniforms = tower3D.slimeMesh.material.uniforms;
-        uniforms.uTime.value += 0.016;
-        uniforms.uTouchStrength.value *= 0.97; // decay
-      }
-      // Update subject labels over 3D
-      if (tower3D.sorted && tower3D.sortedSections) {
-        updateSortedLabels();
+      // Update slime ratio overlays (panels + labels)
+      if (tower3D.slimePanels && tower3D.slimePanels.length > 0) {
+        updateSlimeOverlays();
       }
       tower3D.renderer.render(tower3D.scene, tower3D.camera);
     }
 
     /* =======================================
-       6b. Sort by Subject + Slime Shader
+       6b. Slime Ratio Overlay (자세히보기)
     ======================================= */
 
     // GLSL Slime Vertex Shader
@@ -2942,16 +2945,16 @@
         vUv = uv;
         vec3 pos = position;
 
-        // Organic undulation
-        float wave = sin(pos.x * 5.0 + uTime * 1.8) * 0.06
-                   + cos(pos.z * 4.0 + uTime * 1.3) * 0.05
-                   + sin((pos.x + pos.z) * 3.0 + uTime * 2.2) * 0.04;
+        // Organic undulation on Z axis (front face wobble)
+        float wave = sin(pos.x * 5.0 + uTime * 1.8) * 0.04
+                   + cos(pos.y * 4.0 + uTime * 1.3) * 0.035
+                   + sin((pos.x + pos.y) * 3.0 + uTime * 2.2) * 0.025;
 
         // Touch ripple
-        float dist = distance(pos.xz, uTouch);
+        float dist = distance(pos.xy, uTouch);
         float ripple = sin(dist * 14.0 - uTime * 10.0) * exp(-dist * 2.5) * uTouchStrength;
 
-        pos.y += wave + ripple;
+        pos.z += wave + ripple;
         vWave = wave + ripple;
 
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
@@ -2967,7 +2970,6 @@
       varying vec2 vUv;
       varying float vWave;
 
-      // Simple noise function
       float hash(vec2 p) {
         return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
       }
@@ -2984,193 +2986,121 @@
       }
 
       void main() {
-        // Organic color mix
-        float n = noise(vUv * 6.0 + uTime * 0.4);
-        float n2 = noise(vUv * 12.0 - uTime * 0.3);
-        vec3 color = mix(uColor1, uColor2, n * 0.7 + 0.15);
+        float n = noise(vUv * 8.0 + uTime * 0.3);
+        float n2 = noise(vUv * 14.0 - uTime * 0.25);
+        vec3 color = mix(uColor1, uColor2, n * 0.6 + 0.2);
 
         // Specular highlight from wave
-        float specular = pow(max(0.0, vWave * 4.0 + 0.5), 3.0) * 0.35;
+        float specular = pow(max(0.0, vWave * 5.0 + 0.5), 3.0) * 0.3;
         color += vec3(specular);
 
         // Subsurface glow
-        float glow = smoothstep(0.3, 0.7, n2) * 0.15;
+        float glow = smoothstep(0.3, 0.7, n2) * 0.12;
         color += glow * uColor1;
 
         // Edge darkening (viscous depth)
-        float edge = smoothstep(0.0, 0.15, vUv.x) * smoothstep(0.0, 0.15, 1.0 - vUv.x)
-                   * smoothstep(0.0, 0.15, vUv.y) * smoothstep(0.0, 0.15, 1.0 - vUv.y);
-        color *= 0.7 + edge * 0.3;
+        float edge = smoothstep(0.0, 0.12, vUv.x) * smoothstep(0.0, 0.12, 1.0 - vUv.x)
+                   * smoothstep(0.0, 0.12, vUv.y) * smoothstep(0.0, 0.12, 1.0 - vUv.y);
+        color *= 0.75 + edge * 0.25;
 
-        gl_FragColor = vec4(color, uOpacity * (0.78 + n * 0.22));
+        gl_FragColor = vec4(color, uOpacity * (0.82 + n * 0.18));
       }
     `;
 
-    tower3D.sorted = false;
-    tower3D.sortedSections = null;
-    tower3D.slimeMesh = null;
-    tower3D.slimeClockStart = 0;
+    tower3D.slimePanels = [];
+    tower3D._slimeSections = null;
 
-    function disposeSortedOverlays() {
-      // Remove slime mesh
-      if (tower3D.slimeMesh) {
-        tower3D.slimeMesh.geometry?.dispose();
-        tower3D.slimeMesh.material?.dispose();
-        if (tower3D.slimeMesh.parent) tower3D.slimeMesh.parent.remove(tower3D.slimeMesh);
-        tower3D.slimeMesh = null;
-      }
-      // Remove label overlays
-      const existing = document.getElementById('tower-sorted-labels');
+    function disposeSlimeRatioOverlays() {
+      tower3D.slimePanels.forEach(panel => {
+        panel.geometry?.dispose();
+        panel.material?.dispose();
+        if (panel.parent) panel.parent.remove(panel);
+      });
+      tower3D.slimePanels = [];
+      tower3D._slimeSections = null;
+      const existing = document.getElementById('tower-slime-labels');
       if (existing) existing.remove();
-      tower3D.sorted = false;
-      tower3D.sortedSections = null;
+      const canvas = document.getElementById('tower-canvas');
+      if (canvas) {
+        if (canvas._slimeClickHandler) { canvas.removeEventListener('click', canvas._slimeClickHandler); canvas._slimeClickHandler = null; }
+        if (canvas._slimeTouchHandler) { canvas.removeEventListener('touchstart', canvas._slimeTouchHandler); canvas._slimeTouchHandler = null; }
+      }
     }
 
-    function sortTowerBySubject() {
+    function createSlimeRatioOverlays() {
       if (!tower3D.ready) return;
+      disposeSlimeRatioOverlays();
+
       const data = getRecords();
       const totals = getSubjectTotals(data);
       const entries = Object.entries(totals).filter(([, s]) => s > 0).sort((a, b) => b[1] - a[1]);
       if (!entries.length) return;
 
-      // If already sorted, toggle off
-      if (tower3D.sorted) {
-        disposeSortedOverlays();
-        refreshTowerFromRecords();
-        const btn = document.getElementById('tower-sort-btn');
-        if (btn) btn.innerText = '정렬하기';
-        return;
-      }
-
-      // Clear existing tower meshes
-      while (tower3D.group.children.length) {
-        const child = tower3D.group.children.pop();
-        child.geometry?.dispose();
-        if (Array.isArray(child.material)) child.material.forEach(mat => mat.dispose());
-        else child.material?.dispose();
-      }
-      tower3D.materialCache.clear();
-
       const totalSeconds = entries.reduce((sum, [, s]) => sum + s, 0);
-      const TOWER_TOTAL_HEIGHT = Math.max(2.5, Math.min(12, totalSeconds / 1800));
-      const TOWER_WIDTH = 1.4;
-      const TOWER_DEPTH = 0.85;
+      const towerHeight = tower3D.bounds.height;
+      const PANEL_WIDTH = 1.3;
+      const PANEL_Z_OFFSET = 0.48;
 
       let y = 0;
       const sections = [];
 
       entries.forEach(([subject, seconds], idx) => {
         const ratio = seconds / totalSeconds;
-        const sectionHeight = Math.max(0.15, ratio * TOWER_TOTAL_HEIGHT);
-        const color = getSubjectColor(subject, data);
+        const sectionHeight = Math.max(0.08, ratio * towerHeight);
+        const colorStr = getSubjectColor(subject, data);
+        const c = new THREE.Color(colorStr);
+        const c2 = c.clone();
+        c2.offsetHSL(0.05, -0.1, 0.08);
 
-        // Create solid section block
-        const blockGeo = new THREE.BoxGeometry(TOWER_WIDTH, sectionHeight, TOWER_DEPTH, 4, 2, 4);
-        const coverTex = makeTowerTexture(color, idx % 3 === 0 ? 'leather' : idx % 3 === 1 ? 'cloth' : 'paper');
-        const pageTex = makeTowerTexture('#efe6d2', 'paper');
-
-        const coverMat = new THREE.MeshStandardMaterial({
-          map: coverTex, roughness: 0.72, metalness: 0.03
+        const geo = new THREE.PlaneGeometry(PANEL_WIDTH, sectionHeight, 32, Math.max(4, Math.floor(sectionHeight * 20)));
+        const mat = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: { value: Math.random() * 100 },
+            uTouch: { value: new THREE.Vector2(0, 0) },
+            uTouchStrength: { value: 0.0 },
+            uColor1: { value: new THREE.Vector3(c.r, c.g, c.b) },
+            uColor2: { value: new THREE.Vector3(c2.r, c2.g, c2.b) },
+            uOpacity: { value: 0.88 }
+          },
+          vertexShader: SLIME_VERTEX_SHADER,
+          fragmentShader: SLIME_FRAGMENT_SHADER,
+          transparent: true,
+          side: THREE.DoubleSide,
+          depthWrite: false
         });
-        const pageMat = new THREE.MeshStandardMaterial({
-          map: pageTex, roughness: 0.92, metalness: 0
-        });
 
-        // Box has 6 faces: +x, -x, +y, -y, +z, -z
-        const block = new THREE.Mesh(blockGeo, [
-          pageMat, coverMat, coverMat, coverMat, coverMat, pageMat
-        ]);
-        block.position.set(0, y + sectionHeight / 2, 0);
-        block.castShadow = true;
-        block.receiveShadow = true;
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(0, y + sectionHeight / 2, PANEL_Z_OFFSET);
+        mesh.renderOrder = 900 + idx;
 
-        // Add subtle book-spine lines
-        const lineCount = Math.max(1, Math.floor(sectionHeight / 0.08));
-        for (let li = 0; li < lineCount; li++) {
-          const lineY = y + (li + 0.5) * (sectionHeight / lineCount);
-          const lineGeo = new THREE.BoxGeometry(TOWER_WIDTH + 0.01, 0.005, TOWER_DEPTH + 0.01);
-          const lineMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.08 });
-          const lineMesh = new THREE.Mesh(lineGeo, lineMat);
-          lineMesh.position.set(0, lineY, 0);
-          tower3D.group.add(lineMesh);
-        }
-
-        tower3D.group.add(block);
+        tower3D.group.add(mesh);
+        tower3D.slimePanels.push(mesh);
 
         sections.push({
-          subject,
-          seconds,
-          ratio,
-          color,
-          yStart: y,
-          yEnd: y + sectionHeight,
-          yCenter: y + sectionHeight / 2
+          subject, seconds, ratio, color: colorStr,
+          yStart: y, yEnd: y + sectionHeight, yCenter: y + sectionHeight / 2
         });
 
-        y += sectionHeight + 0.012;
+        y += sectionHeight;
       });
 
-      tower3D.bounds.height = Math.max(0.8, y);
-      tower3D.sortedSections = sections;
-      tower3D.sorted = true;
+      tower3D._slimeSections = sections;
 
-      // Create slime overlay on top
-      createSlimeOverlay(y, TOWER_WIDTH, TOWER_DEPTH, entries, data);
-
-      // Create HTML label overlay container
-      createSortedLabelsContainer();
-
-      // Update camera
-      setTowerCameraMode('full', true);
-
-      // Update button
-      const btn = document.getElementById('tower-sort-btn');
-      if (btn) btn.innerText = '원래대로';
-    }
-
-    function createSlimeOverlay(topY, width, depth, entries, data) {
-      // Determine dominant colors for the slime
-      const topSubject = entries[0];
-      const color1Str = getSubjectColor(topSubject[0], data);
-      const color2Str = entries.length > 1 ? getSubjectColor(entries[1][0], data) : color1Str;
-
-      // Parse colors to THREE.Color
-      const c1 = new THREE.Color(color1Str);
-      const c2 = new THREE.Color(color2Str);
-
-      // High-res plane for vertex displacement
-      const slimeGeo = new THREE.PlaneGeometry(width * 1.3, depth * 1.3, 64, 64);
-      const slimeMat = new THREE.ShaderMaterial({
-        uniforms: {
-          uTime: { value: 0.0 },
-          uTouch: { value: new THREE.Vector2(0, 0) },
-          uTouchStrength: { value: 0.0 },
-          uColor1: { value: new THREE.Vector3(c1.r, c1.g, c1.b) },
-          uColor2: { value: new THREE.Vector3(c2.r, c2.g, c2.b) },
-          uOpacity: { value: 0.82 }
-        },
-        vertexShader: SLIME_VERTEX_SHADER,
-        fragmentShader: SLIME_FRAGMENT_SHADER,
-        transparent: true,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      });
-
-      const slimeMesh = new THREE.Mesh(slimeGeo, slimeMat);
-      slimeMesh.rotation.x = -Math.PI / 2;
-      slimeMesh.position.set(0, topY + 0.06, 0);
-      slimeMesh.renderOrder = 999;
-
-      tower3D.group.add(slimeMesh);
-      tower3D.slimeMesh = slimeMesh;
-      tower3D.slimeClockStart = performance.now();
+      // Create labels container
+      let container = document.getElementById('tower-slime-labels');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'tower-slime-labels';
+        container.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;';
+        const towerShell = document.querySelector('.tower-shell');
+        if (towerShell) towerShell.appendChild(container);
+      }
 
       // Touch/click interaction for wobble
       const canvas = document.getElementById('tower-canvas');
       if (canvas) {
-        const handleSlimeInteraction = (clientX, clientY) => {
-          if (!tower3D.slimeMesh) return;
-          // Raycasting to find hit point on slime
+        const handleInteraction = (clientX, clientY) => {
+          if (!tower3D.slimePanels.length) return;
           const rect = canvas.getBoundingClientRect();
           const mouse = new THREE.Vector2(
             ((clientX - rect.left) / rect.width) * 2 - 1,
@@ -3178,85 +3108,64 @@
           );
           const raycaster = new THREE.Raycaster();
           raycaster.setFromCamera(mouse, tower3D.camera);
-          const intersects = raycaster.intersectObject(tower3D.slimeMesh);
+          const intersects = raycaster.intersectObjects(tower3D.slimePanels);
           if (intersects.length > 0) {
             const pt = intersects[0].point;
-            tower3D.slimeMesh.material.uniforms.uTouch.value.set(pt.x, pt.z);
-            tower3D.slimeMesh.material.uniforms.uTouchStrength.value = 1.2;
+            tower3D.slimePanels.forEach(panel => {
+              panel.material.uniforms.uTouch.value.set(pt.x, pt.y);
+              panel.material.uniforms.uTouchStrength.value = 1.5;
+            });
           }
         };
-
-        canvas._slimeMouseHandler = (e) => handleSlimeInteraction(e.clientX, e.clientY);
+        canvas._slimeClickHandler = (e) => handleInteraction(e.clientX, e.clientY);
         canvas._slimeTouchHandler = (e) => {
-          if (e.touches.length > 0) handleSlimeInteraction(e.touches[0].clientX, e.touches[0].clientY);
+          if (e.touches.length > 0) handleInteraction(e.touches[0].clientX, e.touches[0].clientY);
         };
-        canvas.addEventListener('click', canvas._slimeMouseHandler);
+        canvas.addEventListener('click', canvas._slimeClickHandler);
         canvas.addEventListener('touchstart', canvas._slimeTouchHandler, { passive: true });
       }
     }
 
-    function createSortedLabelsContainer() {
-      let container = document.getElementById('tower-sorted-labels');
-      if (!container) {
-        container = document.createElement('div');
-        container.id = 'tower-sorted-labels';
-        container.style.cssText = `
-          position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: hidden;
-        `;
-        const towerShell = document.querySelector('.tower-shell');
-        if (towerShell) towerShell.appendChild(container);
-      }
-    }
+    function updateSlimeOverlays() {
+      tower3D.slimePanels.forEach(panel => {
+        if (panel.material?.uniforms) {
+          panel.material.uniforms.uTime.value += 0.016;
+          panel.material.uniforms.uTouchStrength.value *= 0.96;
+        }
+      });
 
-    function updateSortedLabels() {
-      if (!tower3D.sorted || !tower3D.sortedSections || !tower3D.camera) return;
-      const container = document.getElementById('tower-sorted-labels');
+      if (!tower3D._slimeSections || !tower3D.camera) return;
+      const container = document.getElementById('tower-slime-labels');
       if (!container) return;
-
       const canvas = document.getElementById('tower-canvas');
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
 
       let html = '';
-      tower3D.sortedSections.forEach(section => {
-        // Project 3D center to screen
-        const worldPos = new THREE.Vector3(0, section.yCenter, 0);
-        // Apply group rotation
+      tower3D._slimeSections.forEach(section => {
+        const worldPos = new THREE.Vector3(0, section.yCenter, 0.48);
         worldPos.applyMatrix4(tower3D.group.matrixWorld);
         const projected = worldPos.clone().project(tower3D.camera);
+        if (projected.z > 1) return;
 
         const screenX = (projected.x * 0.5 + 0.5) * rect.width;
         const screenY = (-projected.y * 0.5 + 0.5) * rect.height;
-
-        // Only show if in front of camera
-        if (projected.z > 1) return;
-
         const textColor = getContrastColor(section.color);
         const pct = Math.round(section.ratio * 100);
-        const timeStr = formatHMS(section.seconds);
 
         html += `<div style="
-          position:absolute;
-          left:${screenX}px; top:${screenY}px;
+          position:absolute;left:${screenX}px;top:${screenY}px;
           transform:translate(-50%,-50%);
-          background:${section.color};
           color:${textColor};
-          padding:4px 10px;
-          border-radius:8px;
-          font-size:12px;
-          font-weight:800;
-          white-space:nowrap;
-          box-shadow:0 2px 8px rgba(0,0,0,0.2);
-          border:1px solid rgba(255,255,255,0.2);
-          pointer-events:none;
-          opacity:0.92;
-          backdrop-filter:blur(4px);
+          padding:3px 8px;border-radius:6px;
+          font-size:11px;font-weight:800;
+          white-space:nowrap;pointer-events:none;
+          text-shadow:0 1px 3px rgba(0,0,0,0.5);
         ">
-          <div style="font-size:13px;">${section.subject}</div>
-          <div style="font-size:11px;opacity:0.85;">${timeStr} · ${pct}%</div>
+          <div style="font-size:12px;">${section.subject}</div>
+          <div style="font-size:10px;opacity:0.9;">${formatHMS(section.seconds)} · ${pct}%</div>
         </div>`;
       });
-
       container.innerHTML = html;
     }
 
