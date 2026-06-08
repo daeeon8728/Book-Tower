@@ -1618,18 +1618,22 @@
     }
 
     function getSubjectInsights(data = getRecords()) {
-      const subjects = data.subjects || [];
+      // Get all unique subjects added by the user
+      const userSubjects = new Set(Object.keys(data.subjectColors || {}));
+      Object.values(data.daily || {}).forEach(day => {
+        (day.subjectList || []).forEach(s => userSubjects.add(s));
+      });
+      
       const totals = getSubjectTotals(data);
-      // Filter to only real user-created subjects
-      const entries = Object.entries(totals)
-        .filter(([name, seconds]) => seconds > 0 && subjects.includes(name));
-      if (!entries.length) {
-        // Fallback: use all entries if subjects list doesn't match
-        const fallback = Object.entries(totals).filter(([, seconds]) => seconds > 0);
-        if (!fallback.length) return { most: null, least: null };
-        fallback.sort((a, b) => b[1] - a[1]);
-        return { most: fallback[0], least: fallback[fallback.length - 1] };
-      }
+      
+      // Calculate totals for all known user subjects (including 0 seconds)
+      const entries = Array.from(userSubjects).map(name => {
+        return [name, totals[name] || 0];
+      });
+
+      if (!entries.length) return { most: null, least: null };
+
+      // Sort descending (highest first)
       entries.sort((a, b) => b[1] - a[1]);
       return { most: entries[0], least: entries[entries.length - 1] };
     }
@@ -1856,8 +1860,9 @@
         let secs = todayData.subjects[sj] || 0;
         let m = Math.floor(secs / 60);
         let safeId = sj.replace(/'/g, "\\'");
+        let sjColor = getSubjectColor(sj, data);
         html += `
-        <div class="subject-item" style="border-left: 6px solid ${data.subjectColors && data.subjectColors[sj] ? data.subjectColors[sj] : 'var(--toss-blue)'};">
+        <div class="subject-item" style="border-left: 6px solid ${sjColor};">
             <div class="subject-info">
                 <div class="subject-name">${sj}</div>
                 <div class="subject-time">${m}분 방어함</div>
